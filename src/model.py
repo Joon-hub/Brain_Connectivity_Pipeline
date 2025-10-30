@@ -196,3 +196,5 @@ if __name__ == "__main__":
     X_test = np.random.randn(10, 232)
     y_pred, y_proba = predict(model, scaler, X_test)
     print(f"Predictions: {y_pred[:5]}")
+    
+    

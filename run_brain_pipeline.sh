@@ -22,8 +22,8 @@ echo "Start time: $(date)"
 echo "==========================================="
 
 # Run full pipeline
-echo "Running: python run.py --config config.yaml --help"
-python3 run.py --config config.yaml
+# echo "Running: python run.py --config config.yaml --help"
+python3 run.py --config config.yaml 
 
 EXIT_CODE=$?
 

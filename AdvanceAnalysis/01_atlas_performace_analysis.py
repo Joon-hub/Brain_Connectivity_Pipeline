@@ -304,73 +304,56 @@ def filter_subcortical_only(y_true_network, y_pred_network, network_labels):
     return y_true_sub, y_pred_sub, subcortical_labels
 
 
-def plot_confusion_matrix(cm, labels, title, output_path, normalize=True):
+def plot_confusion_matrix(cm, labels, title, output_path):
     """
-    Plot and save confusion matrix with all cells showing values.
-    
+    Plot and save a confusion matrix using Matplotlib with integer counts.
+
     Args:
-        cm: Confusion matrix (n_classes × n_classes)
-        labels: Class labels
+        cm: Confusion matrix (2D numpy array)
+        labels: List of class labels
         title: Plot title
-        output_path: Save path
-        normalize: Whether to normalize (row-wise)
+        output_path: File path to save the figure
     """
-    if normalize:
-        # Row-wise normalization (each row sums to 1)
-        cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        cm_normalized = np.nan_to_num(cm_normalized)  # Handle division by zero
-    else:
-        cm_normalized = cm.astype('float')
-    
-    # Create figure - size based on number of labels
-    fig_size = max(10, len(labels) * 0.6)
+    # Figure size adjusts with number of classes
+    fig_size = max(8, len(labels) * 0.7)
     fig, ax = plt.subplots(figsize=(fig_size, fig_size))
-    
-    # Determine font size based on matrix size
-    if len(labels) <= 8:
-        annot_fontsize = 11
-        label_fontsize = 11
-    elif len(labels) <= 15:
-        annot_fontsize = 8
-        label_fontsize = 9
-    else:
-        annot_fontsize = 6
-        label_fontsize = 8
-    
-    # Create annotation matrix with all values formatted
-    annot_matrix = np.empty_like(cm_normalized, dtype=object)
-    for i in range(cm_normalized.shape[0]):
-        for j in range(cm_normalized.shape[1]):
-            annot_matrix[i, j] = f'{cm_normalized[i, j]:.3f}'
-    
-    # Plot heatmap - ALWAYS show annotations for all cells
-    sns.heatmap(cm_normalized, 
-                annot=annot_matrix,
-                fmt='',  # Use pre-formatted strings
-                cmap='RdYlGn_r',
-                xticklabels=labels, 
-                yticklabels=labels,
-                cbar_kws={'label': 'Proportion' if normalize else 'Count'},
-                square=True, 
-                linewidths=0.5, 
-                linecolor='white',
-                ax=ax,
-                annot_kws={'fontsize': annot_fontsize, 'weight': 'bold'},
-                vmin=0, 
-                vmax=1 if normalize else None)
-    
-    ax.set_xlabel('Predicted', fontweight='bold', fontsize=14)
-    ax.set_ylabel('True', fontweight='bold', fontsize=14)
-    ax.set_title(title, fontweight='bold', fontsize=16, pad=20)
-    
-    plt.xticks(rotation=45, ha='right', fontsize=label_fontsize)
-    plt.yticks(rotation=0, fontsize=label_fontsize)
+
+    # Plot the confusion matrix as an image
+    im = ax.imshow(cm, interpolation='nearest', cmap='YlGn', aspect='auto')
+
+    # Add colorbar with label
+    cbar = plt.colorbar(im, ax=ax)
+    cbar.ax.set_ylabel('Count', rotation=270, labelpad=15, fontsize=12, fontweight='bold')
+
+    # Titles and labels
+    ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
+    ax.set_xlabel('Predicted label', fontsize=14, fontweight='bold')
+    ax.set_ylabel('True label', fontsize=14, fontweight='bold')
+
+    # Tick labels
+    tick_fontsize = 10 if len(labels) > 10 else 12
+    ax.set_xticks(np.arange(len(labels)))
+    ax.set_yticks(np.arange(len(labels)))
+    ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=tick_fontsize)
+    ax.set_yticklabels(labels, fontsize=tick_fontsize)
+
+    # Annotate every cell with integer count
+    max_val = cm.max()
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            value = int(cm[i, j])
+            # Use white text for dark cells, black for light ones
+            color = "white" if value > max_val / 2 else "black"
+            ax.text(j, i, f"{value}", ha="center", va="center", color=color, fontsize=10, fontweight='bold')
+
+    # Tight layout for better spacing
     plt.tight_layout()
-    
+
+    # Save the figure
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
-    
+
     print(f"✓ Saved confusion matrix: {output_path}")
 
 

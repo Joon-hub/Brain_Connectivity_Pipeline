@@ -8,22 +8,12 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import Tuple, List
+import os
 
 
 def load_connectivity_data(filepath: str, validate: bool = True) -> pd.DataFrame:
     """
     Load connectivity CSV with validation.
-    
-    Args:
-        filepath: Path to CSV file
-        validate: Whether to validate schema
-        
-    Returns:
-        DataFrame with connectivity data
-        
-    Raises:
-        FileNotFoundError: If file doesn't exist
-        ValueError: If schema validation fails
     """
     filepath = Path(filepath)
     if not filepath.exists():
@@ -96,7 +86,7 @@ def create_sample_dataset(input_path: str, output_path: str, n_subjects: int = 1
 # Example usage for testing
 if __name__ == "__main__":
     # Test on sample data
-    df = load_connectivity_data("../data/sample/sample_piop2.csv")
+    df = load_connectivity_data("/home/sjoon/projects/brain_connectivity_classifier/data/sample/sample_piop2.csv")
     print(f"Loaded {df.shape[0]} subjects with {df.shape[1]-1} connections")
     
     connections = extract_connection_columns(df)

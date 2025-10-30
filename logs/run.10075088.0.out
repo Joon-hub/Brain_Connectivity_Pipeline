@@ -1,0 +1,44 @@
+===========================================
+Starting Brain Connectivity Classification
+===========================================
+Current directory: /home/sjoon/projects/brain_connectivity_classifier
+Running on host: cpu43
+Start time: Thu Oct 30 11:55:56 PM CET 2025
+===========================================
+
+======================================================================
+              BRAIN CONNECTIVITY CLASSIFICATION PIPELINE              
+======================================================================
+
+Mode: FULL DATA
+Config: config.yaml
+Start time: 2025-10-30 23:55:57
+
+✓ Loaded configuration from config.yaml
+✓ Random seeds set to 42
+
+======================================================================
+                  STEP 1/6: Load Resting-State Data                   
+======================================================================
+✓ Schema valid: 224 subjects, 26796 connections
+
+======================================================================
+            STEP 2/6: Extract Features and Create Dataset             
+======================================================================
+✓ Extracted 232 unique brain regions
+✓ Extracted 232 unique brain regions
+✓ Created dataset: 51968 samples (224 subjects × 232 regions)
+
+======================================================================
+               STEP 3/6: Train Brain Region Classifier                
+======================================================================
+
+============================================================
+TRAINING BRAIN REGION CLASSIFIER
+============================================================
+Samples: 51968
+Features: 232
+Classes: 232
+Subjects: 224
+
+Running 5-fold cross-validation...

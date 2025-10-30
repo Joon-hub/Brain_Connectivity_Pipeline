@@ -9,8 +9,8 @@ data:
 # Output directories
 output_dirs:
   models: "data/processed"
-  tables: "reports/tables"
-  figures: "reports/figures"
+  tables: "reports/tables/basic_analysis"
+  figures: "reports/figures/basic_analysis"
 
 # Feature extraction
 diagonal_strategy: "network_mean"  # Options: zero, one, mean, network_mean
