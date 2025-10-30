@@ -1,0 +1,135 @@
+===========================================
+Starting Brain Connectivity Classification
+===========================================
+Current directory: /home/sjoon/projects/brain_connectivity_classifier
+Running on host: cpu43
+Start time: Thu Oct 30 02:09:31 PM CET 2025
+===========================================
+Running: python run.py --config config.yaml --help
+
+======================================================================
+              BRAIN CONNECTIVITY CLASSIFICATION PIPELINE              
+======================================================================
+
+Mode: SAMPLE DATA (quick test)
+Config: config.yaml
+Start time: 2025-10-30 14:09:32
+
+✓ Loaded configuration from config.yaml
+✓ Random seeds set to 42
+
+======================================================================
+                  STEP 1/6: Load Resting-State Data                   
+======================================================================
+✓ Created sample with 10 subjects: data/sample/sample_piop2_small.csv
+✓ Schema valid: 224 subjects, 26796 connections
+✓ Created sample with 10 subjects: data/sample/sample_piop2_small.csv
+✓ Schema valid: 10 subjects, 26796 connections
+
+======================================================================
+            STEP 2/6: Extract Features and Create Dataset             
+======================================================================
+✓ Extracted 232 unique brain regions
+✓ Extracted 232 unique brain regions
+✓ Created dataset: 2320 samples (10 subjects × 232 regions)
+
+======================================================================
+               STEP 3/6: Train Brain Region Classifier                
+======================================================================
+
+============================================================
+TRAINING BRAIN REGION CLASSIFIER
+============================================================
+Samples: 2320
+Features: 232
+Classes: 232
+Subjects: 10
+
+Running 5-fold cross-validation...
+  Fold 1: 0.2953
+  Fold 2: 0.2737
+  Fold 3: 0.3534
+  Fold 4: 0.3060
+  Fold 5: 0.3922
+
+CV Results: 0.3241 ± 0.0429
+
+Training final model on full dataset...
+Training accuracy: 0.7720
+============================================================
+
+✓ Model saved: data/processed/trained_model.pkl
+
+======================================================================
+               STEP 4/6: Apply Classifier to Task Data                
+======================================================================
+✓ Schema valid: 200 subjects, 26796 connections
+✓ Created sample with 10 subjects: data/sample/sample_piop1_small.csv
+✓ Schema valid: 10 subjects, 26796 connections
+✓ Schema valid: 10 subjects, 26796 connections
+✓ Extracted 232 unique brain regions
+✓ Created dataset: 2320 samples (10 subjects × 232 regions)
+
+======================================================================
+             STEP 5/6: Generate Error Maps and Statistics             
+======================================================================
+✓ Saved: reports/tables/error_map_rest.csv
+✓ Saved: reports/tables/network_summary_rest.csv
+✓ Saved: reports/tables/high_error_regions_rest.csv
+✓ Saved: reports/tables/low_error_regions_rest.csv
+✓ Saved: reports/tables/error_map_task.csv
+✓ Saved: reports/tables/network_summary_task.csv
+✓ Saved: reports/tables/comparison_rest_vs_task.csv
+
+✓ Generated 7 CSV tables in reports/tables
+
+======================================================================
+                  STEP 6/6: Generate Thesis Figures                   
+======================================================================
+✓ Saved figure: reports/figures/fig1_error_map_rest.png
+✓ Saved figure: reports/figures/fig2_network_analysis_rest.png
+✓ Saved figure: reports/figures/fig3_error_map_task.png
+✓ Saved figure: reports/figures/fig4_rest_vs_task_comparison.png
+
+✓ Generated 4 thesis figures in reports/figures
+
+======================================================================
+                          PIPELINE COMPLETE!                          
+======================================================================
+
+Summary of Results:
+==================
+
+Training Data:
+  Subjects: 10
+  Regions: 232
+  Samples: 2320
+
+Model Performance:
+  CV Accuracy: 0.3241 ± 0.0429
+  Train Accuracy: 0.7720
+  Random Baseline: 0.0043 (232 classes)
+  Improvement: 75.2x better than chance
+
+Task Data:
+  Subjects: 10
+  Samples: 2320
+
+
+Output Files:
+  Models: data/processed/trained_model.pkl
+  Tables: reports/tables/ (7 CSV files)
+  Figures: reports/figures/ (4 PNG files)
+
+Execution Time: 1m 23s
+Completed: 2025-10-30 14:10:55
+
+✓ Provenance logged to reports/tables/provenance.yaml
+✅ All done! Results are ready for your thesis.
+
+
+===========================================
+Pipeline finished!
+End time: Thu Oct 30 02:10:56 PM CET 2025
+Exit code: 0
+===========================================

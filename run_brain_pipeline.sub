@@ -1,0 +1,29 @@
+# ===============================================================
+# HTCondor Submit File - Brain Connectivity Classification
+# ===============================================================
+
+universe   = vanilla
+executable = run_brain_pipeline.sh
+
+# Phton environment
+getenv = True 
+initialdir = /home/sjoon/projects/brain_connectivity_classifier
+
+
+# Logfiles
+output = logs/run.$(Cluster).$(Process).out
+error  = logs/run.$(Cluster).$(Process).err
+log    = logs/run.$(Cluster).$(Process).log
+
+# Resources
+request_cpus   = 4
+request_memory = 12 GB
+request_disk   = 20 GB
+
+
+# File transfer settings
+should_transfer_files   = IF_NEEDED
+when_to_transfer_output = ON_EXIT
+
+# queue
+queue 1

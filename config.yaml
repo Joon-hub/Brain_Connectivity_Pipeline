@@ -1,0 +1,27 @@
+# Brain Connectivity Classification - Configuration
+# =================================================
+
+# Data files (CSV format)
+data:
+  piop2_file: "data/raw/PIOP2_restingstate.csv"  # Training: resting-state
+  piop1_file: "data/raw/PIOP1_gstroop.csv"       # Testing: gender task
+
+# Output directories
+output_dirs:
+  models: "data/processed"
+  tables: "reports/tables"
+  figures: "reports/figures"
+
+# Feature extraction
+diagonal_strategy: "network_mean"  # Options: zero, one, mean, network_mean
+
+# Model training
+C: 0.01                  # Regularization (smaller = more regularization)
+max_iter: 1000           # Maximum iterations
+n_splits: 5              # Cross-validation folds
+random_seed: 42          # For reproducibility
+
+# Visualization
+dpi: 300                 # Figure resolution
+high_error_threshold: 0.3  # Threshold for "high error" regions
+low_error_threshold: 0.1   # Threshold for "low error" regions
