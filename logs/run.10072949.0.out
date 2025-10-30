@@ -3,7 +3,7 @@ Starting Brain Connectivity Classification
 ===========================================
 Current directory: /home/sjoon/projects/brain_connectivity_classifier
 Running on host: cpu43
-Start time: Thu Oct 30 02:09:31 PM CET 2025
+Start time: Thu Oct 30 05:17:10 PM CET 2025
 ===========================================
 Running: python run.py --config config.yaml --help
 
@@ -11,9 +11,9 @@ Running: python run.py --config config.yaml --help
               BRAIN CONNECTIVITY CLASSIFICATION PIPELINE              
 ======================================================================
 
-Mode: SAMPLE DATA (quick test)
+Mode: FULL DATA
 Config: config.yaml
-Start time: 2025-10-30 14:09:32
+Start time: 2025-10-30 17:17:11
 
 ✓ Loaded configuration from config.yaml
 ✓ Random seeds set to 42
@@ -23,15 +23,13 @@ Start time: 2025-10-30 14:09:32
 ======================================================================
 ✓ Created sample with 10 subjects: data/sample/sample_piop2_small.csv
 ✓ Schema valid: 224 subjects, 26796 connections
-✓ Created sample with 10 subjects: data/sample/sample_piop2_small.csv
-✓ Schema valid: 10 subjects, 26796 connections
 
 ======================================================================
             STEP 2/6: Extract Features and Create Dataset             
 ======================================================================
 ✓ Extracted 232 unique brain regions
 ✓ Extracted 232 unique brain regions
-✓ Created dataset: 2320 samples (10 subjects × 232 regions)
+✓ Created dataset: 51968 samples (224 subjects × 232 regions)
 
 ======================================================================
                STEP 3/6: Train Brain Region Classifier                
@@ -40,22 +38,22 @@ Start time: 2025-10-30 14:09:32
 ============================================================
 TRAINING BRAIN REGION CLASSIFIER
 ============================================================
-Samples: 2320
+Samples: 51968
 Features: 232
 Classes: 232
-Subjects: 10
+Subjects: 224
 
 Running 5-fold cross-validation...
-  Fold 1: 0.2953
-  Fold 2: 0.2737
-  Fold 3: 0.3534
-  Fold 4: 0.3060
-  Fold 5: 0.3922
+  Fold 1: 0.7376
+  Fold 2: 0.7392
+  Fold 3: 0.7327
+  Fold 4: 0.7553
+  Fold 5: 0.7381
 
-CV Results: 0.3241 ± 0.0429
+CV Results: 0.7406 ± 0.0077
 
 Training final model on full dataset...
-Training accuracy: 0.7720
+Training accuracy: 0.8521
 ============================================================
 
 ✓ Model saved: data/processed/trained_model.pkl
@@ -64,11 +62,9 @@ Training accuracy: 0.7720
                STEP 4/6: Apply Classifier to Task Data                
 ======================================================================
 ✓ Schema valid: 200 subjects, 26796 connections
-✓ Created sample with 10 subjects: data/sample/sample_piop1_small.csv
-✓ Schema valid: 10 subjects, 26796 connections
-✓ Schema valid: 10 subjects, 26796 connections
+✓ Schema valid: 200 subjects, 26796 connections
 ✓ Extracted 232 unique brain regions
-✓ Created dataset: 2320 samples (10 subjects × 232 regions)
+✓ Created dataset: 46400 samples (200 subjects × 232 regions)
 
 ======================================================================
              STEP 5/6: Generate Error Maps and Statistics             
@@ -101,19 +97,19 @@ Summary of Results:
 ==================
 
 Training Data:
-  Subjects: 10
+  Subjects: 224
   Regions: 232
-  Samples: 2320
+  Samples: 51968
 
 Model Performance:
-  CV Accuracy: 0.3241 ± 0.0429
-  Train Accuracy: 0.7720
+  CV Accuracy: 0.7406 ± 0.0077
+  Train Accuracy: 0.8521
   Random Baseline: 0.0043 (232 classes)
-  Improvement: 75.2x better than chance
+  Improvement: 171.8x better than chance
 
 Task Data:
-  Subjects: 10
-  Samples: 2320
+  Subjects: 200
+  Samples: 46400
 
 
 Output Files:
@@ -121,8 +117,8 @@ Output Files:
   Tables: reports/tables/ (7 CSV files)
   Figures: reports/figures/ (4 PNG files)
 
-Execution Time: 1m 23s
-Completed: 2025-10-30 14:10:55
+Execution Time: 10m 21s
+Completed: 2025-10-30 17:27:32
 
 ✓ Provenance logged to reports/tables/provenance.yaml
 ✅ All done! Results are ready for your thesis.
@@ -130,6 +126,6 @@ Completed: 2025-10-30 14:10:55
 
 ===========================================
 Pipeline finished!
-End time: Thu Oct 30 02:10:56 PM CET 2025
+End time: Thu Oct 30 05:27:33 PM CET 2025
 Exit code: 0
 ===========================================

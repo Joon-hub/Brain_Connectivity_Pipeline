@@ -23,7 +23,7 @@ echo "==========================================="
 
 # Run full pipeline
 echo "Running: python run.py --config config.yaml --help"
-python3 run.py --config config.yaml --sample
+python3 run.py --config config.yaml
 
 EXIT_CODE=$?
 
