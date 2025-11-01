@@ -19,7 +19,7 @@ def load_connectivity_data(filepath: str, validate: bool = True) -> pd.DataFrame
     if not filepath.exists():
         raise FileNotFoundError(f"Data file not found: {filepath}")
     
-    df = pd.read_csv(filepath)
+    df = pd.read_csv(filepath, header = 0)
     
     if validate:
         validate_schema(df)

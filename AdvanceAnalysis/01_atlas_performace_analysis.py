@@ -22,16 +22,16 @@ import argparse
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
+from sklearn.metrics import confusion_matrix, accuracy_score
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
+# Local imports
 from data import load_connectivity_data, extract_connection_columns
-from features import extract_regions, create_classification_dataset
-from model import train_classifier, predict, load_model, save_model
+from features import create_classification_dataset
+from model import predict
 from utils import load_config, set_random_seeds, print_section
 
 
@@ -262,6 +262,7 @@ def aggregate_predictions_to_network(y_true, y_pred, region_list, network_mappin
     return np.array(y_true_network), np.array(y_pred_network), network_labels
 
 
+
 def filter_cortical_only(y_true_network, y_pred_network, network_labels):
     """
     Filter to keep only cortical networks (exclude subcortical).
@@ -354,9 +355,6 @@ def plot_confusion_matrix(cm, labels, title, output_path):
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
 
-    print(f"✓ Saved confusion matrix: {output_path}")
-
-
 def calculate_network_error_rates(y_true, y_pred, region_list, network_mapping):
     """
     Calculate error rates per network.
@@ -439,13 +437,10 @@ def main():
         model, scaler = load_model(str(model_path))
         print("✓ Loaded existing model")
     else:
-        model, scaler, cv_results = train_classifier(
-            X_train, y_train, subjects_train,
-            C=config.get('C', 0.01),
-            n_splits=config.get('n_splits', 5)
-        )
-        save_model(model, scaler, str(model_path))
-        print(f"✓ Trained new model (CV accuracy: {cv_results['mean_accuracy']:.4f})")
+        print("✗ Model file not found. Please train the model first.")
+        sys.exit("Terminating: trained model.pkl not found")
+        
+        
     
     # Get predictions
     print_section("Step 4: Generate Predictions")
@@ -463,6 +458,22 @@ def main():
     figures_dir = Path('reports/figures/atlas_analysis')
     tables_dir.mkdir(parents=True, exist_ok=True)
     figures_dir.mkdir(parents=True, exist_ok=True)
+    
+    # =========================================================================
+    # Create region list as csv file
+    # =========================================================================
+    
+    region_list_path = tables_dir / 'region_list.csv'
+
+    # Convert list to DataFrame if it's a list
+    if isinstance(region_list, list):
+        region_list = pd.DataFrame(region_list, columns=['region'])
+
+    region_list.to_csv(region_list_path, index=False)
+    print(f"✓ Region list saved: {region_list_path}")
+    
+    if isinstance(region_list, pd.DataFrame):
+        region_list = region_list['region'].tolist()
     
     # =========================================================================
     # ANALYSIS 1: Schaefer N7 (7 Cortical Networks Only)
@@ -829,22 +840,6 @@ Visualizations (PNG) - with numbers in heatmaps:
   COMBINED:
     - {figures_dir}/confusion_N7_TianI_combined_rest.png
     - {figures_dir}/confusion_N7_TianI_combined_task.png
-
-Key Changes:
-============
-✓ N7 confusion matrix now shows ONLY 7 cortical networks (no subcortical)
-✓ N17 confusion matrix now shows ONLY 17 cortical networks (no subcortical)
-✓ Tian Scale I/II matrices show ONLY subcortical regions
-✓ NEW: Combined N7 (7 cortical) + Tian I (8 subcortical) = 15 total networks
-✓ All heatmaps now display numbers inside cells for easier reading
-
-Next Steps:
-===========
-1. Review the 7×7 N7 cortical confusion matrix
-2. Review the 17×17 N17 cortical confusion matrix
-3. Review the 15×15 combined N7+Tian I matrix (cortical + subcortical together)
-4. Run 02_atlas_comparison.py to compare performance across configurations
-5. Run 03_connectivity_analysis.py to examine task-induced changes
 """)
     
     return 0
