@@ -399,7 +399,7 @@ def main():
     tables_dir = Path('reports/tables/atlas_analysis')
     
     if not tables_dir.exists():
-        print(f"\n❌ Error: {tables_dir} not found")
+        print(f"\n Error: {tables_dir} not found")
         print("Please run 01_atlas_performance_analysis.py first!")
         return 1
     
@@ -407,7 +407,7 @@ def main():
     error_data = load_error_rates(tables_dir)
     
     if not error_data:
-        print("❌ No error rate files found!")
+        print(" No error rate files found!")
         return 1
     
     print(f"✓ Loaded {len(error_data)} error rate files")
@@ -497,7 +497,7 @@ Key Findings:
             sig = "***" if row['p_value'] < 0.001 else "**" if row['p_value'] < 0.01 else "*" if row['p_value'] < 0.05 else "n.s."
             print(f"   {row['atlas']}: Task - Rest = {row['mean_increase']:.4f} ({row['pct_increase']:.1f}% increase, p = {row['p_value']:.4f}) {sig}")
     
-    print("\n✅ Atlas comparison complete!\n")
+    print("\n Atlas comparison complete!\n")
     
     return 0
 

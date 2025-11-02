@@ -2,17 +2,17 @@
 Starting Brain Connectivity Classification
 ===========================================
 Current directory: /home/sjoon/projects/brain_connectivity_classifier
-Running on host: cpu43
-Start time: Sun Nov  2 12:56:15 PM CET 2025
+Running on host: cpu29
+Start time: Sun Nov  2 04:51:45 PM CET 2025
 ===========================================
 
 ======================================================================
               BRAIN CONNECTIVITY CLASSIFICATION PIPELINE              
 ======================================================================
 
-Mode: SAMPLE DATA (quick test)
+Mode: FULL DATA
 Config: config.yaml
-Start time: 2025-11-02 12:56:16
+Start time: 2025-11-02 16:51:48
 
 ✓ Loaded configuration from config.yaml
 ✓ Random seeds set to 42
@@ -20,15 +20,14 @@ Start time: 2025-11-02 12:56:16
 ======================================================================
                   STEP 1/6: Load Resting-State Data                   
 ======================================================================
-✓ Created sample with 10 subjects: data/sample/sample_piop2_small.csv
-✓ Schema valid: 10 subjects, 26796 connections
+✓ Schema valid: 224 subjects, 26796 connections
 
 ======================================================================
             STEP 2/6: Extract Features and Create Dataset             
 ======================================================================
 ✓ Extracted 232 unique brain regions
 ✓ Extracted 232 unique brain regions
-✓ Created dataset: 2320 samples (10 subjects × 232 regions)
+✓ Created dataset: 51968 samples (224 subjects × 232 regions)
 ✓ Saved region list to data/processed/region_list.csv
 
 ======================================================================
@@ -38,22 +37,22 @@ Start time: 2025-11-02 12:56:16
 ============================================================
 TRAINING BRAIN REGION CLASSIFIER
 ============================================================
-Samples: 2320
+Samples: 51968
 Features: 232
 Classes: 232
-Subjects: 10
+Subjects: 224
 
 Running 5-fold cross-validation...
-  Fold 1: 0.2953
-  Fold 2: 0.2737
-  Fold 3: 0.3534
-  Fold 4: 0.3060
-  Fold 5: 0.3922
+  Fold 1: 0.7376
+  Fold 2: 0.7392
+  Fold 3: 0.7327
+  Fold 4: 0.7553
+  Fold 5: 0.7381
 
-CV Results: 0.3241 ± 0.0429
+CV Results: 0.7406 ± 0.0077
 
 Training final model on full dataset...
-Training accuracy: 0.7720
+Training accuracy: 0.8521
 ============================================================
 
 ✓ Model saved: data/processed/trained_model.pkl
@@ -61,15 +60,14 @@ Training accuracy: 0.7720
 ======================================================================
                STEP 4/6: Apply Classifier to Task Data                
 ======================================================================
-✓ Created sample with 10 subjects: data/sample/sample_piop1_small.csv
-✓ Schema valid: 10 subjects, 26796 connections
-✓ Schema valid: 10 subjects, 26796 connections
+✓ Schema valid: 200 subjects, 26796 connections
+✓ Schema valid: 200 subjects, 26796 connections
 ✓ Extracted 232 unique brain regions
-✓ Created dataset: 2320 samples (10 subjects × 232 regions)
-Shape of y_train_pred: (2320,)
-Shape of y_test_pred: (2320,)
-Shape of y_test: (2320,)
-Shape of y_train: (2320,)
+✓ Created dataset: 46400 samples (200 subjects × 232 regions)
+Shape of y_train_pred: (51968,)
+Shape of y_test_pred: (46400,)
+Shape of y_test: (46400,)
+Shape of y_train: (51968,)
 ✓ Saved y_train_pred to data/processed/y_train_pred.csv
 ✓ Saved y_test_pred to data/processed/y_test_pred.csv
 ✓ Saved y_test to data/processed/y_test.csv
@@ -108,19 +106,19 @@ Summary of Results:
 ==================
 
 Training Data:
-  Subjects: 10
+  Subjects: 224
   Regions: 232
-  Samples: 2320
+  Samples: 51968
 
 Model Performance:
-  CV Accuracy: 0.3241 ± 0.0429
-  Train Accuracy: 0.7720
+  CV Accuracy: 0.7406 ± 0.0077
+  Train Accuracy: 0.8521
   Random Baseline: 0.0043 (232 classes)
-  Improvement: 75.2x better than chance
+  Improvement: 171.8x better than chance
 
 Task Data:
-  Subjects: 10
-  Samples: 2320
+  Subjects: 200
+  Samples: 46400
 
 
 Output Files:
@@ -128,8 +126,8 @@ Output Files:
   Tables: reports/tables/basic_analysis/
   Figures: reports/figures/basic_analysis/
 
-Execution Time: 48s
-Completed: 2025-11-02 12:57:04
+Execution Time: 9m 31s
+Completed: 2025-11-02 17:01:20
 
 ✓ Provenance logged to reports/tables/basic_analysis/provenance.yaml
 ✅ All done! Results are ready for your thesis.
@@ -137,6 +135,6 @@ Completed: 2025-11-02 12:57:04
 
 ===========================================
 Pipeline finished!
-End time: Sun Nov  2 12:57:04 PM CET 2025
+End time: Sun Nov  2 05:01:20 PM CET 2025
 Exit code: 0
 ===========================================
