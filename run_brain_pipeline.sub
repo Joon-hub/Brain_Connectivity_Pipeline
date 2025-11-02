@@ -3,11 +3,11 @@
 # ===============================================================
 
 universe   = vanilla
-executable = run_brain_pipeline.sh
+executable = sh_files/run_brain_pipeline.sh
 
 # Phton environment
 getenv = True 
-initialdir = /home/sjoon/projects/brain_connectivity_classifier
+initialdir = /home/sjoon/projects/brain_connectivity_classifier/
 
 
 # Logfiles

@@ -22,6 +22,7 @@ import sys
 import time
 import argparse
 import numpy as np
+import pandas as pd
 from pathlib import Path
 
 # Add src/ to path for imports
@@ -127,6 +128,12 @@ def main():
     results['n_regions'] = n_regions
     results['n_train_samples'] = len(X_train)
     results['n_train_subjects'] = len(np.unique(subjects_train))
+    
+    # save region list into a csv file
+    region_list_path = Path(config['output_dirs']['processed']) / 'region_list.csv'
+    df_region_list = pd.DataFrame({"Region": region_list})
+    df_region_list.to_csv(region_list_path, index=False)
+    print(f"✓ Saved region list to {region_list_path}")
 
     # =========================================================================
     # STEP 3: Train Classifier with Cross-Validation
@@ -183,7 +190,31 @@ def main():
         results['n_test_subjects'] = len(np.unique(subjects_test))
 
         task_data_available = True
+        
+        # print shape of the files
+        print(f"Shape of y_train_pred: {y_train_pred.shape}")
+        print(f"Shape of y_test_pred: {y_test_pred.shape}")
+        print(f"Shape of y_test: {y_test.shape}")
+        print(f"Shape of y_train: {y_train.shape}")
+        
+        # define paths to save y_train_pred,y_test_pred,y_test,y_train 
+        y_train_pred_path = Path(config['output_dirs']['processed']) / 'y_train_pred.csv'
+        y_test_pred_path = Path(config['output_dirs']['processed']) / 'y_test_pred.csv'
+        y_test_path = Path(config['output_dirs']['processed']) / 'y_test.csv'
+        y_train_path = Path(config['output_dirs']['processed']) / 'y_train.csv'
 
+        # convert arrays to df 
+        pd.DataFrame(y_train_pred).to_csv(y_train_pred_path, index=False)
+        pd.DataFrame(y_test_pred).to_csv(y_test_pred_path, index=False)
+        pd.DataFrame(y_test).to_csv(y_test_path, index=False)
+        pd.DataFrame(y_train).to_csv(y_train_path, index=False)
+
+        # save y_train_pred,y_test_pred,y_test,y_train into a csv file
+        print(f"✓ Saved y_train_pred to {y_train_pred_path}")
+        print(f"✓ Saved y_test_pred to {y_test_pred_path}")
+        print(f"✓ Saved y_test to {y_test_path}")
+        print(f"✓ Saved y_train to {y_train_path}")
+        
     except FileNotFoundError as e:
         print(f"\n⚠ Task data not found: {e}")
         print("  Skipping task analysis (Step 4–5 will be partial)")

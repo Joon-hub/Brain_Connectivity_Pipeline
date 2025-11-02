@@ -36,22 +36,12 @@ from utils import load_config, set_random_seeds, print_section
 
 
 def map_regions_to_networks(region_list, network_type='N7'):
-    """
-    Map individual regions to network labels.
-    
-    Args:
-        region_list: List of region names
-        network_type: 'N7' (7 networks) or 'N17' (17 networks)
-        
-    Returns:
-        Dictionary mapping region_name -> network_label
-    """
+    """Map individual regions to Schaefer networks (cortical) or subcortical names."""
     network_mapping = {}
-    
     for region in region_list:
         name = region.lower()
-        
-        # Subcortical regions (Tian Atlas)
+
+        # Subcortical regions
         if not region.startswith(('LH_', 'RH_')):
             if 'hip' in name:
                 network = 'Hippocampus'
@@ -69,18 +59,16 @@ def map_regions_to_networks(region_list, network_type='N7'):
                 network = 'Caudate'
             else:
                 network = 'SubcorticalOther'
-        
-        # Cortical regions (Schaefer Atlas)
+        # Cortical regions
         else:
             if network_type == 'N7':
-                # 7-network parcellation (coarse) - be more inclusive to avoid "Other"
                 if 'vis' in name:
                     network = 'Visual'
                 elif 'sommot' in name or 'senmot' in name or 'motor' in name:
                     network = 'Somatomotor'
-                elif 'dorsattn' in name or 'dorsal' in name and 'attn' in name:
+                elif ('dorsattn' in name) or ('dorsal' in name and 'attn' in name):
                     network = 'DorsalAttention'
-                elif 'salventattn' in name or 'ventral' in name and 'attn' in name or 'salience' in name:
+                elif ('salventattn' in name) or (('ventral' in name or 'salience' in name) and 'attn' in name):
                     network = 'VentralAttention'
                 elif 'limbic' in name or 'limb' in name:
                     network = 'Limbic'
@@ -88,149 +76,156 @@ def map_regions_to_networks(region_list, network_type='N7'):
                     network = 'FrontoParietal'
                 elif 'default' in name or 'dmn' in name:
                     network = 'DefaultMode'
-                elif 'temppar' in name or 'temporal' in name and 'parietal' in name:
-                    network = 'FrontoParietal'  # Assign to FrontoParietal if TempPar exists
                 else:
-                    # Last resort: try to infer from position or context
                     network = 'CorticalOther'
-            
             elif network_type == 'N17':
-                # 17-network parcellation (fine-grained)
+                # Fine-grained mapping
                 if 'viscent' in name or 'vis_cent' in name:
                     network = 'VisCent'
                 elif 'visperi' in name or 'vis_peri' in name:
                     network = 'VisPeri'
-                elif 'vis' in name:  # Catch remaining visual
-                    network = 'VisCent'
                 elif 'sommota' in name or 'senmota' in name:
                     network = 'SomMotA'
                 elif 'sommotb' in name or 'senmotb' in name:
                     network = 'SomMotB'
-                elif 'sommot' in name or 'senmot' in name or 'motor' in name:
-                    network = 'SomMotA'  # Default to A
                 elif 'dorsattna' in name or 'dorsattn_a' in name:
                     network = 'DorsAttnA'
                 elif 'dorsattnb' in name or 'dorsattn_b' in name:
                     network = 'DorsAttnB'
-                elif 'dorsattn' in name:
-                    network = 'DorsAttnA'  # Default to A
                 elif 'salventattna' in name or 'salventattn_a' in name:
                     network = 'SalVentAttnA'
                 elif 'salventattnb' in name or 'salventattn_b' in name:
                     network = 'SalVentAttnB'
-                elif 'salventattn' in name or 'salience' in name:
-                    network = 'SalVentAttnA'  # Default to A
                 elif 'limbica' in name or 'limbic_a' in name:
                     network = 'LimbicA'
                 elif 'limbicb' in name or 'limbic_b' in name:
                     network = 'LimbicB'
-                elif 'limbic' in name:
-                    network = 'LimbicA'  # Default to A
                 elif 'conta' in name or 'cont_a' in name:
                     network = 'ContA'
                 elif 'contb' in name or 'cont_b' in name:
                     network = 'ContB'
                 elif 'contc' in name or 'cont_c' in name:
                     network = 'ContC'
-                elif 'cont' in name or 'control' in name:
-                    network = 'ContA'  # Default to A
                 elif 'defaulta' in name or 'default_a' in name:
                     network = 'DefaultA'
                 elif 'defaultb' in name or 'default_b' in name:
                     network = 'DefaultB'
                 elif 'defaultc' in name or 'default_c' in name:
                     network = 'DefaultC'
-                elif 'default' in name or 'dmn' in name:
-                    network = 'DefaultA'  # Default to A
                 elif 'temppar' in name:
                     network = 'TempPar'
                 else:
                     network = 'CorticalOther'
-        
+
         network_mapping[region] = network
-    
     return network_mapping
 
 
 def map_regions_to_tian_scale(region_list, scale='I'):
-    """
-    Map Tian regions to Scale I (8 regions) or Scale II (16 regions).
+    """Map subcortical regions to Tian Scale I or II.
     
     Args:
         region_list: List of region names
-        scale: 'I' (8 regions) or 'II' (16 regions)
+        scale: 'I' for 8 regions, 'II' for 16 subdivisions
         
     Returns:
-        Dictionary mapping region_name -> tian_label
+        Dictionary mapping region names to Tian labels
+        
+    Scale I (8 regions):
+        - Hippocampus
+        - Amygdala
+        - Thalamus_post (DP + VP)
+        - Thalamus_ant (DA + VA)
+        - Accumbens
+        - Pallidum
+        - Putamen
+        - Caudate
+        
+    Scale II (16 regions):
+        - Hippocampus_ant, Hippocampus_post
+        - Amygdala_lat, Amygdala_med
+        - Thalamus_DP, Thalamus_VP, Thalamus_VA, Thalamus_DA
+        - Accumbens_shell, Accumbens_core
+        - Pallidum_post, Pallidum_ant
+        - Putamen_ant, Putamen_post
+        - Caudate_ant, Caudate_post
     """
     tian_mapping = {}
     
     for region in region_list:
         name = region.lower()
         
-        # Only map subcortical regions
+        # Cortical regions -> mark as Cortical
         if region.startswith(('LH_', 'RH_')):
             tian_mapping[region] = 'Cortical'
             continue
         
-        # Determine the base structure first
-        if 'hip' in name:
-            base = 'HIP'
-        elif 'amy' in name or 'amg' in name:
-            base = 'AMG'
-        elif 'tha' in name or '_th_' in name or name.startswith('th_'):
-            base = 'THA'
-        elif 'nac' in name:
-            base = 'NAc'
-        elif 'put' in name:
-            base = 'PUT'
-        elif 'gp' in name or 'pallid' in name:
-            base = 'GP'
-        elif 'cau' in name:
-            base = 'CAU'
-        else:
-            tian_mapping[region] = 'SubcorticalOther'
-            continue
-        
+        # Scale II (16 subdivisions)
         if scale == 'II':
-            # Scale II: Keep fine subdivisions (16 regions)
-            # Try to identify subdivision
-            if '_ant' in name or 'anterior' in name:
-                label = f'{base}_ant'
-            elif '_post' in name or 'posterior' in name:
-                label = f'{base}_post'
-            elif '_lat' in name or 'lateral' in name:
-                label = f'{base}_lat'
-            elif '_med' in name or 'medial' in name:
-                label = f'{base}_med'
-            elif '_shell' in name or 'shell' in name:
-                label = f'{base}_shell'
-            elif '_core' in name or 'core' in name:
-                label = f'{base}_core'
-            elif '_dp' in name or 'dp' in name:
-                label = 'THA_DP'
-            elif '_vp' in name or 'vp' in name:
-                label = 'THA_VP'
-            elif '_va' in name or 'va' in name:
-                label = 'THA_VA'
-            elif '_da' in name or 'da' in name:
-                label = 'THA_DA'
+            # Hippocampus
+            if 'ahip' in name:
+                label = 'Hippocampus_ant'
+            elif 'phip' in name:
+                label = 'Hippocampus_post'
+            # Amygdala
+            elif 'lamy' in name:
+                label = 'Amygdala_lat'
+            elif 'mamy' in name:
+                label = 'Amygdala_med'
+            # Thalamus
+            elif 'tha-dp' in name or 'tha_dp' in name:
+                label = 'Thalamus_DP'
+            elif 'tha-vp' in name or 'tha_vp' in name:
+                label = 'Thalamus_VP'
+            elif 'tha-va' in name or 'tha_va' in name:
+                label = 'Thalamus_VA'
+            elif 'tha-da' in name or 'tha_da' in name:
+                label = 'Thalamus_DA'
+            # Accumbens
+            elif 'nac-shell' in name or 'nac_shell' in name:
+                label = 'Accumbens_shell'
+            elif 'nac-core' in name or 'nac_core' in name:
+                label = 'Accumbens_core'
+            # Pallidum (GP = Globus Pallidus)
+            elif 'pgp' in name:
+                label = 'Pallidum_post'
+            elif 'agp' in name:
+                label = 'Pallidum_ant'
+            # Putamen
+            elif 'aput' in name:
+                label = 'Putamen_ant'
+            elif 'pput' in name:
+                label = 'Putamen_post'
+            # Caudate
+            elif 'acau' in name:
+                label = 'Caudate_ant'
+            elif 'pcau' in name:
+                label = 'Caudate_post'
             else:
-                # No subdivision found, use base name
-                label = base
+                label = 'SubcorticalOther'
         
-        elif scale == 'I':
-            # Scale I: Merge all subdivisions to base structure
-            structure_map = {
-                'HIP': 'Hippocampus',
-                'AMG': 'Amygdala',
-                'THA': 'Thalamus',
-                'NAc': 'Accumbens',
-                'PUT': 'Putamen',
-                'GP': 'Pallidum',
-                'CAU': 'Caudate'
-            }
-            label = structure_map.get(base, 'SubcorticalOther')
+        # Scale I (8 base regions)
+        else:
+            if 'hip' in name:
+                label = 'Hippocampus'
+            elif 'amy' in name:
+                label = 'Amygdala'
+            # Thalamus posterior (DP and VP)
+            elif 'tha-dp' in name or 'tha-vp' in name or 'tha_dp' in name or 'tha_vp' in name:
+                label = 'Thalamus_post'
+            # Thalamus anterior (DA and VA)
+            elif 'tha-da' in name or 'tha-va' in name or 'tha_da' in name or 'tha_va' in name:
+                label = 'Thalamus_ant'
+            elif 'nac' in name:
+                label = 'Accumbens'
+            elif 'put' in name:
+                label = 'Putamen'
+            elif 'gp' in name:
+                label = 'Pallidum'
+            elif 'cau' in name:
+                label = 'Caudate'
+            else:
+                label = 'SubcorticalOther'
         
         tian_mapping[region] = label
     
@@ -262,7 +257,6 @@ def aggregate_predictions_to_network(y_true, y_pred, region_list, network_mappin
     return np.array(y_true_network), np.array(y_pred_network), network_labels
 
 
-
 def filter_cortical_only(y_true_network, y_pred_network, network_labels):
     """
     Filter to keep only cortical networks (exclude subcortical).
@@ -291,10 +285,33 @@ def filter_subcortical_only(y_true_network, y_pred_network, network_labels):
     Returns:
         Filtered arrays with only subcortical regions
     """
-    subcortical = {'Hippocampus', 'Amygdala', 'Thalamus', 'Accumbens',
-                   'Putamen', 'Pallidum', 'Caudate', 'SubcorticalOther'}
+    # For Tian Scale I and II, we need to include the subdivided labels
+    subcortical_base = {'Hippocampus', 'Amygdala', 'Thalamus', 'Accumbens',
+                        'Putamen', 'Pallidum', 'Caudate', 'SubcorticalOther'}
     
-    subcortical_labels = [net for net in network_labels if net in subcortical]
+    # Check if we have Tian Scale I labels (with underscores)
+    subcortical_scale_i = {'Hippocampus', 'Amygdala', 'Thalamus_post', 'Thalamus_ant',
+                           'Accumbens', 'Putamen', 'Pallidum', 'Caudate', 'SubcorticalOther'}
+    
+    # Check if we have Tian Scale II labels (with underscores and subdivisions)
+    subcortical_scale_ii_patterns = ['_ant', '_post', '_lat', '_med', '_shell', '_core', 
+                                      '_DP', '_VP', '_VA', '_DA']
+    
+    # Collect all subcortical labels from the actual network_labels
+    subcortical_labels = []
+    for net in network_labels:
+        # Base subcortical (for old N7 mapping)
+        if net in subcortical_base:
+            subcortical_labels.append(net)
+        # Scale I subdivisions
+        elif net in subcortical_scale_i:
+            subcortical_labels.append(net)
+        # Scale II subdivisions
+        elif any(pattern in net for pattern in subcortical_scale_ii_patterns):
+            subcortical_labels.append(net)
+    
+    # Remove duplicates and sort
+    subcortical_labels = sorted(set(subcortical_labels))
     
     # Create mask for subcortical samples
     mask = np.isin(y_true_network, subcortical_labels)
@@ -467,9 +484,11 @@ def main():
 
     # Convert list to DataFrame if it's a list
     if isinstance(region_list, list):
-        region_list = pd.DataFrame(region_list, columns=['region'])
+        region_list_df = pd.DataFrame(region_list, columns=['region'])
+    else:
+        region_list_df = region_list.copy()
 
-    region_list.to_csv(region_list_path, index=False)
+    region_list_df.to_csv(region_list_path, index=False)
     print(f"✓ Region list saved: {region_list_path}")
     
     if isinstance(region_list, pd.DataFrame):
