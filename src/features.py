@@ -37,7 +37,6 @@ def extract_regions(connection_columns: List[str]) -> Tuple[List[str], Dict[str,
     
     region_to_idx = {region: idx for idx, region in enumerate(unique_regions)}
     
-    print(f"✓ Extracted {len(unique_regions)} unique brain regions")
     return unique_regions, region_to_idx, len(unique_regions)
 
 
@@ -142,45 +141,81 @@ def parse_networks(region_list: List[str]) -> List[str]:
         name = region.lower()
         network = 'Unknown'
         
-        # --- Cortical (Schaefer 7 or 17 networks) ---
+        # --- Cortical (Schaefer 17 networks) ---
         if region.startswith(('LH_', 'RH_')):
-            if 'viscent' in name or 'visperi' in name or 'striate' in name:
-                network = 'Visual'
-            elif 'sommota' in name or 'sommotb' in name:
-                network = 'Somatomotor'
-            elif 'dorsattna' in name or 'dorsattnb' in name:
-                network = 'DorsalAttention'
-            elif 'salventattna' in name or 'salventattnb' in name:
-                network = 'SalienceVentralAttention'
-            elif 'limbica' in name or 'limbicb' in name:
-                network = 'Limbic'
-            elif 'conta' in name or 'contb' in name or 'contc' in name:
-                network = 'Control'
-            elif 'defaulta' in name or 'defaultb' in name or 'defaultc' in name:
-                network = 'DefaultMode'
-            elif 'temppar' in name:
-                network = 'TemporalParietal'
-            else:
-                network = 'CorticalOther'
+                if 'viscent' in name or 'vis_cent' in name:
+                    net = 'VisCent'
+                elif 'visperi' in name or 'vis_peri' in name:
+                    net = 'VisPeri'
+                elif 'sommota' in name or 'senmota' in name:
+                    net = 'SomMotA'
+                elif 'sommotb' in name or 'senmotb' in name:
+                    net = 'SomMotB'
+                elif 'dorsattna' in name or 'dorsattn_a' in name:
+                    net = 'DorsAttnA'
+                elif 'dorsattnb' in name or 'dorsattn_b' in name:
+                    net = 'DorsAttnB'
+                elif 'salventattna' in name or 'salventattn_a' in name:
+                    net = 'SalVentAttnA'
+                elif 'salventattnb' in name or 'salventattn_b' in name:
+                    net = 'SalVentAttnB'
+                elif 'limbica' in name or 'limbic_a' in name:
+                    net = 'LimbicA'
+                elif 'limbicb' in name or 'limbic_b' in name:
+                    net = 'LimbicB'
+                elif 'conta' in name or 'cont_a' in name:
+                    net = 'ContA'
+                elif 'contb' in name or 'cont_b' in name:
+                    net = 'ContB'
+                elif 'contc' in name or 'cont_c' in name:
+                    net = 'ContC'
+                elif 'defaulta' in name or 'default_a' in name:
+                    net = 'DefaultA'
+                elif 'defaultb' in name or 'default_b' in name:
+                    net = 'DefaultB'
+                elif 'defaultc' in name or 'default_c' in name:
+                    net = 'DefaultC'
+                elif 'temppar' in name:
+                    net = 'TempPar'
+                else:
+                    net = 'CorticalOther'
         
-        # Subcortical Tian regions
+        # Subcortical Tian II regions
         else:
-            if 'hip' in name:
-                network = 'Hippocampus'
-            elif 'amy' in name:
-                network = 'Amygdala'
-            elif 'th' in name:
-                network = 'Thalamus'
-            elif 'nac' in name:
-                network = 'Accumbens'
-            elif 'put' in name:
-                network = 'Putamen'
-            elif 'pallid' in name or 'gp' in name:
-                network = 'Pallidum'
-            elif 'caud' in name:
-                network = 'Caudate'
+            if 'ahip' in name:
+                net = 'Hippocampus_ant'
+            elif 'phip' in name:
+                net = 'Hippocampus_post'
+            elif 'lamy' in name:
+                net = 'Amygdala_lat'
+            elif 'mamy' in name:
+                net = 'Amygdala_med'
+            elif 'tha-dp' in name or 'tha_dp' in name:
+                net = 'Thalamus_DP'
+            elif 'tha-vp' in name or 'tha_vp' in name:
+                net = 'Thalamus_VP'
+            elif 'tha-va' in name or 'tha_va' in name:
+                net = 'Thalamus_VA'
+            elif 'tha-da' in name or 'tha_da' in name:
+                net = 'Thalamus_DA'
+            elif 'nac-shell' in name or 'nac_shell' in name:
+                net = 'Accumbens_shell'
+            elif 'nac-core' in name or 'nac_core' in name:
+                net = 'Accumbens_core'
+            elif 'pgp' in name:
+                net = 'Pallidum_post'
+            elif 'agp' in name:
+                net = 'Pallidum_ant'
+            elif 'aput' in name:
+                net = 'Putamen_ant'
+            elif 'pput' in name:
+                net = 'Putamen_post'
+            elif 'acau' in name:
+                net = 'Caudate_ant'
+            elif 'pcau' in name:
+                net = 'Caudate_post'
             else:
-                network = 'SubcorticalOther'
+                net = 'SubcorticalOther'
         
         networks.append(network)
     

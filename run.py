@@ -238,9 +238,6 @@ def main():
         save_confusion_matrix(
             y_test, y_test_pred, region_list, dataset_name="task"
         )
-
-    # Skip network-level aggregation (advanced analysis handled separately)
-    print("⚠ Skipping network-level aggregation (user-defined advanced analysis).")
     network_stats = None
 
     # Compute and save rest vs task comparison (if applicable)
@@ -341,7 +338,7 @@ Completed: {time.strftime('%Y-%m-%d %H:%M:%S')}
         results
     )
 
-    print("✅ All done! Results are ready for your thesis.\n")
+    print(" Pipeline executed successfully.\n")
     return 0
 
 
