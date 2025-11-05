@@ -2,20 +2,22 @@
 """
 Connectivity Analysis - Inter-Network Connectivity & Task Modulation
 =====================================================================
-Analyzes functional connectivity patterns with consistent network definitions:
-1. Inter-network connectivity matrices (rest vs task)
-2. Task-induced connectivity changes
-3. Subcortical-cortical coupling
-4. Identification of task-modulated connections
+Analyzes functional connectivity patterns with separate analyses for:
+1. N7 (Schaefer) cortical networks - 7 networks
+2. Tian Scale I subcortical networks - 8 networks
+3. Combined N7 + Tian I analysis
+4. Task-induced connectivity changes
+5. Cortical-subcortical coupling
 
 Usage:
-    python 03_connectivity_analysis.py --config config.yaml
+    python 03_connectivity_analysis_separated.py --config config.yaml
 
 Outputs:
-    - Inter-network connectivity matrices (N7 + Tian I)
+    - Separate connectivity matrices for N7 and Tian I
+    - Combined inter-network connectivity matrices
     - Task modulation matrices (task - rest)
-    - Top changed connections
-    - Comprehensive visualization
+    - Top changed connections per analysis
+    - Comprehensive visualizations (3 separate figures)
 """
 
 import sys
@@ -38,68 +40,66 @@ sns.set_palette("husl")
 
 
 # =============================================================================
-# NETWORK MAPPING (Consistent with refactored script)
+# NETWORK MAPPING (Separate N7 and Tian I)
 # =============================================================================
 
-def map_to_schaefer_n7(region_list):
-    """Map regions to Schaefer N7 + Tian Scale I (consistent with refactored script)."""
-    mapping = {}
+def map_to_schaefer_n7_only(region_list):
+    """Map cortical regions to Schaefer N7 networks only."""
+    cortical_map = {
+        'vis': 'Visual',
+        'sommot': 'Somatomotor', 'senmot': 'Somatomotor',
+        'dorsattn': 'DorsalAttention',
+        'salventattn': 'VentralAttention',
+        'limbic': 'Limbic',
+        'cont': 'FrontoParietal',
+        'default': 'DefaultMode'
+    }
     
+    mapping = {}
     for region in region_list:
-        name = region.lower()
-        
-        # Subcortical regions (Tian Scale I)
-        if not region.startswith(('LH_', 'RH_')):
-            if 'hip' in name:
-                net = 'Hippocampus'
-            elif 'amy' in name or 'amg' in name:
-                net = 'Amygdala'
-            # Thalamus - combine posterior and anterior
-            elif 'tha-dp' in name or 'tha-vp' in name or 'tha_dp' in name or 'tha_vp' in name:
-                net = 'Thalamus_post'
-            elif 'tha-da' in name or 'tha-va' in name or 'tha_da' in name or 'tha_va' in name:
-                net = 'Thalamus_ant'
-            elif 'tha' in name or '_th' in name or name.startswith('th'):
-                net = 'Thalamus'  # Generic thalamus if no subdivision
-            elif 'nac' in name or 'accumb' in name:
-                net = 'Accumbens'
-            elif 'put' in name:
-                net = 'Putamen'
-            elif 'gp' in name or 'pallid' in name:
-                net = 'Pallidum'
-            elif 'cau' in name:
-                net = 'Caudate'
-            else:
-                net = 'SubcorticalOther'
-        
-        # Cortical regions (Schaefer N7)
-        else:
-            if 'vis' in name:
-                net = 'Visual'
-            elif 'sommot' in name or 'senmot' in name or 'motor' in name:
-                net = 'Somatomotor'
-            elif 'dorsattn' in name or ('dorsal' in name and 'attn' in name):
-                net = 'DorsalAttention'
-            elif 'salventattn' in name or (('ventral' in name or 'salience' in name) and 'attn' in name):
-                net = 'VentralAttention'
-            elif 'limbic' in name or 'limb' in name:
-                net = 'Limbic'
-            elif 'cont' in name or 'frontoparietal' in name or 'control' in name:
-                net = 'FrontoParietal'
-            elif 'default' in name or 'dmn' in name:
-                net = 'DefaultMode'
-            else:
-                net = 'CorticalOther'
-        
-        mapping[region] = net
+        # Only map cortical regions (LH_ or RH_ prefix)
+        if region.startswith(('LH_', 'RH_')):
+            name = region.lower()
+            net = next((v for k, v in cortical_map.items() if k in name), None)
+            if net:
+                mapping[region] = net
     
     return mapping
 
 
-def filter_out_other_networks(network_mapping):
-    """Remove 'Other' networks for cleaner analysis."""
-    exclude = {'CorticalOther', 'SubcorticalOther'}
-    return {k: v for k, v in network_mapping.items() if v not in exclude}
+def map_to_tian_scale_i_only(region_list):
+    """Map subcortical regions to Tian Scale I networks only."""
+    subcortical_map = {
+        'hip': 'Hippocampus',
+        'amy': 'Amygdala',
+        'tha-dp': 'Thal_post', 'tha-vp': 'Thal_post', 'tha_dp': 'Thal_post', 'tha_vp': 'Thal_post',
+        'tha-da': 'Thal_ant', 'tha-va': 'Thal_ant', 'tha_da': 'Thal_ant', 'tha_va': 'Thal_ant',
+        'nac': 'Accumbens',
+        'put': 'Putamen',
+        'gp': 'Pallidum',
+        'cau': 'Caudate'
+    }
+    
+    mapping = {}
+    for region in region_list:
+        # Only map subcortical regions (no LH_ or RH_ prefix)
+        if not region.startswith(('LH_', 'RH_')):
+            name = region.lower()
+            net = next((v for k, v in subcortical_map.items() if k in name), None)
+            if net:
+                mapping[region] = net
+    
+    return mapping
+
+
+def map_to_combined_networks(region_list):
+    """Map regions to combined N7 + Tian Scale I."""
+    cortical_mapping = map_to_schaefer_n7_only(region_list)
+    subcortical_mapping = map_to_tian_scale_i_only(region_list)
+    
+    # Combine mappings
+    combined = {**cortical_mapping, **subcortical_mapping}
+    return combined
 
 
 # =============================================================================
@@ -245,7 +245,7 @@ def compute_group_connectivity(df, connection_columns, region_list, network_mapp
 # =============================================================================
 
 def identify_top_changed_connections(rest_matrix, task_matrix, region_list, 
-                                     network_mapping, top_k=100):
+                                     network_mapping, top_k=100, analysis_name=''):
     """
     Identify connections with largest change from rest to task.
     
@@ -312,7 +312,7 @@ def categorize_network_pair_type(net_i, net_j):
 # =============================================================================
 
 def plot_connectivity_analysis(rest_network, task_network, change_network, 
-                               top_changes, output_path):
+                               top_changes, output_path, title_prefix=''):
     """
     Create comprehensive connectivity analysis figure (2×3 layout).
     """
@@ -325,10 +325,11 @@ def plot_connectivity_analysis(rest_network, task_network, change_network,
     
     # Panel A: Resting-state inter-network connectivity
     ax1 = fig.add_subplot(gs[0, 0])
-    sns.heatmap(rest_network, annot=False, fmt='.2f', cmap='RdBu_r', 
+    sns.heatmap(rest_network, annot=True, fmt='.3f', cmap='RdBu_r', 
                 center=0, vmin=vmin, vmax=vmax,
                 cbar_kws={'label': 'Connectivity', 'shrink': 0.8}, 
-                square=True, ax=ax1, linewidths=0.5, linecolor='gray')
+                square=True, ax=ax1, linewidths=0.5, linecolor='gray',
+                annot_kws={'size': 7})
     ax1.set_title('A) Inter-Network Connectivity (Rest)', 
                  fontweight='bold', fontsize=12, pad=10)
     ax1.set_xlabel('Network', fontweight='bold', fontsize=10)
@@ -338,10 +339,11 @@ def plot_connectivity_analysis(rest_network, task_network, change_network,
     
     # Panel B: Task inter-network connectivity
     ax2 = fig.add_subplot(gs[0, 1])
-    sns.heatmap(task_network, annot=False, fmt='.2f', cmap='RdBu_r', 
+    sns.heatmap(task_network, annot=True, fmt='.3f', cmap='RdBu_r', 
                 center=0, vmin=vmin, vmax=vmax,
                 cbar_kws={'label': 'Connectivity', 'shrink': 0.8}, 
-                square=True, ax=ax2, linewidths=0.5, linecolor='gray')
+                square=True, ax=ax2, linewidths=0.5, linecolor='gray',
+                annot_kws={'size': 7})
     ax2.set_title('B) Inter-Network Connectivity (Task)', 
                  fontweight='bold', fontsize=12, pad=10)
     ax2.set_xlabel('Network', fontweight='bold', fontsize=10)
@@ -352,10 +354,11 @@ def plot_connectivity_analysis(rest_network, task_network, change_network,
     # Panel C: Change matrix (Task - Rest)
     ax3 = fig.add_subplot(gs[0, 2])
     change_vmax = max(abs(change_network.values.min()), abs(change_network.values.max()))
-    sns.heatmap(change_network, annot=False, fmt='.3f', cmap='RdBu_r', 
+    sns.heatmap(change_network, annot=True, fmt='.3f', cmap='RdBu_r', 
                 center=0, vmin=-change_vmax, vmax=change_vmax,
                 cbar_kws={'label': 'Connectivity Change', 'shrink': 0.8}, 
-                square=True, ax=ax3, linewidths=0.5, linecolor='gray')
+                square=True, ax=ax3, linewidths=0.5, linecolor='gray',
+                annot_kws={'size': 7})
     ax3.set_title('C) Connectivity Change (Task - Rest)', 
                  fontweight='bold', fontsize=12, pad=10)
     ax3.set_xlabel('Network', fontweight='bold', fontsize=10)
@@ -377,7 +380,7 @@ def plot_connectivity_analysis(rest_network, task_network, change_network,
         
         # Add value labels
         for i, (bar, val) in enumerate(zip(bars, top_increased['change'])):
-            ax4.text(val + 0.002, i, f'{val:.3f}', 
+            ax4.text(val + val*0.02, i, f'{val:.3f}', 
                     va='center', ha='left', fontsize=7, fontweight='bold')
         
         ax4.set_yticks(range(len(top_increased)))
@@ -402,7 +405,7 @@ def plot_connectivity_analysis(rest_network, task_network, change_network,
         
         # Add value labels
         for i, (bar, val) in enumerate(zip(bars, top_decreased['change'])):
-            ax5.text(val - 0.002, i, f'{val:.3f}', 
+            ax5.text(val - abs(val)*0.02, i, f'{val:.3f}', 
                     va='center', ha='right', fontsize=7, fontweight='bold')
         
         ax5.set_yticks(range(len(top_decreased)))
@@ -433,7 +436,7 @@ def plot_connectivity_analysis(rest_network, task_network, change_network,
     
     stats_text = f"""
 F) CONNECTIVITY CHANGE SUMMARY
-={'='*32}
+{'='*32}
 
 Total Connections: {len(top_changes)}
 
@@ -463,7 +466,7 @@ Most Changed Network Pair:
              bbox=dict(boxstyle='round', facecolor='lightblue', 
                       alpha=0.3, edgecolor='black', linewidth=1.5))
     
-    plt.suptitle('Functional Connectivity Analysis: Rest vs Task', 
+    plt.suptitle(f'{title_prefix}Functional Connectivity Analysis: Rest vs Task', 
                 fontsize=16, fontweight='bold', y=0.98)
     
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -478,13 +481,13 @@ Most Changed Network Pair:
 # =============================================================================
 
 def main():
-    parser = argparse.ArgumentParser(description='Connectivity Analysis')
+    parser = argparse.ArgumentParser(description='Connectivity Analysis (Separated N7 and Tian I)')
     parser.add_argument('--config', type=str, default='config.yaml')
     parser.add_argument('--sample', action='store_true')
     args = parser.parse_args()
     
     # Setup
-    print_section("CONNECTIVITY ANALYSIS")
+    print_section("CONNECTIVITY ANALYSIS - SEPARATED N7 & TIAN I")
     config = load_config(args.config)
     set_random_seeds(config.get('random_seed', 42))
     
@@ -515,80 +518,158 @@ def main():
     n_regions = len(region_list)
     print(f"✓ Extracted {n_regions} regions")
     
-    # Map regions to networks (N7 + Tian Scale I)
-    network_mapping_full = map_to_schaefer_n7(region_list)
+    # Map regions to different network schemes
+    n7_mapping = map_to_schaefer_n7_only(region_list)
+    tian_mapping = map_to_tian_scale_i_only(region_list)
+    combined_mapping = map_to_combined_networks(region_list)
     
-    # Filter out 'Other' networks for cleaner analysis
-    network_mapping = filter_out_other_networks(network_mapping_full)
+    n7_networks = sorted(set(n7_mapping.values()))
+    tian_networks = sorted(set(tian_mapping.values()))
+    combined_networks = sorted(set(combined_mapping.values()))
     
-    networks = sorted(set(network_mapping.values()))
-    print(f"✓ Mapped to {len(networks)} networks (excluding 'Other' categories)")
-    print(f"  Networks: {', '.join(networks)}")
+    print(f"\n✓ Network Mappings:")
+    print(f"  N7 (Cortical):     {len(n7_networks)} networks, {len(n7_mapping)} regions")
+    print(f"    Networks: {', '.join(n7_networks)}")
+    print(f"  Tian I (Subcort):  {len(tian_networks)} networks, {len(tian_mapping)} regions")
+    print(f"    Networks: {', '.join(tian_networks)}")
+    print(f"  Combined:          {len(combined_networks)} networks, {len(combined_mapping)} regions")
     
     # =========================================================================
-    # Step 3: Compute Inter-Network Connectivity
+    # Step 3: N7 Cortical Analysis
     # =========================================================================
-    print_section("Step 3: Compute Inter-Network Connectivity")
+    print_section("Step 3: N7 Cortical Network Analysis")
     
-    print("Computing resting-state connectivity...")
-    rest_network, rest_matrix = compute_group_connectivity(
-        df_rest, connection_columns, region_list, network_mapping
+    print("Computing N7 resting-state connectivity...")
+    n7_rest_network, n7_rest_matrix = compute_group_connectivity(
+        df_rest, connection_columns, region_list, n7_mapping
     )
-    print(f"  ✓ Rest connectivity: {rest_network.shape[0]}×{rest_network.shape[1]} matrix")
+    print(f"  ✓ N7 Rest: {n7_rest_network.shape[0]}×{n7_rest_network.shape[1]} matrix")
     
-    print("Computing task connectivity...")
-    task_network, task_matrix = compute_group_connectivity(
-        df_task, connection_columns, region_list, network_mapping
+    print("Computing N7 task connectivity...")
+    n7_task_network, n7_task_matrix = compute_group_connectivity(
+        df_task, connection_columns, region_list, n7_mapping
     )
-    print(f"  ✓ Task connectivity: {task_network.shape[0]}×{task_network.shape[1]} matrix")
+    print(f"  ✓ N7 Task: {n7_task_network.shape[0]}×{n7_task_network.shape[1]} matrix")
     
-    print("✓ Computed inter-network connectivity matrices")
+    n7_change_network = n7_task_network - n7_rest_network
     
-    # =========================================================================
-    # Step 4: Identify Task-Modulated Connections
-    # =========================================================================
-    print_section("Step 4: Identify Task-Modulated Connections")
-    
-    change_network = task_network - rest_network
-    
-    # Identify top changed connections
-    print("Identifying top changed connections...")
-    top_changes = identify_top_changed_connections(
-        rest_matrix, task_matrix, region_list, network_mapping, top_k=100
+    print("Identifying N7 top changed connections...")
+    n7_top_changes = identify_top_changed_connections(
+        n7_rest_matrix, n7_task_matrix, region_list, n7_mapping, top_k=100, analysis_name='N7'
     )
-    
-    print(f"✓ Identified top 100 changed connections")
-    print(f"  - Increased: {(top_changes['change'] > 0).sum()}")
-    print(f"  - Decreased: {(top_changes['change'] < 0).sum()}")
+    print(f"✓ N7 top 100 changed connections identified")
+    print(f"  - Increased: {(n7_top_changes['change'] > 0).sum()}")
+    print(f"  - Decreased: {(n7_top_changes['change'] < 0).sum()}")
     
     # =========================================================================
-    # Step 5: Save Results
+    # Step 4: Tian I Subcortical Analysis
     # =========================================================================
-    print_section("Step 5: Save Results")
+    print_section("Step 4: Tian Scale I Subcortical Network Analysis")
+    
+    print("Computing Tian I resting-state connectivity...")
+    tian_rest_network, tian_rest_matrix = compute_group_connectivity(
+        df_rest, connection_columns, region_list, tian_mapping
+    )
+    print(f"  ✓ Tian I Rest: {tian_rest_network.shape[0]}×{tian_rest_network.shape[1]} matrix")
+    
+    print("Computing Tian I task connectivity...")
+    tian_task_network, tian_task_matrix = compute_group_connectivity(
+        df_task, connection_columns, region_list, tian_mapping
+    )
+    print(f"  ✓ Tian I Task: {tian_task_network.shape[0]}×{tian_task_network.shape[1]} matrix")
+    
+    tian_change_network = tian_task_network - tian_rest_network
+    
+    print("Identifying Tian I top changed connections...")
+    tian_top_changes = identify_top_changed_connections(
+        tian_rest_matrix, tian_task_matrix, region_list, tian_mapping, top_k=100, analysis_name='Tian I'
+    )
+    print(f"✓ Tian I top 100 changed connections identified")
+    print(f"  - Increased: {(tian_top_changes['change'] > 0).sum()}")
+    print(f"  - Decreased: {(tian_top_changes['change'] < 0).sum()}")
+    
+    # =========================================================================
+    # Step 5: Combined Analysis
+    # =========================================================================
+    print_section("Step 5: Combined N7 + Tian I Analysis")
+    
+    print("Computing combined resting-state connectivity...")
+    combined_rest_network, combined_rest_matrix = compute_group_connectivity(
+        df_rest, connection_columns, region_list, combined_mapping
+    )
+    print(f"  ✓ Combined Rest: {combined_rest_network.shape[0]}×{combined_rest_network.shape[1]} matrix")
+    
+    print("Computing combined task connectivity...")
+    combined_task_network, combined_task_matrix = compute_group_connectivity(
+        df_task, connection_columns, region_list, combined_mapping
+    )
+    print(f"  ✓ Combined Task: {combined_task_network.shape[0]}×{combined_task_network.shape[1]} matrix")
+    
+    combined_change_network = combined_task_network - combined_rest_network
+    
+    print("Identifying combined top changed connections...")
+    combined_top_changes = identify_top_changed_connections(
+        combined_rest_matrix, combined_task_matrix, region_list, combined_mapping, top_k=100, analysis_name='Combined'
+    )
+    print(f"✓ Combined top 100 changed connections identified")
+    print(f"  - Increased: {(combined_top_changes['change'] > 0).sum()}")
+    print(f"  - Decreased: {(combined_top_changes['change'] < 0).sum()}")
+    
+    # =========================================================================
+    # Step 6: Save Results
+    # =========================================================================
+    print_section("Step 6: Save Results")
     
     output_tables = Path('reports/tables/connectivity_analysis')
     output_figures = Path('reports/figures/connectivity_analysis')
     output_tables.mkdir(parents=True, exist_ok=True)
     output_figures.mkdir(parents=True, exist_ok=True)
     
-    # Save matrices
-    rest_network.to_csv(output_tables / 'inter_network_connectivity_rest.csv')
-    task_network.to_csv(output_tables / 'inter_network_connectivity_task.csv')
-    change_network.to_csv(output_tables / 'inter_network_connectivity_change.csv')
-    print("✓ Saved inter-network connectivity matrices")
+    # Save N7 matrices
+    n7_rest_network.to_csv(output_tables / 'n7_inter_network_connectivity_rest.csv')
+    n7_task_network.to_csv(output_tables / 'n7_inter_network_connectivity_task.csv')
+    n7_change_network.to_csv(output_tables / 'n7_inter_network_connectivity_change.csv')
+    n7_top_changes.to_csv(output_tables / 'n7_top_changed_connections.csv', index=False)
+    print("✓ Saved N7 cortical analysis results")
     
-    # Save top changes
-    top_changes.to_csv(output_tables / 'top_changed_connections.csv', index=False)
-    print("✓ Saved top changed connections")
+    # Save Tian I matrices
+    tian_rest_network.to_csv(output_tables / 'tian_inter_network_connectivity_rest.csv')
+    tian_task_network.to_csv(output_tables / 'tian_inter_network_connectivity_task.csv')
+    tian_change_network.to_csv(output_tables / 'tian_inter_network_connectivity_change.csv')
+    tian_top_changes.to_csv(output_tables / 'tian_top_changed_connections.csv', index=False)
+    print("✓ Saved Tian I subcortical analysis results")
+    
+    # Save combined matrices
+    combined_rest_network.to_csv(output_tables / 'combined_inter_network_connectivity_rest.csv')
+    combined_task_network.to_csv(output_tables / 'combined_inter_network_connectivity_task.csv')
+    combined_change_network.to_csv(output_tables / 'combined_inter_network_connectivity_change.csv')
+    combined_top_changes.to_csv(output_tables / 'combined_top_changed_connections.csv', index=False)
+    print("✓ Saved combined analysis results")
     
     # =========================================================================
-    # Step 6: Generate Visualization
+    # Step 7: Generate Visualizations
     # =========================================================================
-    print_section("Step 6: Generate Visualization")
+    print_section("Step 7: Generate Visualizations")
     
+    # N7 visualization
     plot_connectivity_analysis(
-        rest_network, task_network, change_network, top_changes,
-        output_figures / 'connectivity_analysis.png'
+        n7_rest_network, n7_task_network, n7_change_network, n7_top_changes,
+        output_figures / 'connectivity_analysis_n7_cortical.png',
+        title_prefix='N7 Cortical - '
+    )
+    
+    # Tian I visualization
+    plot_connectivity_analysis(
+        tian_rest_network, tian_task_network, tian_change_network, tian_top_changes,
+        output_figures / 'connectivity_analysis_tian_subcortical.png',
+        title_prefix='Tian Scale I Subcortical - '
+    )
+    
+    # Combined visualization
+    plot_connectivity_analysis(
+        combined_rest_network, combined_task_network, combined_change_network, combined_top_changes,
+        output_figures / 'connectivity_analysis_combined.png',
+        title_prefix='Combined N7 + Tian I - '
     )
     
     # =========================================================================
@@ -601,50 +682,95 @@ Generated Files:
 ================
 
 Tables (CSV):
-  • {output_tables}/inter_network_connectivity_rest.csv
-  • {output_tables}/inter_network_connectivity_task.csv
-  • {output_tables}/inter_network_connectivity_change.csv
-  • {output_tables}/top_changed_connections.csv
+  N7 Cortical Analysis:
+    • {output_tables}/n7_inter_network_connectivity_rest.csv
+    • {output_tables}/n7_inter_network_connectivity_task.csv
+    • {output_tables}/n7_inter_network_connectivity_change.csv
+    • {output_tables}/n7_top_changed_connections.csv
+
+  Tian I Subcortical Analysis:
+    • {output_tables}/tian_inter_network_connectivity_rest.csv
+    • {output_tables}/tian_inter_network_connectivity_task.csv
+    • {output_tables}/tian_inter_network_connectivity_change.csv
+    • {output_tables}/tian_top_changed_connections.csv
+
+  Combined Analysis:
+    • {output_tables}/combined_inter_network_connectivity_rest.csv
+    • {output_tables}/combined_inter_network_connectivity_task.csv
+    • {output_tables}/combined_inter_network_connectivity_change.csv
+    • {output_tables}/combined_top_changed_connections.csv
 
 Figures (PNG):
-  • {output_figures}/connectivity_analysis.png
-    - 2×3 grid with connectivity matrices and top changes
+  • {output_figures}/connectivity_analysis_n7_cortical.png
+  • {output_figures}/connectivity_analysis_tian_subcortical.png
+  • {output_figures}/connectivity_analysis_combined.png
+  Each with 2×3 grid: Rest/Task/Change matrices + top increased/decreased + summary
 
 Key Findings:
 =============
 """)
     
-    # Print top 10 changed connections
-    print("\nTop 10 Changed Connections:")
+    # Print summaries for each analysis
+    print("\n" + "="*80)
+    print("N7 CORTICAL NETWORK ANALYSIS")
+    print("="*80)
+    print(f"\nNetworks: {', '.join(n7_networks)}")
+    print(f"\nTop 5 Changed Connections:")
     print("-" * 80)
-    top_10 = top_changes[['network_i', 'network_j', 'change', 'pct_change']].head(10)
-    for idx, row in top_10.iterrows():
+    for idx, row in n7_top_changes.head(5).iterrows():
         direction = "↑" if row['change'] > 0 else "↓"
-        print(f"  {idx+1:2d}. {row['network_i']:20s} ↔ {row['network_j']:20s} "
-              f"{direction} {abs(row['change']):7.4f} ({row['pct_change']:+7.1f}%)")
+        print(f"  {idx+1}. {row['network_i']:20s} ↔ {row['network_j']:20s} "
+              f"{direction} {abs(row['change']):7.4f}")
     
-    # Print mean connectivity changes by network
-    print("\n\nMean Connectivity Change by Network Pair:")
+    print(f"\nMean Connectivity Change Matrix:")
     print("-" * 80)
-    print(change_network.round(4).to_string())
+    print(n7_change_network.round(4).to_string())
     
-    # Statistics by connection type
-    print("\n\nConnection Type Statistics:")
+    print("\n\n" + "="*80)
+    print("TIAN SCALE I SUBCORTICAL NETWORK ANALYSIS")
+    print("="*80)
+    print(f"\nNetworks: {', '.join(tian_networks)}")
+    print(f"\nTop 5 Changed Connections:")
     print("-" * 80)
-    top_changes['pair_type'] = top_changes.apply(
+    for idx, row in tian_top_changes.head(5).iterrows():
+        direction = "↑" if row['change'] > 0 else "↓"
+        print(f"  {idx+1}. {row['network_i']:20s} ↔ {row['network_j']:20s} "
+              f"{direction} {abs(row['change']):7.4f}")
+    
+    print(f"\nMean Connectivity Change Matrix:")
+    print("-" * 80)
+    print(tian_change_network.round(4).to_string())
+    
+    print("\n\n" + "="*80)
+    print("COMBINED N7 + TIAN I ANALYSIS")
+    print("="*80)
+    print(f"\nTop 5 Changed Connections:")
+    print("-" * 80)
+    for idx, row in combined_top_changes.head(5).iterrows():
+        direction = "↑" if row['change'] > 0 else "↓"
+        pair_type = categorize_network_pair_type(row['network_i'], row['network_j'])
+        print(f"  {idx+1}. {row['network_i']:20s} ↔ {row['network_j']:20s} "
+              f"{direction} {abs(row['change']):7.4f} [{pair_type}]")
+    
+    # Connection type statistics for combined analysis
+    print("\n\nConnection Type Statistics (Combined):")
+    print("-" * 80)
+    combined_top_changes['pair_type'] = combined_top_changes.apply(
         lambda row: categorize_network_pair_type(row['network_i'], row['network_j']), 
         axis=1
     )
     
     for pair_type in ['Cortical-Cortical', 'Cortical-Subcortical', 'Subcortical-Subcortical']:
-        subset = top_changes[top_changes['pair_type'] == pair_type]
+        subset = combined_top_changes[combined_top_changes['pair_type'] == pair_type]
         if len(subset) > 0:
             print(f"\n{pair_type}:")
             print(f"  Count: {len(subset)}")
             print(f"  Mean change: {subset['change'].mean():7.4f}")
             print(f"  Mean |change|: {subset['abs_change'].mean():7.4f}")
+            print(f"  Increased: {(subset['change'] > 0).sum()}")
+            print(f"  Decreased: {(subset['change'] < 0).sum()}")
     
-    print("\n✅ Connectivity analysis complete!\n")
+    print("\n Connectivity analysis complete (separated N7 & Tian I)!\n")
     
     return 0
 

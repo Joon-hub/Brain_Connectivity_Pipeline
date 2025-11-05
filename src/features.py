@@ -217,7 +217,7 @@ def parse_networks(region_list: List[str]) -> List[str]:
             else:
                 net = 'SubcorticalOther'
         
-        networks.append(network)
+        networks.append(net)
     
     return networks
 

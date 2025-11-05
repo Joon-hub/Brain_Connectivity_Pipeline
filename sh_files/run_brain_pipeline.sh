@@ -21,7 +21,12 @@ echo "Running on host: $(hostname)"
 echo "Start time: $(date)"
 echo "==========================================="
 
-# Run full pipeline
+# 
+set -e
+
+# activate the brain_connectivity_classifier environment
+source /home/sjoon/projects/brain_connectivity_classifier/masterthesis_venv/bin/activate
+
 # echo "Running: python run.py --config config.yaml --help"
 python3 run.py --config config.yaml 
 
