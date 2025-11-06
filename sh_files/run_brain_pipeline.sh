@@ -5,6 +5,7 @@
 # ===============================================================
 
 set -e  # Exit on error
+JOBNAME=$1
 
 # --- Prepare directories ---
 mkdir -p data/raw
@@ -28,7 +29,7 @@ set -e
 source /home/sjoon/projects/brain_connectivity_classifier/masterthesis_venv/bin/activate
 
 # echo "Running: python run.py --config config.yaml --help"
-python3 run.py --config config.yaml 
+python3 run.py --config config.yaml --jobname $JOBNAME
 
 EXIT_CODE=$?
 

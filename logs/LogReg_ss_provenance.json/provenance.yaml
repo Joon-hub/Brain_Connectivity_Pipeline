@@ -1,0 +1,20 @@
+config:
+  C: 0.01
+  data:
+    piop1_file: data/raw/PIOP1_gstroop.csv
+    piop2_file: data/raw/PIOP2_restingstate.csv
+  diagonal_strategy: network_mean
+  dpi: 300
+  high_error_threshold: 0.3
+  low_error_threshold: 0.1
+  max_iter: 1000
+  n_splits: 5
+  output_dirs:
+    figures: reports/figures/basic_analysis
+    logs: logs
+    models: models
+    processed: data/processed
+    tables: reports/tables/basic_analysis
+  random_seed: 42
+results: {}
+timestamp: '2025-11-06T18:15:53.603667'

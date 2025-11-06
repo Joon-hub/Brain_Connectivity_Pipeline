@@ -1,4 +1,4 @@
-## Quick orientation for AI coding agents
+  ## Quick orientation for AI coding agents
 
 This repository implements a brain-region classification pipeline built around a small set of Python modules in `src/` and a top-level driver `run.py`.
 Keep instructions short and actionable: reference these files and the configuration-driven workflow.

@@ -35,7 +35,7 @@ from data import (
     load_connectivity_data, extract_connection_columns, extract_subjects,
     create_sample_dataset, validate_schema
 )
-from features import extract_regions, create_classification_dataset
+from features import create_classification_dataset
 from model import train_classifier, predict, save_model, load_model
 from evaluate import (
     calculate_error_map,
@@ -75,6 +75,8 @@ def main():
                         help='Run on sample data (10 subjects) for quick testing')
     parser.add_argument('--log', type=str, default=None,
                         help='Path to log file (optional)')
+    parser.add_argument('--jobname', type=str, default='trained_model',
+                        help='Job name for provenance logging (e.g. model filename)')
     args = parser.parse_args()
 
     # ---------------------------------------------------------------
@@ -86,6 +88,7 @@ def main():
     print_section("BRAIN CONNECTIVITY CLASSIFICATION PIPELINE")
     print(f"\nMode: {'SAMPLE DATA (quick test)' if args.sample else 'FULL DATA'}")
     print(f"Config: {args.config}")
+    print(f"Job Name: {args.jobname}")
     print(f"Start time: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
 
     # Load configuration
@@ -119,18 +122,20 @@ def main():
     # =========================================================================
     print_section("STEP 2/6: Extract Features and Create Dataset")
 
-    region_list, region_to_idx, n_regions = extract_regions(connection_columns)
-
     X_train, y_train, subjects_train, region_list = create_classification_dataset(
         df_piop2, connection_columns, diagonal_strategy=diagonal_strategy
     )
 
+    n_regions = len(region_list)
     results['n_regions'] = n_regions
     results['n_train_samples'] = len(X_train)
     results['n_train_subjects'] = len(np.unique(subjects_train))
     
-    # save region list into a csv file
-    region_list_path = Path(config['output_dirs']['processed']) / 'region_list.csv'
+    # Save region list into a csv file
+    processed_dir = Path(config['output_dirs']['processed'])
+    processed_dir.mkdir(parents=True, exist_ok=True)
+    
+    region_list_path = processed_dir / 'region_list.csv'
     df_region_list = pd.DataFrame({"Region": region_list})
     df_region_list.to_csv(region_list_path, index=False)
     print(f"✓ Saved region list to {region_list_path}")
@@ -149,8 +154,17 @@ def main():
     results['train_accuracy'] = cv_results['train_accuracy']
 
     # Save trained model
-    model_path = Path(config['output_dirs']['models']) / 'trained_model.pkl'
-    save_model(model, scaler, str(model_path))
+    models_dir = Path(config['output_dirs']['models'])
+    models_dir.mkdir(parents=True, exist_ok=True)
+    
+    model_filename = f'{args.jobname}.pkl'
+    model_path = models_dir / model_filename
+    
+    try:
+        save_model(model, scaler, str(model_path))
+        print(f"✓ Trained model saved to {model_path}")
+    except Exception as e:
+        print(f"❌ Failed to save model: {e}")
 
     # Predict on training data
     y_train_pred, _ = predict(model, scaler, X_train)
@@ -178,7 +192,7 @@ def main():
         if not df_piop1.columns.equals(df_piop2.columns):
             raise ValueError("Task dataset schema does not match resting-state dataset.")
 
-        X_test, y_test, subjects_test, region_list = create_classification_dataset(
+        X_test, y_test, subjects_test, _ = create_classification_dataset(
             df_piop1, connection_columns, diagonal_strategy=diagonal_strategy
         )
 
@@ -191,33 +205,35 @@ def main():
 
         task_data_available = True
         
-        # print shape of the files
-        print(f"Shape of y_train_pred: {y_train_pred.shape}")
-        print(f"Shape of y_test_pred: {y_test_pred.shape}")
-        print(f"Shape of y_test: {y_test.shape}")
+        # Print shape of the arrays
         print(f"Shape of y_train: {y_train.shape}")
+        print(f"Shape of y_train_pred: {y_train_pred.shape}")
+        print(f"Shape of y_test: {y_test.shape}")
+        print(f"Shape of y_test_pred: {y_test_pred.shape}")
         
-        # define paths to save y_train_pred,y_test_pred,y_test,y_train 
-        y_train_pred_path = Path(config['output_dirs']['processed']) / 'y_train_pred.csv'
-        y_test_pred_path = Path(config['output_dirs']['processed']) / 'y_test_pred.csv'
-        y_test_path = Path(config['output_dirs']['processed']) / 'y_test.csv'
-        y_train_path = Path(config['output_dirs']['processed']) / 'y_train.csv'
+        # Define paths to save prediction arrays
+        y_train_path = processed_dir / f'{args.jobname}_y_train.csv'
+        y_train_pred_path = processed_dir / f'{args.jobname}_y_train_pred.csv'
+        y_test_path = processed_dir / f'{args.jobname}_y_test.csv'
+        y_test_pred_path = processed_dir / f'{args.jobname}_y_test_pred.csv'
 
-        # convert arrays to df 
-        pd.DataFrame(y_train_pred).to_csv(y_train_pred_path, index=False)
-        pd.DataFrame(y_test_pred).to_csv(y_test_pred_path, index=False)
-        pd.DataFrame(y_test).to_csv(y_test_path, index=False)
-        pd.DataFrame(y_train).to_csv(y_train_path, index=False)
+        # Convert arrays to DataFrames and save
+        pd.DataFrame(y_train, columns=['true_label']).to_csv(y_train_path, index=False)
+        pd.DataFrame(y_train_pred, columns=['predicted_label']).to_csv(y_train_pred_path, index=False)
+        pd.DataFrame(y_test, columns=['true_label']).to_csv(y_test_path, index=False)
+        pd.DataFrame(y_test_pred, columns=['predicted_label']).to_csv(y_test_pred_path, index=False)
 
-        # save y_train_pred,y_test_pred,y_test,y_train into a csv file
-        print(f"✓ Saved y_train_pred to {y_train_pred_path}")
-        print(f"✓ Saved y_test_pred to {y_test_pred_path}")
-        print(f"✓ Saved y_test to {y_test_path}")
         print(f"✓ Saved y_train to {y_train_path}")
+        print(f"✓ Saved y_train_pred to {y_train_pred_path}")
+        print(f"✓ Saved y_test to {y_test_path}")
+        print(f"✓ Saved y_test_pred to {y_test_pred_path}")
         
     except FileNotFoundError as e:
         print(f"\n⚠ Task data not found: {e}")
         print("  Skipping task analysis (Step 4–5 will be partial)")
+    except Exception as e:
+        print(f"\n⚠ Error processing task data: {e}")
+        print("  Skipping task analysis")
 
     # =========================================================================
     # STEP 5: Create Error Maps, Confusion Matrices, and Comparisons
@@ -228,22 +244,24 @@ def main():
     tables_dir.mkdir(parents=True, exist_ok=True)
 
     # Save training error map
-    save_results_csv(error_map_train, tables_dir / 'error_map_rest.csv')
+    save_results_csv(error_map_train, tables_dir / f'{args.jobname}_error_map_rest.csv')
 
     # Save confusion matrices
     save_confusion_matrix(
-    y_train, y_train_pred, region_list, dataset_name="train"
+        y_train, y_train_pred, region_list, dataset_name=f"{args.jobname}_train"
     )
+    
     if task_data_available:
         save_confusion_matrix(
-            y_test, y_test_pred, region_list, dataset_name="task"
+            y_test, y_test_pred, region_list, dataset_name=f"{args.jobname}_task"
         )
+        
     network_stats = None
 
     # Compute and save rest vs task comparison (if applicable)
     if task_data_available:
         comparison = compare_error_maps(error_map_train, error_map_test)
-        save_results_csv(comparison, tables_dir / 'comparison_rest_vs_task.csv')
+        save_results_csv(comparison, tables_dir / f'{args.jobname}_comparison_rest_vs_task.csv')
 
     print(f"\n✓ Generated CSV outputs in {tables_dir}")
 
@@ -259,7 +277,7 @@ def main():
     plot_error_map(
         error_map_train,
         title='Resting-State Error Map (Training)',
-        output_path=str(figures_dir / 'fig1_error_map_rest.png')
+        output_path=str(figures_dir / f'{args.jobname}_fig1_error_map_rest.png')
     )
 
     # Figure 2: Skip network-level figure if not aggregated
@@ -267,7 +285,7 @@ def main():
         plot_network_analysis(
             error_map_train,
             network_stats,
-            output_path=str(figures_dir / 'fig2_network_analysis_rest.png')
+            output_path=str(figures_dir / f'{args.jobname}_fig2_network_analysis_rest.png')
         )
     else:
         print("⚠ Skipping network-level visualization (user-defined advanced analysis).")
@@ -277,7 +295,7 @@ def main():
         plot_error_map(
             error_map_test,
             title='Task Error Map (Gender Stroop)',
-            output_path=str(figures_dir / 'fig3_error_map_task.png')
+            output_path=str(figures_dir / f'{args.jobname}_fig3_error_map_task.png')
         )
 
         comparison = compare_error_maps(error_map_train, error_map_test)
@@ -285,7 +303,7 @@ def main():
             error_map_train,
             error_map_test,
             comparison,
-            output_path=str(figures_dir / 'fig4_rest_vs_task_comparison.png')
+            output_path=str(figures_dir / f'{args.jobname}_fig4_rest_vs_task_comparison.png')
         )
 
         print(f"\n✓ Generated 4 thesis figures in {figures_dir}")
@@ -331,14 +349,25 @@ Execution Time: {format_time(elapsed_time)}
 Completed: {time.strftime('%Y-%m-%d %H:%M:%S')}
 """)
 
-    # Log provenance for reproducibility
-    log_provenance(
-        config['output_dirs']['tables'],
-        config,
-        results
-    )
+    # =========================================================================
+    # Log Provenance for Reproducibility
+    # =========================================================================
+    logs_dir = Path(config['output_dirs'].get('logs', 'logs'))
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    
+    provenance_path = logs_dir / f'{args.jobname}_provenance.json'
+    
+    try:
+        log_provenance(
+            str(provenance_path),
+            config,
+            results
+        )
+        print(f"✓ Provenance log saved to {provenance_path}")
+    except Exception as e:
+        print(f"⚠ Failed to save provenance log: {e}")
 
-    print(" Pipeline executed successfully.\n")
+    print("\n✅ Pipeline executed successfully.\n")
     return 0
 
 
