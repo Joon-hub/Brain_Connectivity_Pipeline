@@ -1,29 +1,56 @@
 # Brain Connectivity Classification - Configuration
 # =================================================
+# Updated: November 2025
+# Compatible with Pipeline-based model.py (Fisher Z + StandardScaler support)
 
+# ==================================================================
 # Data files (CSV format)
+# ==================================================================
 data:
-  piop2_file: "data/raw/PIOP2_restingstate.csv"  # Training: resting-state
-  piop1_file: "data/raw/PIOP1_gstroop.csv"       # Testing: gender task
+  piop2_file: "data/raw/PIOP2_restingstate.csv"      # Training: resting-state
+  piop1_file: "data/raw/PIOP1_gstroop.csv"           # Testing: Gender Stroop task
 
+# ==================================================================
 # Output directories
+# ==================================================================
 output_dirs:
-  processed: "data/processed"
-  models: "models"
-  tables: "reports/tables/basic_analysis"
-  figures: "reports/figures/basic_analysis"
-  logs: "logs"  # Provenance and execution logs
+  processed: "data/processed"                        # Predictions, region lists, etc.
+  models: "models"                                   # Saved .pkl pipelines
+  tables: "reports/tables/basic_analysis"            # CSVs: error maps, confusion, comparisons
+  figures: "reports/figures/basic_analysis"          # PNGs: error maps, comparisons
 
+# ==================================================================
 # Feature extraction
-diagonal_strategy: "network_mean"  # Options: zero, one, mean, network_mean
+# ==================================================================
+diagonal_strategy: "network_mean"                    # Options: "zero", "one", "mean", "network_mean"
+                                                             # "network_mean" = fill diagonal with mean of region's off-diagonal edges
 
+# ==================================================================
 # Model training
-C: 0.01                  # Regularization (smaller = more regularization)
-max_iter: 1000           # Maximum iterations for solver
-n_splits: 5              # Cross-validation folds
-random_seed: 42          # For reproducibility
+# ==================================================================
+model:
+  scaler_type: "fisher_z"                            # CRITICAL: "fisher_z" (recommended) or "standard"
+  C: 0.01                                            # L2 regularization strength (smaller = stronger)
+  max_iter: 1000
+  n_splits: 5                                        # GroupKFold cross-validation
+  random_seed: 42
 
-# Visualization
-dpi: 300                 # Figure resolution
-high_error_threshold: 0.3  # Threshold for "high error" regions
-low_error_threshold: 0.1   # Threshold for "low error" regions
+# ==================================================================
+# Evaluation & Visualization
+# ==================================================================
+visualization:
+  dpi: 300
+  high_error_threshold: 0.30                         # Regions with error ≥ this = "hard to predict"
+  low_error_threshold: 0.10                          # Regions with error ≤ this = "easy to predict"
+  colormap_error: "RdBu_r"                           # Matplotlib colormap for error maps
+  colormap_diff: "PRGn"                              # For rest vs. task difference plots
+
+# ==================================================================
+# Optional
+# ==================================================================
+logging:
+  level: "INFO"                                      # DEBUG, INFO, WARNING, ERROR
+  file: null                                         # Set path to enable file logging, e.g. "logs/pipeline.log"
+
+sample:
+  n_subjects: 10                                     # Used with --sample flag

@@ -1,97 +1,34 @@
 """
-Brain Region Classifier
-=======================
-Simple logistic regression classifier for brain regions.
+Brain Region Classifier with sklearn Pipeline Integration
+==========================================================
+Supports Logistic Regression only.
+Uses sklearn Pipeline for proper preprocessing integration.
 """
 
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GroupKFold
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import pickle
 from pathlib import Path
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional
 
 
-def train_classifier(
-    X: np.ndarray,
-    y: np.ndarray,
-    subjects: np.ndarray,
+# ============================================================================
+# PIPELINE FUNCTIONS
+# ============================================================================
+
+def create_pipeline(
     C: float = 0.01,
     max_iter: int = 1000,
-    n_splits: int = 5,
     random_state: int = 42
-) -> Tuple[LogisticRegression, StandardScaler, Dict]:
+) -> Pipeline:
     """
-    Train brain region classifier with cross-validation.
-    
-    Args:
-        X: Features (n_samples × n_features)
-        y: Labels (region indices)
-        subjects: Subject IDs for group splitting
-        C: Regularization strength
-        max_iter: Maximum iterations
-        n_splits: Number of CV folds
-        random_state: Random seed
-        
-    Returns:
-        model: Trained classifier
-        scaler: Fitted feature scaler
-        cv_results: Cross-validation metrics
+    Create sklearn Pipeline with StandardScaler and Logistic Regression.
     """
-    print(f"\n{'='*60}")
-    print(f"TRAINING BRAIN REGION CLASSIFIER")
-    print(f"{'='*60}")
-    print(f"Samples: {X.shape[0]}")
-    print(f"Features: {X.shape[1]}")
-    print(f"Classes: {len(np.unique(y))}")
-    print(f"Subjects: {len(np.unique(subjects))}")
-    
-    # Cross-validation (subject-wise splitting)
-    gkf = GroupKFold(n_splits=n_splits)
-    fold_scores = []
-    
-    print(f"\nRunning {n_splits}-fold cross-validation...")
-    
-    for fold, (train_idx, val_idx) in enumerate(gkf.split(X, y, groups=subjects), 1):
-        X_train, X_val = X[train_idx], X[val_idx]
-        y_train, y_val = y[train_idx], y[val_idx]
-        
-        # Scale features
-        scaler_fold = StandardScaler()
-        X_train_scaled = scaler_fold.fit_transform(X_train)
-        X_val_scaled = scaler_fold.transform(X_val)
-        
-        # Train
-        clf = LogisticRegression(
-            C=C,
-            max_iter=max_iter,
-            random_state=random_state,
-            solver='lbfgs',
-            penalty='l2',
-            n_jobs=-1
-        )
-        clf.fit(X_train_scaled, y_train)
-        
-        # Validate
-        y_pred = clf.predict(X_val_scaled)
-        acc = accuracy_score(y_val, y_pred)
-        fold_scores.append(acc)
-        
-        print(f"  Fold {fold}: {acc:.4f}")
-    
-    cv_mean = np.mean(fold_scores)
-    cv_std = np.std(fold_scores)
-    
-    print(f"\nCV Results: {cv_mean:.4f} ± {cv_std:.4f}")
-    
-    # Train final model on all data
-    print(f"\nTraining final model on full dataset...")
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    
-    model = LogisticRegression(
+    classifier = LogisticRegression(
         C=C,
         max_iter=max_iter,
         random_state=random_state,
@@ -99,102 +36,173 @@ def train_classifier(
         penalty='l2',
         n_jobs=-1
     )
-    model.fit(X_scaled, y)
     
-    # Training accuracy
-    y_pred_train = model.predict(X_scaled)
-    train_acc = accuracy_score(y, y_pred_train)
+    pipeline = Pipeline([
+        ('scaler', StandardScaler()),
+        ('classifier', classifier)
+    ])
     
-    print(f"Training accuracy: {train_acc:.4f}")
-    print(f"{'='*60}\n")
-    
+    return pipeline
+
+
+def train_pipeline(
+    pipeline: Pipeline,
+    X: np.ndarray,
+    y: np.ndarray,
+    subjects: np.ndarray,
+    n_splits: int = 5,
+    verbose: bool = True
+) -> Tuple[Pipeline, Dict]:
+    """
+    Train pipeline with subject-wise cross-validation.
+    """
+    gkf = GroupKFold(n_splits=n_splits)
+    fold_scores = []
+
+    if verbose:
+        print(f"\nRunning {n_splits}-fold cross-validation...")
+
+    from sklearn.base import clone
+
+    for fold, (train_idx, val_idx) in enumerate(gkf.split(X, y, groups=subjects), 1):
+        X_train, X_val = X[train_idx], X[val_idx]
+        y_train, y_val = y[train_idx], y[val_idx]
+
+        fold_pipeline = clone(pipeline)
+        fold_pipeline.fit(X_train, y_train)
+        y_pred = fold_pipeline.predict(X_val)
+        acc = accuracy_score(y_val, y_pred)
+        fold_scores.append(acc)
+
+        if verbose:
+            print(f"  Fold {fold}: {acc:.4f}")
+
+    cv_mean = np.mean(fold_scores)
+    cv_std = np.std(fold_scores)
+
+    if verbose:
+        print(f"\nCV Results: {cv_mean:.4f} ± {cv_std:.4f}")
+        print("Training final model on full dataset...")
+
+    pipeline.fit(X, y)
+    train_acc = accuracy_score(y, pipeline.predict(X))
+
+    if verbose:
+        print(f"Training accuracy: {train_acc:.4f}")
+
     cv_results = {
         'fold_scores': fold_scores,
         'mean_accuracy': cv_mean,
         'std_accuracy': cv_std,
         'train_accuracy': train_acc
     }
-    
-    return model, scaler, cv_results
+
+    return pipeline, cv_results
 
 
-def predict(model: LogisticRegression, scaler: StandardScaler, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Make predictions on new data.
-    
-    Args:
-        model: Trained classifier
-        scaler: Fitted scaler
-        X: Features
-        
-    Returns:
-        y_pred: Predicted labels
-        y_proba: Prediction probabilities
-    """
-    X_scaled = scaler.transform(X)
-    y_pred = model.predict(X_scaled)
-    y_proba = model.predict_proba(X_scaled)
-    
+def predict_pipeline(pipeline: Pipeline, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    y_pred = pipeline.predict(X)
+    y_proba = pipeline.predict_proba(X)
     return y_pred, y_proba
 
 
-def save_model(model: LogisticRegression, scaler: StandardScaler, filepath: str) -> None:
-    """
-    Save trained model and scaler.
-    
-    Args:
-        model: Trained classifier
-        scaler: Fitted scaler
-        filepath: Where to save
-    """
+def save_pipeline(pipeline: Pipeline, filepath: str) -> None:
     filepath = Path(filepath)
     filepath.parent.mkdir(parents=True, exist_ok=True)
-    
     with open(filepath, 'wb') as f:
-        pickle.dump({'model': model, 'scaler': scaler}, f)
-    
-    print(f"✓ Model saved: {filepath}")
+        pickle.dump(pipeline, f)
+    print(f"✓ Pipeline saved: {filepath}")
 
 
-def load_model(filepath: str) -> Tuple[LogisticRegression, StandardScaler]:
-    """
-    Load trained model and scaler.
-    
-    Args:
-        filepath: Model file path
-        
-    Returns:
-        model: Trained classifier
-        scaler: Fitted scaler
-    """
+def load_pipeline(filepath: str) -> Pipeline:
     filepath = Path(filepath)
-    
     if not filepath.exists():
-        raise FileNotFoundError(f"Model not found: {filepath}")
-    
+        raise FileNotFoundError(f"Pipeline not found: {filepath}")
     with open(filepath, 'rb') as f:
-        data = pickle.load(f)
-    
-    print(f"✓ Model loaded: {filepath}")
-    return data['model'], data['scaler']
+        pipeline = pickle.load(f)
+    print(f"✓ Pipeline loaded: {filepath}")
+    return pipeline
 
 
-# Example usage
+# ============================================================================
+# WRAPPER CLASS
+# ============================================================================
+
+class BrainRegionClassifierPipeline:
+    """
+    Wrapper for brain region classification using Logistic Regression Pipeline.
+    """
+    def __init__(self, C: float = 0.01, max_iter: int = 1000, n_splits: int = 5, random_state: int = 42):
+        self.C = C
+        self.max_iter = max_iter
+        self.n_splits = n_splits
+        self.random_state = random_state
+
+        self.pipeline = None
+        self.cv_results = None
+        self.is_fitted = False
+
+    def fit(self, X: np.ndarray, y: np.ndarray, subjects: np.ndarray, verbose: bool = True):
+        self.pipeline = create_pipeline(C=self.C, max_iter=self.max_iter, random_state=self.random_state)
+        self.pipeline, self.cv_results = train_pipeline(
+            self.pipeline, X, y, subjects, n_splits=self.n_splits, verbose=verbose
+        )
+        self.is_fitted = True
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        if not self.is_fitted:
+            raise RuntimeError("Model must be fitted before prediction")
+        return self.pipeline.predict(X)
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        if not self.is_fitted:
+            raise RuntimeError("Model must be fitted before prediction")
+        return self.pipeline.predict_proba(X)
+
+    def evaluate(self, X: np.ndarray, y: np.ndarray) -> Dict:
+        if not self.is_fitted:
+            raise RuntimeError("Model must be fitted before evaluation")
+        y_pred = self.predict(X)
+        return {
+            'accuracy': accuracy_score(y, y_pred),
+            'confusion_matrix': confusion_matrix(y, y_pred),
+            'classification_report': classification_report(y, y_pred, output_dict=True)
+        }
+
+    def save(self, filepath: str):
+        if not self.is_fitted:
+            raise RuntimeError("Model must be fitted before saving")
+        save_pipeline(self.pipeline, filepath)
+
+    def load(self, filepath: str):
+        self.pipeline = load_pipeline(filepath)
+        self.is_fitted = True
+
+    def get_cv_results(self) -> Optional[Dict]:
+        return self.cv_results
+
+
+# ============================================================================
+# EXAMPLE USAGE
+# ============================================================================
+
 if __name__ == "__main__":
-    # Test with dummy data
     np.random.seed(42)
-    
-    X = np.random.randn(1000, 232)  # 1000 samples, 232 features
-    y = np.random.randint(0, 232, 1000)  # 232 classes
-    subjects = np.repeat(np.arange(10), 100)  # 10 subjects
-    
-    model, scaler, cv_results = train_classifier(X, y, subjects)
-    
-    print(f"CV accuracy: {cv_results['mean_accuracy']:.4f}")
-    
-    # Test prediction
-    X_test = np.random.randn(10, 232)
-    y_pred, y_proba = predict(model, scaler, X_test)
-    print(f"Predictions: {y_pred[:5]}")
-    
-    
+    n_subjects = 10
+    n_regions = 50
+    n_samples = n_subjects * n_regions
+    n_features = n_regions - 1
+
+    X = np.random.randn(n_samples, n_features)
+    y = np.repeat(np.arange(n_regions), n_subjects)
+    subjects = np.tile(np.arange(n_subjects), n_regions)
+
+    lr_classifier = BrainRegionClassifierPipeline(C=0.01, n_splits=3)
+    lr_classifier.fit(X, y, subjects)
+
+    y_pred = lr_classifier.predict(X[:100])
+    print(f"Sample predictions: {y_pred[:10]}")
+
+    results = lr_classifier.evaluate(X, y)
+    print(f"Full dataset accuracy: {results['accuracy']:.4f}")
