@@ -1,0 +1,18 @@
+category,metric,value,formatted
+Performance,N7 rest - Accuracy,0.9138135030992174,0.914 ± 0.035
+Performance,N7 task - Accuracy,0.8448673179670423,0.845 ± 0.042
+Performance,N17 rest - Accuracy,0.8941215297339696,0.894 ± 0.041
+Performance,N17 task - Accuracy,0.8073755595074288,0.807 ± 0.048
+Performance,TianI rest - Accuracy,0.8226841517857143,0.823 ± 0.106
+Performance,TianI task - Accuracy,0.6928125,0.693 ± 0.126
+Performance,TianII rest - Accuracy,0.7374441964285714,0.737 ± 0.117
+Performance,TianII task - Accuracy,0.59515625,0.595 ± 0.131
+Performance,Combined rest - Accuracy,0.8682488274424658,0.868 ± 0.090
+Performance,Combined task - Accuracy,0.7688399089835212,0.769 ± 0.120
+Task Effect,N7 Cortical,0.0689461851321751,+0.069 (+80.0%)
+Task Effect,N17 Cortical,0.0867459702265408,+0.087 (+81.9%)
+Task Effect,Tian I Subcortical,0.1298716517857142,+0.130 (+73.2%)
+Task Effect,Tian II Subcortical,0.1422879464285714,+0.142 (+54.2%)
+Task Effect,Combined,0.0994089184589447,+0.099 (+75.5%)
+Region Type,Subcortical vs Cortical (Rest),0.091129351313503,+0.091 (p=0.038)
+Region Type,Subcortical vs Cortical (Task),0.1520548179670421,+0.152 (p=0.006)

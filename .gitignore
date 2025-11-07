@@ -1,2 +1,3 @@
 /data/
-/reports/
+/reports/__pycache__/
+*.pyc

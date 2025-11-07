@@ -1,0 +1,5 @@
+finding,result,interpretation,significance
+Classification Performance,91.4% accuracy across 8 networks (7.3× better than chance),Networks have unique connectivity fingerprints that can be reliably identified,High
+Task-Induced Changes,Error increased by 7.8% during task,"Task engagement reorganizes connectivity patterns, showing network flexibility",High
+Network Variability,"Best: Visual (96.4%), Worst: Limbic (85.0%)","Sensory networks more stable than cognitive networks, supporting hierarchical organization",Moderate
+Subcortical Difficulty,Subcortical regions 9.1% harder to classify,Smaller subcortical structures have less distinctive connectivity patterns,Moderate
