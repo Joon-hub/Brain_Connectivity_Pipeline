@@ -26,8 +26,10 @@ from data import (
     load_connectivity_data, extract_connection_columns, extract_subjects,
     create_sample_dataset, validate_schema
 )
-from features import extract_regions, create_classification_dataset
-from model import train_classifier, predict, save_model, load_model
+# CHANGED: Use new features.py instead of old_features
+from features import BrainConnectivityPreprocessor
+# CHANGED: Use new model.py instead of old_model
+from model import BrainRegionClassifierPipeline
 from evaluate import (
     calculate_error_map,
     calculate_global_metrics,
@@ -45,9 +47,7 @@ from utils import (
     print_section, format_time
 )
 
-# ======================================================================
 # Main Pipeline
-# ======================================================================
 def main():
     """Run the complete brain connectivity classification pipeline."""
     # ---------------------------------------------------------------
@@ -83,10 +83,11 @@ def main():
     # Extract settings
     piop2_file = config['data']['piop2_file']
     piop1_file = config['data']['piop1_file']
-    diagonal_strategy = config.get('diagonal_strategy', 'network_mean')
+    diagonal_strategy = config.get('diagonal_strategy', 'region_mean')  # CHANGED: default to region_mean
     n_splits = config.get('n_splits', 5)
     C = config.get('C', 0.01)
-    scaler_type = config.get('scaler_type', 'fisher_z')  # NEW: flexible scaler
+    max_iter = config.get('max_iter', 1000)  # NEW: max iterations for LogisticRegression
+    random_state = config.get('random_seed', 42)
 
     results = {}
 
@@ -105,18 +106,33 @@ def main():
     print(f"Loaded {len(df_piop2)} samples, {len(connection_columns)} connections")
 
     # =========================================================================
-    # STEP 2: Extract Features & Create Dataset
+    # STEP 2: Extract Features & Create Dataset (NEW APPROACH)
     # =========================================================================
     print_section("STEP 2/6: Extract Features and Create Dataset")
-    region_list, region_to_idx, n_regions = extract_regions(connection_columns)
-
-    X_train, y_train, subjects_train, region_list = create_classification_dataset(
-        df_piop2, connection_columns, diagonal_strategy=diagonal_strategy
+    
+    preprocessor = BrainConnectivityPreprocessor(
+        connection_columns=connection_columns,
+        diagonal_strategy=diagonal_strategy
     )
+    
+    # Fit and transform training data
+    print("Fitting preprocessor on training data...")
+    preprocessor.fit(df_piop2)
+    X_train = preprocessor.transform(df_piop2)
+    y_train = preprocessor.get_labels()
+    subjects_train = preprocessor.get_subjects()
+    
+    # Get region information
+    region_list = preprocessor.region_list_
+    n_regions = preprocessor.n_regions_
+    
+    # Convert subject indices to actual subject IDs
+    subject_ids = df_piop2.iloc[:, 0].values
+    subjects_train_ids = np.array([subject_ids[idx] for idx in subjects_train])
 
     results['n_regions'] = n_regions
     results['n_train_samples'] = len(X_train)
-    results['n_train_subjects'] = len(np.unique(subjects_train))
+    results['n_train_subjects'] = len(np.unique(subjects_train_ids))
 
     # Save region list
     region_list_path = Path(config['output_dirs']['processed']) / 'region_list.csv'
@@ -125,34 +141,38 @@ def main():
     print(f"Region list saved to {region_list_path}")
 
     # =========================================================================
-    # STEP 3: Train Classifier with Cross-Validation
+    # STEP 3: Train Classifier with Cross-Validation (NEW APPROACH)
     # =========================================================================
     print_section("STEP 3/6: Train Brain Region Classifier")
-    pipeline, cv_results = train_classifier(
-        X=X_train,
-        y=y_train,
-        subjects=subjects_train,
+    
+    # CHANGED: Use new BrainRegionClassifierPipeline
+    classifier = BrainRegionClassifierPipeline(
         C=C,
+        max_iter=max_iter,
         n_splits=n_splits,
-        scaler_type=scaler_type,
-        random_state=config.get('random_seed', 42)
+        random_state=random_state
     )
+    
+    print("Training classifier with cross-validation...")
+    classifier.fit(X_train, y_train, subjects_train_ids, verbose=True)
+    cv_results = classifier.get_cv_results()
 
     results.update({
         'cv_mean_accuracy': cv_results['mean_accuracy'],
         'cv_std_accuracy': cv_results['std_accuracy'],
         'train_accuracy': cv_results['train_accuracy'],
-        'scaler_type': scaler_type
+        'diagonal_strategy': diagonal_strategy
     })
 
-    # Save full pipeline (preprocessing + model)
-    model_path = Path(config['output_dirs']['models']) / f'brain_region_classifier_{scaler_type}.pkl'
+    # Save model
+    model_path = Path(config['output_dirs']['models']) / f'brain_region_classifier_{diagonal_strategy}.pkl'
     model_path.parent.mkdir(parents=True, exist_ok=True)
-    save_model(pipeline, str(model_path))
-    print(f"Full pipeline (preprocessing + model) saved to {model_path}")
+    classifier.save(str(model_path))
+    print(f"Classifier saved to {model_path}")
 
     # Predict on training data
-    y_train_pred, y_train_proba = predict(pipeline, X_train)
+    y_train_pred = classifier.predict(X_train)
+    y_train_proba = classifier.predict_proba(X_train)
     error_map_train = calculate_error_map(y_train, y_train_pred, region_list)
 
     # =========================================================================
@@ -174,18 +194,26 @@ def main():
         if not df_piop1.columns.equals(df_piop2.columns):
             raise ValueError("Task and rest datasets have mismatched columns!")
 
-        X_test, y_test, subjects_test, _ = create_classification_dataset(
-            df_piop1, connection_columns, diagonal_strategy=diagonal_strategy
-        )
+        # CHANGED: Use fitted preprocessor to transform test data
+        print("Transforming test data with fitted preprocessor...")
+        X_test = preprocessor.transform(df_piop1)
+        y_test = preprocessor.get_labels()
+        subjects_test = preprocessor.get_subjects()
+        
+        # Convert subject indices to actual subject IDs
+        subject_ids_test = df_piop1.iloc[:, 0].values
+        subjects_test_ids = np.array([subject_ids_test[idx] for idx in subjects_test])
 
-        y_test_pred, y_test_proba = predict(pipeline, X_test)
+        # Predict on test data
+        y_test_pred = classifier.predict(X_test)
+        y_test_proba = classifier.predict_proba(X_test)
         error_map_test = calculate_error_map(y_test, y_test_pred, region_list)
 
         results['n_test_samples'] = len(X_test)
-        results['n_test_subjects'] = len(np.unique(subjects_test))
+        results['n_test_subjects'] = len(np.unique(subjects_test_ids))
         task_data_available = True
 
-        print(f"Task prediction complete: {len(X_test)} samples, {len(subjects_test)} subjects")
+        print(f"Task prediction complete: {len(X_test)} samples, {len(subjects_test_ids)} subjects")
 
     except FileNotFoundError as e:
         print(f"\nTask data not found: {e}")
@@ -263,7 +291,7 @@ Training Data:
   Regions: {results['n_regions']}
   Samples: {results['n_train_samples']}
 
-Model Performance ({scaler_type.upper()} preprocessing):
+Model Performance (Diagonal Strategy: {diagonal_strategy}):
   CV Accuracy:  {results['cv_mean_accuracy']:.4f} ± {results['cv_std_accuracy']:.4f}
   Train Accuracy: {results['train_accuracy']:.4f}
   Chance Level:  {chance:.4f} ({results['n_regions']} classes)
