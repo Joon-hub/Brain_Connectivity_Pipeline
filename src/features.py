@@ -7,15 +7,13 @@ Now includes sklearn-compatible transformers for Pipeline integration.
 
 import numpy as np
 import pandas as pd
-from typing import Tuple, Dict, List, Optional
+from typing import Tuple, Dict, List, Optional, Any
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.impute import KNNImputer
+from sklearn.neighbors import NearestNeighbors
 import warnings
 
-
-# ============================================================================
-# ORIGINAL HELPER FUNCTIONS (Backward Compatibility)
-# ============================================================================
-
+# Internal functions
 def extract_regions(connection_columns: List[str]) -> Tuple[List[str], Dict[str, int], int]:
     """
     Extract unique brain regions from connection column names.
@@ -45,7 +43,6 @@ def extract_regions(connection_columns: List[str]) -> Tuple[List[str], Dict[str,
     region_to_idx = {region: idx for idx, region in enumerate(unique_regions)}
     
     return unique_regions, region_to_idx, len(unique_regions)
-
 
 def reconstruct_connectivity_matrix(
     subject_values: np.ndarray,
@@ -83,19 +80,119 @@ def reconstruct_connectivity_matrix(
     
     return matrix
 
+def parse_networks(region_list: List[str]) -> Dict[str, str]:
+    """
+    Parse network membership from region names.
+    
+    Args:
+        region_list: List of region names
+        
+    Returns:
+        Dictionary mapping region names to network labels
+    """
+    network_map = {}
+    
+    for region in region_list:
+        name = region.lower()
+        network = 'Unknown'
+        
+        # --- Cortical (Schaefer 17 networks) ---
+        if region.startswith(('LH_', 'RH_')):
+            if 'viscent' in name or 'vis_cent' in name:
+                network = 'VisCent'
+            elif 'visperi' in name or 'vis_peri' in name:
+                network = 'VisPeri'
+            elif 'sommota' in name or 'senmota' in name:
+                network = 'SomMotA'
+            elif 'sommotb' in name or 'senmotb' in name:
+                network = 'SomMotB'
+            elif 'dorsattna' in name or 'dorsattn_a' in name:
+                network = 'DorsAttnA'
+            elif 'dorsattnb' in name or 'dorsattn_b' in name:
+                network = 'DorsAttnB'
+            elif 'salventattna' in name or 'salventattn_a' in name:
+                network = 'SalVentAttnA'
+            elif 'salventattnb' in name or 'salventattn_b' in name:
+                network = 'SalVentAttnB'
+            elif 'limbica' in name or 'limbic_a' in name:
+                network = 'LimbicA'
+            elif 'limbicb' in name or 'limbic_b' in name:
+                network = 'LimbicB'
+            elif 'conta' in name or 'cont_a' in name:
+                network = 'ContA'
+            elif 'contb' in name or 'cont_b' in name:
+                network = 'ContB'
+            elif 'contc' in name or 'cont_c' in name:
+                network = 'ContC'
+            elif 'defaulta' in name or 'default_a' in name:
+                network = 'DefaultA'
+            elif 'defaultb' in name or 'default_b' in name:
+                network = 'DefaultB'
+            elif 'defaultc' in name or 'default_c' in name:
+                network = 'DefaultC'
+            elif 'temppar' in name:
+                network = 'TempPar'
+            else:
+                network = 'CorticalOther'
+        
+        # Subcortical Tian II regions
+        else:
+            if 'ahip' in name:
+                network = 'Hippocampus_ant'
+            elif 'phip' in name:
+                network = 'Hippocampus_post'
+            elif 'lamy' in name:
+                network = 'Amygdala_lat'
+            elif 'mamy' in name:
+                network = 'Amygdala_med'
+            elif 'tha-dp' in name or 'tha_dp' in name:
+                network = 'Thalamus_DP'
+            elif 'tha-vp' in name or 'tha_vp' in name:
+                network = 'Thalamus_VP'
+            elif 'tha-va' in name or 'tha_va' in name:
+                network = 'Thalamus_VA'
+            elif 'tha-da' in name or 'tha_da' in name:
+                network = 'Thalamus_DA'
+            elif 'nac-shell' in name or 'nac_shell' in name:
+                network = 'Accumbens_shell'
+            elif 'nac-core' in name or 'nac_core' in name:
+                network = 'Accumbens_core'
+            elif 'pgp' in name:
+                network = 'Pallidum_post'
+            elif 'agp' in name:
+                network = 'Pallidum_ant'
+            elif 'aput' in name:
+                network = 'Putamen_ant'
+            elif 'pput' in name:
+                network = 'Putamen_post'
+            elif 'acau' in name:
+                network = 'Caudate_ant'
+            elif 'pcau' in name:
+                network = 'Caudate_post'
+            else:
+                network = 'SubcorticalOther'
+        
+        network_map[region] = network
+    
+    return network_map
 
 def impute_diagonal(
     matrix: np.ndarray,
-    strategy: str = "mean",
-    region_list: List[str] = None
+    strategy: str = "region_mean",
+    region_list: Optional[List[str]] = None,
+    region_models: Optional[Dict[str, Any]] = None,
+    k_neighbors: int = 5
 ) -> np.ndarray:
     """
     Impute diagonal values using specified strategy.
     
     Args:
-        matrix: Connectivity matrix
-        strategy: Imputation method ('zero', 'one', 'mean', 'network_mean')
-        region_list: Required for 'network_mean' strategy
+        matrix: The connectivity matrix (n_regions × n_regions) for one subject.
+        strategy: Method ('zero', 'region_mean', 'random', 'network_mean', 'regression_predictive', 'knn_imputation').
+        region_list: Required list of region names for 'network_mean' and 'regression_predictive'.
+        region_models: Dictionary mapping region names to a fitted scikit-learn
+                       model (e.g., Ridge) required for 'regression_predictive'.
+        k_neighbors: Number of neighbors for 'knn_imputation' strategy.
         
     Returns:
         Matrix with imputed diagonal
@@ -103,23 +200,27 @@ def impute_diagonal(
     matrix_copy = matrix.copy()
     n_regions = matrix.shape[0]
     
+    # 1. Simple strategies (Zero)
     if strategy == "zero":
         np.fill_diagonal(matrix_copy, 0.0)
-        
-    elif strategy == "one":
-        np.fill_diagonal(matrix_copy, 1.0)
-        
-    elif strategy == "mean":
+    
+    # 2. Simple strategies (Random values between -1 and 1)
+    elif strategy == "random":
+        np.fill_diagonal(matrix_copy, np.random.uniform(-1, 1, n_regions))
+
+    # 3. Statistical strategies (region_mean per region/subject)
+    elif strategy == "region_mean":
         for i in range(n_regions):
             row_mean = np.mean(matrix_copy[i, :])
             matrix_copy[i, i] = row_mean
-            
+  
+    # 4. Statistical strategies (network_mean per region/subject)       
     elif strategy == "network_mean":
         if region_list is None:
             raise ValueError("region_list required for network_mean strategy")
         
         # Parse network memberships
-        network_map = _parse_networks(region_list)
+        network_map = parse_networks(region_list)
         
         for i in range(n_regions):
             region_name = region_list[i]
@@ -137,46 +238,81 @@ def impute_diagonal(
             else:
                 # Fallback to row mean if no same-network regions
                 matrix_copy[i, i] = np.mean(matrix_copy[i, :])
+
+    # 5. Regression strategies (Region-specific predictions)
+    elif strategy == "regression_predictive":
+        if region_list is None or region_models is None:
+            raise ValueError(
+                "Both 'region_list' and pre-trained 'region_models' are required "
+                "for the 'regression_predictive' strategy."
+            )
+        
+        for i in range(n_regions):
+            region_name = region_list[i]
+            model = region_models.get(region_name)
+            
+            if model is None:
+                warnings.warn(
+                    f"No trained model found for region: {region_name}. "
+                    f"Falling back to 'region_mean' strategy for this region.", 
+                    UserWarning
+                )
+                matrix_copy[i, i] = np.mean(matrix_copy[i, :])
+                continue
+
+            # a. Extract Features (X): The connectivity pattern for region i, 
+            #    EXCLUDING the diagonal element (which we are predicting).
+            connectivity_pattern = matrix_copy[i, :].copy()
+            features = np.delete(connectivity_pattern, i)
+            
+            # b. Reshape for the model: sklearn models usually expect X to be 2D 
+            #    (n_samples x n_features). Here n_samples=1.
+            features = features.reshape(1, -1) 
+            
+            # c. Predict the missing diagonal value (M_i,i)
+            predicted_M_ii = model.predict(features)[0]
+            
+            # d. Impute the diagonal
+            matrix_copy[i, i] = predicted_M_ii
+
+    # 6. KNN-based diagonal imputation
+    elif strategy == "knn_imputation":
+        # Remove diagonals temporarily (set to NaN)
+        matrix_temp = matrix_copy.copy()
+        np.fill_diagonal(matrix_temp, np.nan)
+        
+        # Each row is a region's connectivity pattern (features)
+        # We will use NearestNeighbors to find similar regions
+        nbrs = NearestNeighbors(n_neighbors=min(k_neighbors + 1, n_regions), metric='euclidean')
+        nbrs.fit(np.nan_to_num(matrix_temp))
+        
+        for i in range(n_regions):
+            # Find k nearest neighbors excluding self
+            distances, indices = nbrs.kneighbors(matrix_temp[i, :].reshape(1, -1))
+            neighbor_indices = [idx for idx in indices[0] if idx != i][:k_neighbors]
+
+            # Compute mean of available diagonals among neighbors
+            neighbor_diagonals = [
+                matrix_copy[j, j] for j in neighbor_indices
+                if not np.isnan(matrix_copy[j, j])
+            ]
+
+            if neighbor_diagonals:
+                matrix_copy[i, i] = np.mean(neighbor_diagonals)
+            else:
+                # Fallback to row mean if no valid neighbor diagonals
+                matrix_copy[i, i] = np.nanmean(matrix_temp[i, :])
     
     else:
         raise ValueError(f"Unknown strategy: {strategy}")
     
     return matrix_copy
 
-
-def _parse_networks(region_list: List[str]) -> Dict[str, str]:
-    """
-    Parse network membership from region names.
-    
-    Expected naming: 'LH_Network_Region' or 'RH_Network_Region'
-    
-    Args:
-        region_list: List of region names
-        
-    Returns:
-        Dictionary mapping region names to network labels
-    """
-    network_map = {}
-    
-    for region in region_list:
-        if region.startswith('LH_') or region.startswith('RH_'):
-            parts = region.split('_')
-            if len(parts) >= 2:
-                network = parts[1]  # Extract network name
-                network_map[region] = network
-            else:
-                network_map[region] = 'Unknown'
-        else:
-            # Subcortical or other regions
-            network_map[region] = 'Subcortical'
-    
-    return network_map
-
-
 def create_classification_dataset(
     df: pd.DataFrame,
     connection_columns: List[str],
-    diagonal_strategy: str = "mean"
+    diagonal_strategy: str = "region_mean",
+    region_models: Optional[Dict[str, Any]] = None
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[str]]:
     """
     Create classification dataset from connectivity data (original function).
@@ -185,6 +321,7 @@ def create_classification_dataset(
         df: DataFrame with connectivity data
         connection_columns: List of connection column names
         diagonal_strategy: How to handle diagonal values
+        region_models: Optional pre-trained models for regression_predictive strategy
         
     Returns:
         X: Features (n_samples × n_features) where n_samples = n_subjects × n_regions
@@ -199,13 +336,13 @@ def create_classification_dataset(
     n_samples = n_subjects * n_regions
     
     # Initialize arrays
-    X = np.zeros((n_samples, n_regions), dtype=float)
+    X = np.zeros((n_samples, n_regions - 1), dtype=float)
     y = np.zeros(n_samples, dtype=int)
     subjects = []
     
     sample_idx = 0
     
-    for subject_id, row in df.iterrows():
+    for idx, row in df.iterrows():
         subject_values = row[connection_columns].values
         
         # Reconstruct full connectivity matrix
@@ -214,7 +351,12 @@ def create_classification_dataset(
         )
         
         # Impute diagonal
-        matrix = impute_diagonal(matrix, strategy=diagonal_strategy, region_list=region_list)
+        matrix = impute_diagonal(
+            matrix, 
+            diagonal_strategy,  # Positional argument
+            region_list,
+            region_models
+        )
         
         # Create one sample per region
         for region_idx in range(n_regions):
@@ -222,9 +364,9 @@ def create_classification_dataset(
             connectivity_pattern = matrix[region_idx, :].copy()
             connectivity_pattern = np.delete(connectivity_pattern, region_idx)
             
-            X[sample_idx, :n_regions-1] = connectivity_pattern
+            X[sample_idx] = connectivity_pattern
             y[sample_idx] = region_idx
-            subjects.append(df.iloc[subject_id, 0])  # Subject ID from first column
+            subjects.append(row.iloc[0])  # Subject ID from first column
             
             sample_idx += 1
     
@@ -238,9 +380,7 @@ def create_classification_dataset(
     return X, y, subjects, region_list
 
 
-# ============================================================================
-# SKLEARN-COMPATIBLE TRANSFORMERS (New for Pipeline Integration)
-# ============================================================================
+# SKLEARN-COMPATIBLE TRANSFORMERS 
 
 class ConnectivityMatrixReconstructor(BaseEstimator, TransformerMixin):
     """
@@ -320,16 +460,27 @@ class DiagonalImputer(BaseEstimator, TransformerMixin):
     Sklearn transformer for diagonal imputation in connectivity matrices.
     """
     
-    def __init__(self, strategy: str = "mean", region_list: Optional[List[str]] = None):
+    def __init__(
+        self, 
+        strategy: str = "region_mean",  # Changed from "network_mean" to "region_mean"
+        region_list: Optional[List[str]] = None,
+        region_models: Optional[Dict[str, Any]] = None,
+        k_neighbors: int = 5
+    ):
         """
         Initialize diagonal imputer.
         
         Args:
-            strategy: Imputation method ('zero', 'one', 'mean', 'network_mean')
-            region_list: Required for 'network_mean' strategy
+            strategy: Imputation method ('zero', 'region_mean', 'random', 'network_mean', 
+                     'regression_predictive', 'knn_imputation')
+            region_list: Required for 'network_mean' and 'regression_predictive' strategies
+            region_models: Required for 'regression_predictive' strategy
+            k_neighbors: Number of neighbors for 'knn_imputation' strategy
         """
         self.strategy = strategy
         self.region_list = region_list
+        self.region_models = region_models
+        self.k_neighbors = k_neighbors
     
     def fit(self, X, y=None):
         """
@@ -360,8 +511,10 @@ class DiagonalImputer(BaseEstimator, TransformerMixin):
         for i in range(n_subjects):
             X_imputed[i] = impute_diagonal(
                 X[i],
-                strategy=self.strategy,
-                region_list=self.region_list
+                self.strategy,
+                self.region_list,
+                self.region_models,
+                self.k_neighbors
             )
         
         return X_imputed
@@ -379,6 +532,8 @@ class RegionConnectivityExtractor(BaseEstimator, TransformerMixin):
         """Initialize extractor."""
         self.n_regions_ = None
         self.region_list_ = None
+        self.labels_ = None
+        self.subjects_ = None
     
     def fit(self, X, y=None):
         """
@@ -437,10 +592,14 @@ class RegionConnectivityExtractor(BaseEstimator, TransformerMixin):
     
     def get_labels(self):
         """Get region labels for each sample."""
+        if self.labels_ is None:
+            raise ValueError("Transform must be called before getting labels")
         return self.labels_
     
     def get_subjects(self):
         """Get subject IDs for each sample."""
+        if self.subjects_ is None:
+            raise ValueError("Transform must be called before getting subjects")
         return self.subjects_
 
 
@@ -455,8 +614,10 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
     def __init__(
         self,
         connection_columns: Optional[List[str]] = None,
-        diagonal_strategy: str = "mean",
-        region_list: Optional[List[str]] = None
+        diagonal_strategy: str = "region_mean",
+        region_list: Optional[List[str]] = None,
+        region_models: Optional[Dict[str, Any]] = None,
+        k_neighbors: int = 5
     ):
         """
         Initialize complete preprocessor.
@@ -465,15 +626,21 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
             connection_columns: List of connection column names
             diagonal_strategy: Diagonal imputation method
             region_list: List of region names (for network_mean strategy)
+            region_models: Pre-trained models for regression_predictive strategy
+            k_neighbors: Number of neighbors for knn_imputation strategy
         """
         self.connection_columns = connection_columns
         self.diagonal_strategy = diagonal_strategy
         self.region_list = region_list
+        self.region_models = region_models
+        self.k_neighbors = k_neighbors
         
         # Component transformers
         self.reconstructor_ = None
         self.imputer_ = None
         self.extractor_ = None
+        self.region_list_ = None
+        self.n_regions_ = None
     
     def fit(self, X, y=None):
         """
@@ -486,19 +653,28 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
         Returns:
             self
         """
-        # Initialize components
+        # Initialize reconstructor
         self.reconstructor_ = ConnectivityMatrixReconstructor(self.connection_columns)
-        self.imputer_ = DiagonalImputer(self.diagonal_strategy, self.region_list)
-        self.extractor_ = RegionConnectivityExtractor()
         
-        # Fit pipeline
+        # Fit reconstructor to get region info
         X_matrices = self.reconstructor_.fit_transform(X)
-        X_imputed = self.imputer_.fit_transform(X_matrices)
-        self.extractor_.fit(X_imputed)
         
         # Store region information
         self.region_list_ = self.reconstructor_.region_list_
         self.n_regions_ = self.reconstructor_.n_regions_
+
+        # Initialize imputer with the derived region_list
+        self.imputer_ = DiagonalImputer(
+            self.diagonal_strategy, 
+            self.region_list_,
+            self.region_models,
+            self.k_neighbors
+        )
+        
+        # Continue with pipeline
+        X_imputed = self.imputer_.fit_transform(X_matrices)
+        self.extractor_ = RegionConnectivityExtractor()
+        self.extractor_.fit(X_imputed)
         
         return self
     
@@ -564,7 +740,7 @@ if __name__ == "__main__":
     # Test complete preprocessor
     preprocessor = BrainConnectivityPreprocessor(
         connection_columns=connection_cols,
-        diagonal_strategy="mean"
+        diagonal_strategy="region_mean"
     )
     
     preprocessor.fit(df)

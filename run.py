@@ -110,6 +110,7 @@ def main():
     # =========================================================================
     print_section("STEP 2/6: Extract Features and Create Dataset")
     
+    # CHANGED: Use new BrainConnectivityPreprocessor
     preprocessor = BrainConnectivityPreprocessor(
         connection_columns=connection_columns,
         diagonal_strategy=diagonal_strategy
