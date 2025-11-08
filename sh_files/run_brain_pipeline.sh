@@ -29,7 +29,7 @@ set -e
 source /home/sjoon/projects/brain_connectivity_classifier/masterthesis_venv/bin/activate
 
 # echo "Running: python run.py --config config.yaml --help"
-python3 run.py --config config.yaml --jobname $JOBNAME
+python3 run.py --config config.yaml 
 
 EXIT_CODE=$?
 

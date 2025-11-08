@@ -15,6 +15,4 @@ request_cpus = 4
 request_memory = 12GB
 request_disk = 20GB
 
-queue jobname from (
-LogReg_ss
-)
+queue 1
