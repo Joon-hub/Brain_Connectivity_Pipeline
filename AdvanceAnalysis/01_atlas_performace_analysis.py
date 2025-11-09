@@ -148,9 +148,9 @@ def map_tian(region_list, scale='I'):
                 net = 'Hippocampus'
             elif 'amy' in name:
                 net = 'Amygdala'
-            elif 'tha-dp' in name or 'tha-vp' in name or 'tha_dp' in name or 'tha_vp' in name:
+            elif 'tha-dp' in name or 'tha-vp' in name:
                 net = 'Thal_post'
-            elif 'tha-da' in name or 'tha-va' in name or 'tha_da' in name or 'tha_va' in name:
+            elif 'tha-da' in name or 'tha-va' in name:
                 net = 'Thal_ant'
             elif 'nac' in name:
                 net = 'Accumbens'

@@ -187,14 +187,14 @@ def plot_summary(results, output_path):
     # Panel A: Performance across atlases
     ax1 = fig.add_subplot(gs[0, 0])
     data, labels, colors = [], [], []
-    for atlas in ['N7', 'N17', 'TianI']:
+    for atlas in ['N7', 'N17', 'TianI', 'TianII']:
         for cond in ['rest', 'task']:
             key = f'{atlas}_{cond}'
             if key in results['error_rates']:
                 acc = 1 - results['error_rates'][key]['error_rate'].mean()
                 data.append(acc)
                 labels.append(f'{atlas}\n{cond}')
-                colors.append('#3498DB' if cond == 'rest' else '#E74C3C')
+                colors.append('#3498DB' if cond == 'rest' else "#B3847F")
     
     if data:
         x = np.arange(len(data))
@@ -205,6 +205,10 @@ def plot_summary(results, output_path):
         ax1.set_title('A) Classification Accuracy', fontweight='bold', fontsize=12)
         ax1.set_ylim([0, 1.0])
         ax1.grid(axis='y', alpha=0.3)
+        # annotate accuracy
+        for i, v in enumerate(data):
+            ax1.text(i, v + 0.01, f"{v:.3f}", ha='center', va='bottom', fontsize=9, color='black', weight='bold')
+       
     
     # Panel B: Rest vs Task
     ax2 = fig.add_subplot(gs[0, 1])
@@ -224,6 +228,12 @@ def plot_summary(results, output_path):
             ax2.set_title('B) Rest vs Task', fontweight='bold', fontsize=12)
             ax2.legend()
             ax2.grid(axis='y', alpha=0.3)
+            # annotate error rates
+            for i, v in enumerate(df['rest_mean']):
+                ax2.text(i - width/2, v + 0.005, f"{v:.3f}", ha='center', va='bottom', fontsize=9, color='black', weight='bold')
+            for i, v in enumerate(df['task_mean']):
+                ax2.text(i + width/2, v + 0.005, f"{v:.3f}", ha='center', va='bottom', fontsize=9, color='black', weight='bold')
+            ax2.set_ylim([0, 1.0])
     
     # Panel C: Network performance
     ax3 = fig.add_subplot(gs[0, 2])
@@ -239,6 +249,9 @@ def plot_summary(results, output_path):
         ax3.invert_yaxis()
         ax3.set_xlim([0, 1.0])
         ax3.grid(axis='x', alpha=0.3)
+        # annotate accuracy
+        for i, v in enumerate(1 - df['error_rate']):
+            ax3.text(v + 0.005, i, f"{v:.3f}", ha='left', va='center', fontsize=9, color='black', weight='bold')
     
     # Panel D: Cortical vs Subcortical
     ax4 = fig.add_subplot(gs[1, 0])
@@ -256,6 +269,12 @@ def plot_summary(results, output_path):
         ax4.set_title('D) Cortical vs Subcortical', fontweight='bold', fontsize=12)
         ax4.legend()
         ax4.grid(axis='y', alpha=0.3)
+        # annotate error rates
+        for i, v in enumerate(df['cortical_mean']):
+            ax4.text(i - width/2, v + 0.005, f"{v:.3f}", ha='center', va='bottom', fontsize=9, color='black', weight='bold')
+        for i, v in enumerate(df['subcortical_mean']):
+            ax4.text(i + width/2, v + 0.005, f"{v:.3f}", ha='center', va='bottom', fontsize=9, color='black', weight='bold')
+        ax4.set_ylim([0, 1.0])
     
     # Panel E: Task changes
     ax5 = fig.add_subplot(gs[1, 1])
@@ -278,6 +297,9 @@ def plot_summary(results, output_path):
         ax5.axvline(0, color='black', linewidth=2)
         ax5.invert_yaxis()
         ax5.grid(axis='x', alpha=0.3)
+        # annotate accuracy
+        for i, v in enumerate(merged['change']):
+            ax5.text(v + 0.005, i, f"{v:.3f}", ha='left', va='center', fontsize=9, color='black', weight='bold')
     
     # Panel F: Summary text
     ax6 = fig.add_subplot(gs[1, 2])
