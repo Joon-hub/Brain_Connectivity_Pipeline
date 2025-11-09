@@ -3,15 +3,19 @@ Feature Engineering: Connectivity Matrix Preprocessing
 ======================================================
 Reconstruct connectivity matrices and handle diagonal imputation.
 Now includes sklearn-compatible transformers for Pipeline integration.
+Includes regression model training for predictive diagonal imputation.
 """
 
 import numpy as np
 import pandas as pd
 from typing import Tuple, Dict, List, Optional, Any
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.linear_model import Ridge
 from sklearn.impute import KNNImputer
 from sklearn.neighbors import NearestNeighbors
 import warnings
+import pickle
+from pathlib import Path
 
 # Internal functions
 def extract_regions(connection_columns: List[str]) -> Tuple[List[str], Dict[str, int], int]:
@@ -308,6 +312,147 @@ def impute_diagonal(
     
     return matrix_copy
 
+
+# ============================================================================
+# REGRESSION MODEL TRAINING FOR PREDICTIVE DIAGONAL IMPUTATION
+# ============================================================================
+
+def train_region_models(
+    df: pd.DataFrame,
+    connection_columns: List[str],
+    alpha: float = 1.0,
+    verbose: bool = True
+) -> Tuple[Dict[str, Any], List[str]]:
+    """
+    Train one Ridge regression model per region to predict its diagonal value.
+    
+    This function trains region-specific models that can later be used with the
+    'regression_predictive' diagonal imputation strategy.
+    
+    Args:
+        df: DataFrame with connectivity data
+        connection_columns: List of connection column names
+        alpha: Ridge regression regularization parameter
+        verbose: Print progress messages
+        
+    Returns:
+        Tuple of (region_models, region_list):
+            - region_models: Dictionary mapping region names to trained models
+            - region_list: List of region names
+    """
+    if verbose:
+        print("Training region-specific diagonal prediction models...")
+    
+    # Extract regions
+    region_list, region_to_idx, n_regions = extract_regions(connection_columns)
+    
+    # Store models
+    region_models = {}
+    
+    # For each region, collect training data
+    for region_idx in range(n_regions):
+        region_name = region_list[region_idx]
+        
+        X_train = []  # Features: connectivity patterns (excluding diagonal)
+        y_train = []  # Target: actual diagonal value
+        
+        # Iterate through all subjects
+        for idx, row in df.iterrows():
+            subject_values = row[connection_columns].values
+            
+            # Reconstruct full matrix with diagonal = 1.0 (original values)
+            matrix = reconstruct_connectivity_matrix(
+                subject_values, connection_columns, region_to_idx, n_regions
+            )
+            
+            # Extract features: connectivity pattern for this region (excluding diagonal)
+            connectivity_pattern = matrix[region_idx, :].copy()
+            features = np.delete(connectivity_pattern, region_idx)
+            
+            # Target: the actual diagonal value (1.0 in correlation matrices)
+            target = matrix[region_idx, region_idx]
+            
+            X_train.append(features)
+            y_train.append(target)
+        
+        X_train = np.array(X_train)
+        y_train = np.array(y_train)
+        
+        # Train Ridge regression model
+        model = Ridge(alpha=alpha)
+        model.fit(X_train, y_train)
+        
+        region_models[region_name] = model
+        
+        if verbose and (region_idx + 1) % 10 == 0:
+            print(f"  Trained {region_idx + 1}/{n_regions} models...")
+    
+    if verbose:
+        print(f"✓ Trained {n_regions} region-specific models")
+    
+    return region_models, region_list
+
+
+def save_region_models(
+    region_models: Dict[str, Any],
+    region_list: List[str],
+    output_path: str,
+    verbose: bool = True
+) -> None:
+    """
+    Save trained region models to disk.
+    
+    Args:
+        region_models: Dictionary mapping region names to trained models
+        region_list: List of region names
+        output_path: Path where to save the models
+        verbose: Print confirmation message
+    """
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    data = {
+        'region_models': region_models,
+        'region_list': region_list
+    }
+    
+    with open(output_path, 'wb') as f:
+        pickle.dump(data, f)
+    
+    if verbose:
+        print(f"✓ Models saved to: {output_path}")
+
+
+def load_region_models(filepath: str, verbose: bool = True) -> Tuple[Dict[str, Any], List[str]]:
+    """
+    Load trained region models from disk.
+    
+    Args:
+        filepath: Path to the saved models file
+        verbose: Print confirmation message
+        
+    Returns:
+        Tuple of (region_models, region_list):
+            - region_models: Dictionary mapping region names to trained models
+            - region_list: List of region names
+    """
+    filepath = Path(filepath)
+    if not filepath.exists():
+        raise FileNotFoundError(f"Model file not found: {filepath}")
+    
+    with open(filepath, 'rb') as f:
+        data = pickle.load(f)
+    
+    if verbose:
+        print(f"✓ Models loaded from: {filepath}")
+    
+    return data['region_models'], data['region_list']
+
+
+# ============================================================================
+# ORIGINAL DATASET CREATION FUNCTION
+# ============================================================================
+
 def create_classification_dataset(
     df: pd.DataFrame,
     connection_columns: List[str],
@@ -380,7 +525,9 @@ def create_classification_dataset(
     return X, y, subjects, region_list
 
 
+# ============================================================================
 # SKLEARN-COMPATIBLE TRANSFORMERS 
+# ============================================================================
 
 class ConnectivityMatrixReconstructor(BaseEstimator, TransformerMixin):
     """
@@ -462,7 +609,7 @@ class DiagonalImputer(BaseEstimator, TransformerMixin):
     
     def __init__(
         self, 
-        strategy: str = "region_mean",  # Changed from "network_mean" to "region_mean"
+        strategy: str = "region_mean",
         region_list: Optional[List[str]] = None,
         region_models: Optional[Dict[str, Any]] = None,
         k_neighbors: int = 5
@@ -757,3 +904,29 @@ if __name__ == "__main__":
     ))
     print("Got: {} samples".format(len(X_features)))
     print("\n✓ Transformers working correctly!")
+    
+    # Test regression model training
+    print("\n" + "="*60)
+    print("Testing regression model training...")
+    print("="*60)
+    
+    region_models, region_list = train_region_models(
+        df, connection_cols, alpha=1.0, verbose=True
+    )
+    
+    print(f"\nTrained models for regions: {region_list}")
+    print(f"Total models: {len(region_models)}")
+    
+    # Test with regression_predictive strategy
+    print("\nTesting regression_predictive strategy...")
+    preprocessor_reg = BrainConnectivityPreprocessor(
+        connection_columns=connection_cols,
+        diagonal_strategy="regression_predictive",
+        region_models=region_models
+    )
+    
+    preprocessor_reg.fit(df)
+    X_features_reg = preprocessor_reg.transform(df)
+    
+    print(f"✓ Regression_predictive strategy works!")
+    print(f"  Output shape: {X_features_reg.shape}")

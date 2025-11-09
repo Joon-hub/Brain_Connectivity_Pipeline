@@ -153,30 +153,6 @@ def compare_error_maps(error_rest, error_task):
     comparison = comparison.sort_values('error_increase', ascending=False).reset_index(drop=True)
     return comparison
 
-def save_confusion_matrix(
-    y_true: np.ndarray,
-    y_pred: np.ndarray,
-    region_list: List[str],
-    dataset_name: str = "dataset"
-) -> None:
-    """ Save raw and normalized confusion matrices. Automatically ensures full class coverage. """ 
-    base_dir = Path("reports/tables/confusion_matrix") 
-    base_dir.mkdir(parents=True, exist_ok=True) 
-    labels = np.arange(len(region_list)) 
-    cm = confusion_matrix(y_true, y_pred, labels=labels) 
-    
-    # Raw 
-    cm_df = pd.DataFrame(cm, index=region_list, columns=region_list) 
-    save_results_csv(cm_df.reset_index().rename(columns={"index": "True_Label"}), base_dir / f"{dataset_name}_raw.csv") 
-    
-    # Normalized 
-    with np.errstate(divide='ignore', invalid='ignore'): cm_norm = cm.astype(float) / cm.sum(axis=1, keepdims=True) 
-    cm_norm = np.nan_to_num(cm_norm) 
-    cm_norm_df = pd.DataFrame(cm_norm, index=region_list, columns=region_list) 
-    save_results_csv(cm_norm_df.reset_index().rename(columns={"index": "True_Label"}), base_dir / f"{dataset_name}_normalized.csv") 
-    print(f"✓ Confusion matrices saved for {dataset_name} set (raw & normalized)")
-
-
 # ===============================================================
 # Example Usage
 # ===============================================================

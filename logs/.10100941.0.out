@@ -1,0 +1,119 @@
+===========================================
+Starting Brain Connectivity Classification
+===========================================
+Current directory: /home/sjoon/projects/brain_connectivity_classifier
+Running on host: cpu43
+Start time: Sun Nov  9 02:54:09 PM CET 2025
+===========================================
+
+======================================================================
+              BRAIN CONNECTIVITY CLASSIFICATION PIPELINE              
+======================================================================
+Mode: SAMPLE DATA (quick test)
+Config: config.yaml
+Start: 2025-11-09 14:54:10
+
+Loaded configuration from config.yaml
+Random seeds set to 42
+Config archived → reports/tables/basic_analysis/used_config.yaml
+
+======================================================================
+              STEP 1/6: Load Resting-State Data (PIOP-2)              
+======================================================================
+✓ Schema valid: 10 subjects, 26796 connections
+Loaded 10 samples, 26796 connections
+
+======================================================================
+            STEP 2/6: Extract Features and Preprocess Data            
+======================================================================
+Loading existing region models from data/processed/region_regression_models.pkl
+✓ Models loaded from: data/processed/region_regression_models.pkl
+Fitting preprocessor on resting-state data...
+Preprocessor saved to models/preprocessor.pkl
+
+======================================================================
+         STEP 3/6: Train Brain Region Classifier (GroupKFold)         
+======================================================================
+Training with subject-aware cross-validation...
+
+Running 5-fold GroupKFold cross-validation (by subject)...
+   Fold 1: Train=0.8125, Val=0.4052
+   Fold 2: Train=0.8200, Val=0.3858
+   Fold 3: Train=0.8050, Val=0.4526
+   Fold 4: Train=0.8281, Val=0.3448
+   Fold 5: Train=0.7980, Val=0.4440
+
+CV Results: 0.4065 ± 0.0394
+Training final model on full dataset...
+Final training accuracy: 0.7966
+Pipeline saved: models/brain_region_classifier_regression_predictive.pkl
+Classifier saved to models/brain_region_classifier_regression_predictive.pkl
+
+======================================================================
+                STEP 4/6: Apply to Task Data (PIOP-1)                 
+======================================================================
+✓ Schema valid: 10 subjects, 26796 connections
+✓ Schema valid: 10 subjects, 26796 connections
+Transforming task data using fitted preprocessor...
+Task prediction complete: 2320 samples, 10 subjects
+
+======================================================================
+                STEP 5/6: Save Predictions and Results                
+======================================================================
+✓ Saved: reports/tables/basic_analysis/error_map_rest.csv
+✓ Saved: reports/tables/confusion_matrix/rest_raw.csv
+✓ Saved: reports/tables/confusion_matrix/rest_normalized.csv
+✓ Confusion matrices saved for rest set (raw & normalized)
+✓ Saved: reports/tables/basic_analysis/error_map_task.csv
+✓ Saved: reports/tables/confusion_matrix/task_raw.csv
+✓ Saved: reports/tables/confusion_matrix/task_normalized.csv
+✓ Confusion matrices saved for task set (raw & normalized)
+✓ Saved: reports/tables/basic_analysis/comparison_rest_vs_task.csv
+
+======================================================================
+                  STEP 6/6: Generate Thesis Figures                   
+======================================================================
+✓ Saved figure: reports/figures/basic_analysis/fig1_error_map_rest.png
+✓ Saved figure: reports/figures/basic_analysis/fig3_error_map_task.png
+✓ Saved figure: reports/figures/basic_analysis/fig4_rest_vs_task_comparison.png
+Generated 3 figures in reports/figures/basic_analysis
+
+======================================================================
+                          PIPELINE COMPLETE!                          
+======================================================================
+
+Summary of Results
+==================================================
+Training (Resting-State):
+  Subjects: 10
+  Samples : 2,320
+  Regions : 232
+
+Model Performance (Strategy: regression_predictive):
+  CV Accuracy : 0.4065 ± 0.0394
+  Train Acc.  : 0.7966
+  Chance Level: 0.0043 (232 classes)
+  Improvement : 94.3x above chance
+
+Task Data (PIOP-1):
+  Subjects: 10
+  Samples : 2,320
+
+Output Directories:
+  Models      → models
+  Tables      → reports/tables/basic_analysis
+  Figures     → reports/figures/basic_analysis
+  Processed   → data/processed
+
+Execution Time: 27s
+Completed: 2025-11-09 14:54:38
+
+Provenance logged to reports/tables/basic_analysis/provenance.yaml
+Pipeline executed successfully!
+
+
+===========================================
+Pipeline finished!
+End time: Sun Nov  9 02:54:38 PM CET 2025
+Exit code: 0
+===========================================
