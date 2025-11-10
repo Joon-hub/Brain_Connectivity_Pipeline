@@ -1,7 +1,7 @@
 """
 Data Loading and Validation
 ============================
-Simple, testable functions for loading brain connectivity data.
+functions for loading brain connectivity data.
 """
 
 import pandas as pd

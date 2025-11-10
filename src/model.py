@@ -41,7 +41,6 @@ def create_pipeline(
     ])
     return pipeline
 
-
 def train_pipeline(
     pipeline: Pipeline,
     X: np.ndarray,
@@ -94,7 +93,6 @@ def train_pipeline(
     }
     return pipeline, cv_results
 
-
 def predict_pipeline(pipeline: Pipeline, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     y_pred = pipeline.predict(X)
     y_proba = pipeline.predict_proba(X)
@@ -108,7 +106,6 @@ def save_pipeline(pipeline: Pipeline, filepath: str) -> None:
         pickle.dump(pipeline, f)
     print(f"Pipeline saved: {filepath}")
 
-
 def load_pipeline(filepath: str) -> Pipeline:
     filepath = Path(filepath)
     if not filepath.exists():
@@ -120,7 +117,7 @@ def load_pipeline(filepath: str) -> Pipeline:
 
 
 # ============================================================================
-# WRAPPER CLASS — NOW ACCEPTS `groups=` IN FIT
+# WRAPPER CLASS FOR PIPELINE
 # ============================================================================
 class BrainRegionClassifierPipeline:
     """
@@ -191,10 +188,6 @@ class BrainRegionClassifierPipeline:
     def get_cv_results(self) -> Optional[Dict]:
         return self.cv_results
 
-
-# ============================================================================
-# EXAMPLE USAGE
-# ============================================================================
 if __name__ == "__main__":
     np.random.seed(42)
     n_subjects = 10

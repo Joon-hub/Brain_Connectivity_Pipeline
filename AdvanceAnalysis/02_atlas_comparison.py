@@ -1004,23 +1004,22 @@ def plot_figure3_rest_vs_task(error_data, stats_df, output_path):
 # FIGURE 4: NETWORK-LEVEL DETAIL WITH TIAN II
 # =============================================================================
 
-def plot_figure4_network_detail(error_data, output_path):
+def plot_figure4_error_increase_focus(error_data, output_path):
     """
-    Figure 4: Detailed Network-Level Comparison (2x2 grid)
-    Shows all four atlases including Tian II.
+    Simplified version focusing on error increase with diverging bars.
     """
-    fig, axes = plt.subplots(2, 2, figsize=(16, 14))
-    fig.suptitle('Figure 4: Network-Level Performance Detail (Rest vs Task)', 
-                 fontsize=16, fontweight='bold', y=0.995)
+    fig, axes = plt.subplots(2, 2, figsize=(18, 14))
+    fig.suptitle('Task-Induced Error Increase by Network (Diverging View)', 
+                 fontsize=18, fontweight='bold', y=0.995)
     
-    comparisons = [
+    atlas_configs = [
         ('N7 Cortical', 'N7_rest', 'N7_task', axes[0, 0], 'A', 10),
         ('N17 Cortical', 'N17_rest', 'N17_task', axes[0, 1], 'B', 8),
         ('Tian I Subcortical', 'TianI_rest', 'TianI_task', axes[1, 0], 'C', 10),
         ('Tian II Subcortical', 'TianII_rest', 'TianII_task', axes[1, 1], 'D', 8)
     ]
     
-    for name, rest_key, task_key, ax, panel, fontsize in comparisons:
+    for name, rest_key, task_key, ax, panel, fontsize in atlas_configs:
         if rest_key in error_data and task_key in error_data:
             rest_df = error_data[rest_key]
             task_df = error_data[task_key]
@@ -1032,43 +1031,59 @@ def plot_figure4_network_detail(error_data, output_path):
             )
             
             if len(merged) > 0:
-                merged['avg'] = (merged['error_rate_rest'] + merged['error_rate_task']) / 2
-                merged = merged.sort_values('avg', ascending=False)
+                merged['error_increase'] = merged['error_rate_task'] - merged['error_rate_rest']
+                merged = merged.sort_values('error_increase', ascending=False)
                 
                 y_pos = np.arange(len(merged))
                 
-                ax.barh(y_pos - 0.2, merged['error_rate_rest'], 0.4, label='Rest',
-                       color=COLORS['rest'], alpha=0.85, edgecolor='black', linewidth=1)
-                ax.barh(y_pos + 0.2, merged['error_rate_task'], 0.4, label='Task',
-                       color=COLORS['task'], alpha=0.85, edgecolor='black', linewidth=1)
+                # Diverging color scheme
+                colors = [COLORS['increase'] if x > 0 else COLORS['decrease'] 
+                         for x in merged['error_increase']]
                 
-                # Highlight largest differences
-                merged['diff'] = merged['error_rate_task'] - merged['error_rate_rest']
-                top_3_idx = merged['diff'].nlargest(3).index
+                bars = ax.barh(y_pos, merged['error_increase'], 
+                             color=colors, alpha=0.85, edgecolor='black', linewidth=0.8)
                 
+                # Add zero line
+                ax.axvline(0, color='black', linewidth=2, linestyle='--', alpha=0.7)
+                
+                # Add significance markers
                 for i, (idx, row) in enumerate(merged.iterrows()):
-                    if idx in top_3_idx:
-                        ax.add_patch(plt.Rectangle(
-                            (0, i - 0.4), ax.get_xlim()[1], 0.8,
-                            facecolor='yellow', alpha=0.2, zorder=0
-                        ))
+                    if abs(row['error_increase']) > 0.10:
+                        marker = '***'
+                    elif abs(row['error_increase']) > 0.05:
+                        marker = '**'
+                    else:
+                        marker = ''
+                    
+                    if marker:
+                        ax.text(row['error_increase'], i, f' {marker}',
+                               va='center', ha='left' if row['error_increase'] > 0 else 'right',
+                               fontsize=10, fontweight='bold', color='darkred')
                 
                 ax.set_yticks(y_pos)
                 ax.set_yticklabels(merged['network'], fontsize=fontsize)
-                ax.set_xlabel('Error Rate', fontweight='bold', fontsize=11)
-                ax.set_title(f'{panel}) {name}\nError Rates by Network', 
-                            fontweight='bold', fontsize=12, pad=10)
-                ax.legend(fontsize=10, loc='lower right')
-                ax.grid(axis='x', alpha=0.3, linestyle='--')
+                ax.set_xlabel('Error Increase (Task - Rest)', fontweight='bold', fontsize=11)
+                ax.set_title(f'{panel}) {name}', fontweight='bold', fontsize=13, pad=10)
+                ax.grid(axis='x', alpha=0.3, linestyle='--', linewidth=0.5)
                 ax.invert_yaxis()
+                
+                # Add legend
+                legend_elements = [
+                    plt.Rectangle((0, 0), 1, 1, fc=COLORS['increase'], alpha=0.85, 
+                                 edgecolor='black', label='Task-Engaged'),
+                    plt.Rectangle((0, 0), 1, 1, fc=COLORS['decrease'], alpha=0.85,
+                                 edgecolor='black', label='Task-Suppressed')
+                ]
+                ax.legend(handles=legend_elements, fontsize=9, loc='best')
         else:
             ax.text(0.5, 0.5, f'No {name} data', ha='center', va='center', fontsize=12)
-            ax.set_title(f'{panel}) {name}', fontweight='bold', fontsize=12, pad=10)
+            ax.set_title(f'{panel}) {name}', fontweight='bold', fontsize=13)
+            ax.axis('off')
     
     plt.tight_layout()
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"  ✓ Saved: {output_path.name}")
+    print(f"  ✓ Saved diverging figure: {output_path.name}")
 
 
 # =============================================================================

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Summary Report Generator - Simplified Version
+Summary Report Generator 
 Creates summary statistics, key findings, and visualization from analysis results.
 """
 
@@ -343,79 +343,6 @@ F) KEY FINDINGS
     plt.close()
     print(f"✓ Saved: {output_path}")
 
-
-def create_guide(findings, output_path):
-    """Generate interpretation guide for thesis."""
-    guide = f"""
-THESIS INTERPRETATION GUIDE
-===========================
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}
-
-KEY FINDINGS
-============
-"""
-    
-    for i, row in findings.iterrows():
-        guide += f"""
-{i+1}. {row['finding'].upper()}
-   Result: {row['result']}
-   Meaning: {row['interpretation']}
-   Importance: {row['significance']}
-"""
-    
-    guide += """
-
-MAIN THEMES FOR DISCUSSION
-==========================
-
-1. CONNECTIVITY FINGERPRINTS
-   - Networks have unique patterns
-   - Can identify regions reliably
-   - Supports individual differences research
-
-2. TASK REORGANIZATION
-   - Networks flexible during tasks
-   - Connectivity changes with demands
-   - Novel way to detect engagement
-
-3. BRAIN HIERARCHY
-   - Sensory networks stable
-   - Cognitive networks flexible
-   - Matches known organization
-
-4. METHODOLOGY
-   - Validates atlas choices
-   - Practical comparison tool
-   - Clinical applications possible
-
-
-KEY PAPERS TO CITE
-==================
-
-Fingerprinting:
-- Finn et al. (2015) - Connectome fingerprinting
-- Gratton et al. (2018) - Network stability
-
-Task Effects:
-- Cole et al. (2014) - Multi-task connectivity
-- Bassett et al. (2011) - Dynamic reconfiguration
-
-Atlases:
-- Schaefer et al. (2018) - Cortical parcellation
-- Tian et al. (2020) - Subcortical atlas
-
-Hierarchy:
-- Mesulam (1998) - Brain organization
-- Margulies et al. (2016) - Gradients
-
-"""
-    
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, 'w') as f:
-        f.write(guide)
-    print(f"✓ Saved: {output_path}")
-
-
 def main():
     print("="*60)
     print("SUMMARY REPORT GENERATOR")
@@ -468,26 +395,13 @@ def main():
     
     print("\n3. Summary figure...")
     plot_summary(results, output_dir / 'master_summary.png')
-    
-    print("\n4. Interpretation guide...")
-    create_guide(findings, output_dir / 'interpretation_guide.txt')
-    
+        
     # Done
     print("\n" + "="*60)
     print("✅ COMPLETE!")
     print("="*60)
     print(f"""
-Output Files:
-  • {output_dir}/summary_statistics.csv
-  • {output_dir}/key_findings.csv
-  • {output_dir}/master_summary.png
-  • {output_dir}/interpretation_guide.txt
 
-Next Steps:
-  1. Review key findings
-  2. Use figure in thesis/presentations
-  3. Read interpretation guide
-  4. Write discussion section
 """)
     
     return 0

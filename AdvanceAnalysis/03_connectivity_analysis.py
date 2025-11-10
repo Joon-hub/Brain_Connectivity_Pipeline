@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-Connectivity Analysis - FULL TRIPLE ANALYSIS
-============================================
+Connectivity Analysis 
+======================
 Generates THREE separate analyses:
 1. N7 Cortical (Schaefer 7-network)
 2. Tian Scale I Subcortical
 3. Combined N7 + Tian I
-All with full statistics, no bias, correct mapping.
 """
 
 import sys

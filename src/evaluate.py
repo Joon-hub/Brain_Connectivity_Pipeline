@@ -11,10 +11,6 @@ from pathlib import Path
 from typing import Dict, List
 
 
-# ===============================================================
-# Core Metrics
-# ===============================================================
-
 def calculate_error_map(
     y_true: np.ndarray,
     y_pred: np.ndarray,

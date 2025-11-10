@@ -1,0 +1,145 @@
+===========================================
+Starting Brain Connectivity Classification
+===========================================
+Current directory: /home/sjoon/projects/brain_connectivity_classifier
+Running on host: cpu43
+Start time: Mon Nov 10 11:40:15 AM CET 2025
+===========================================
+
+======================================================================
+              BRAIN CONNECTIVITY CLASSIFICATION PIPELINE              
+======================================================================
+Mode: FULL DATA
+Config: config.yaml
+Start: 2025-11-10 11:40:16
+
+Loaded configuration from config.yaml
+Random seeds set to 42
+Config archived → reports/tables/basic_analysis/used_config.yaml
+
+======================================================================
+              STEP 1/6: Load Resting-State Data (PIOP-2)              
+======================================================================
+✓ Schema valid: 224 subjects, 26796 connections
+Loaded 224 samples, 26796 connections
+
+======================================================================
+            STEP 2/6: Extract Features and Preprocess Data            
+======================================================================
+Training region-specific regression models for diagonal imputation...
+Training region-specific diagonal prediction models...
+  Trained 10/232 models...
+  Trained 20/232 models...
+  Trained 30/232 models...
+  Trained 40/232 models...
+  Trained 50/232 models...
+  Trained 60/232 models...
+  Trained 70/232 models...
+  Trained 80/232 models...
+  Trained 90/232 models...
+  Trained 100/232 models...
+  Trained 110/232 models...
+  Trained 120/232 models...
+  Trained 130/232 models...
+  Trained 140/232 models...
+  Trained 150/232 models...
+  Trained 160/232 models...
+  Trained 170/232 models...
+  Trained 180/232 models...
+  Trained 190/232 models...
+  Trained 200/232 models...
+  Trained 210/232 models...
+  Trained 220/232 models...
+  Trained 230/232 models...
+✓ Trained 232 region-specific models
+✓ Models saved to: data/processed/region_regression_models.pkl
+Region models saved to data/processed/region_regression_models.pkl
+Fitting preprocessor on resting-state data...
+Preprocessor saved to models/preprocessor.pkl
+
+======================================================================
+         STEP 3/6: Train Brain Region Classifier (GroupKFold)         
+======================================================================
+Training with subject-aware cross-validation...
+
+Running 5-fold GroupKFold cross-validation (by subject)...
+   Fold 1: Train=0.8100, Val=0.7117
+   Fold 2: Train=0.8084, Val=0.7180
+   Fold 3: Train=0.8087, Val=0.7085
+   Fold 4: Train=0.8116, Val=0.7105
+   Fold 5: Train=0.8118, Val=0.7006
+
+CV Results: 0.7099 ± 0.0056
+Training final model on full dataset...
+Final training accuracy: 0.8122
+Pipeline saved: models/brain_region_classifier_regression_predictive.pkl
+Classifier saved to models/brain_region_classifier_regression_predictive.pkl
+
+======================================================================
+                STEP 4/6: Apply to Task Data (PIOP-1)                 
+======================================================================
+✓ Schema valid: 200 subjects, 26796 connections
+✓ Schema valid: 200 subjects, 26796 connections
+Transforming task data using fitted preprocessor...
+Task prediction complete: 46400 samples, 200 subjects
+
+======================================================================
+                STEP 5/6: Save Predictions and Results                
+======================================================================
+✓ Saved: reports/tables/basic_analysis/error_map_rest.csv
+✓ Saved: reports/tables/confusion_matrix/rest_raw.csv
+✓ Saved: reports/tables/confusion_matrix/rest_normalized.csv
+✓ Confusion matrices saved for rest set (raw & normalized)
+✓ Saved: reports/tables/basic_analysis/error_map_task.csv
+✓ Saved: reports/tables/confusion_matrix/task_raw.csv
+✓ Saved: reports/tables/confusion_matrix/task_normalized.csv
+✓ Confusion matrices saved for task set (raw & normalized)
+✓ Saved: reports/tables/basic_analysis/comparison_rest_vs_task.csv
+
+======================================================================
+                  STEP 6/6: Generate Thesis Figures                   
+======================================================================
+✓ Saved figure: reports/figures/basic_analysis/fig1_error_map_rest.png
+✓ Saved figure: reports/figures/basic_analysis/fig3_error_map_task.png
+✓ Saved figure: reports/figures/basic_analysis/fig4_rest_vs_task_comparison.png
+Generated 3 figures in reports/figures/basic_analysis
+
+======================================================================
+                          PIPELINE COMPLETE!                          
+======================================================================
+
+Summary of Results
+==================================================
+Training (Resting-State):
+  Subjects: 224
+  Samples : 51,968
+  Regions : 232
+
+Model Performance (Strategy: regression_predictive):
+  CV Accuracy : 0.7099 ± 0.0056
+  Train Acc.  : 0.8122
+  Chance Level: 0.0043 (232 classes)
+  Improvement : 164.7x above chance
+
+Task Data (PIOP-1):
+  Subjects: 200
+  Samples : 46,400
+
+Output Directories:
+  Models      → models
+  Tables      → reports/tables/basic_analysis
+  Figures     → reports/figures/basic_analysis
+  Processed   → data/processed
+
+Execution Time: 21m 49s
+Completed: 2025-11-10 12:02:06
+
+Provenance logged to reports/tables/basic_analysis/provenance.yaml
+Pipeline executed successfully!
+
+
+===========================================
+Pipeline finished!
+End time: Mon Nov 10 12:02:07 PM CET 2025
+Exit code: 0
+===========================================

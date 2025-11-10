@@ -2,7 +2,7 @@
 Feature Engineering: Connectivity Matrix Preprocessing
 ======================================================
 Reconstruct connectivity matrices and handle diagonal imputation.
-Now includes sklearn-compatible transformers for Pipeline integration.
+includes sklearn-compatible transformers for Pipeline integration.
 Includes regression model training for predictive diagonal imputation.
 """
 
