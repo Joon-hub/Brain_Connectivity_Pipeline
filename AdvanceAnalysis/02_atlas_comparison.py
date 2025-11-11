@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Atlas Comparison Analysis - Ultra Clean Graphs
-Graphs are completely clean with no statistical annotations.
+Atlas Comparison Analysis
 All statistics are logged to console and saved in CSV tables.
 """
 
@@ -291,12 +290,11 @@ def annotate_outliers(ax, data, position, labels, n_top=3, direction='right'):
 
 
 # =============================================================================
-# FIGURE 1: RESOLUTION EFFECTS (ULTRA CLEAN)
+# FIGURE 1: RESOLUTION EFFECTS 
 # =============================================================================
 
 def plot_resolution_effects(error_data, output_path):
     """
-    Ultra clean resolution comparison - no statistical annotations on graphs.
     All statistics logged to console and saved in tables.
     """
     fig = plt.figure(figsize=(18, 12))
@@ -465,12 +463,11 @@ def plot_resolution_effects(error_data, output_path):
 
 
 # =============================================================================
-# FIGURE 2: CORTICAL VS SUBCORTICAL (ULTRA CLEAN)
+# FIGURE 2: CORTICAL VS SUBCORTICAL 
 # =============================================================================
 
 def plot_cortical_vs_subcortical(error_data, output_path):
     """
-    Ultra clean cortical vs subcortical comparison.
     No statistical annotations on graphs, full stats logged.
     """
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
@@ -530,12 +527,11 @@ def plot_cortical_vs_subcortical(error_data, output_path):
 
 
 # =============================================================================
-# FIGURE 3: TASK EFFECTS (ULTRA CLEAN)
+# FIGURE 3: TASK EFFECTS 
 # =============================================================================
 
 def plot_task_effects(error_data, output_path):
     """
-    Ultra clean task effects - no statistical annotations.
     Full paired statistics logged to console.
     """
     fig, axes = plt.subplots(2, 2, figsize=(18, 14))
@@ -575,10 +571,21 @@ def plot_task_effects(error_data, output_path):
                 # Create paired plot
                 y_pos = np.arange(len(merged))
                 
-                ax.barh(y_pos - 0.2, rest_vals, 0.4, label='Rest',
+                bars_rest = ax.barh(y_pos - 0.2, rest_vals, 0.4, label='Rest',
                        color=COLORS['rest'], alpha=0.8, edgecolor='black', linewidth=1)
-                ax.barh(y_pos + 0.2, task_vals, 0.4, label='Task',
+                bars_task = ax.barh(y_pos + 0.2, task_vals, 0.4, label='Task',
                        color=COLORS['task'], alpha=0.8, edgecolor='black', linewidth=1)
+                
+                # Add value labels on bars
+                for i, (rest_val, task_val) in enumerate(zip(rest_vals, task_vals)):
+                    # Rest value
+                    ax.text(rest_val, i - 0.2, f'{rest_val:.3f}', 
+                           va='center', ha='left' if rest_val > 0.02 else 'right',
+                           fontsize=8, fontweight='bold', color='black')
+                    # Task value
+                    ax.text(task_val, i + 0.2, f'{task_val:.3f}',
+                           va='center', ha='left' if task_val > 0.02 else 'right',
+                           fontsize=8, fontweight='bold', color='black')
                 
                 # Connect pairs with lines
                 for i, (r, t) in enumerate(zip(rest_vals, task_vals)):
@@ -720,7 +727,6 @@ def main():
     print("="*80)
     print("ATLAS COMPARISON - ULTRA CLEAN GRAPHS")
     print("="*80)
-    print("\nGraphs are completely clean with NO statistical annotations")
     print("All detailed statistics are logged below and saved in CSV tables\n")
     
     # Load data
@@ -803,9 +809,8 @@ Statistical Tables ({output_tables}):
   • resolution_statistics.csv
   • system_statistics.csv
   • task_statistics.csv
-
 {"="*80}
-Perfect: Ultra clean graphs + Complete statistics documented!
+Perfect: graphs + Complete statistics documented!
 {"="*80}
 """)
     
