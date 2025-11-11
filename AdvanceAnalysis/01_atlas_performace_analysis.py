@@ -2,6 +2,8 @@
 """
 Atlas Performance Analysis - Simplified with 2x2 Plots
 Shows Rest vs Task with Raw and Normalized confusion matrices.
+
+MODIFIED VERSION: Uses existing predictions from CSV files instead of retraining model.
 """
 
 import sys
@@ -15,8 +17,7 @@ import matplotlib.pyplot as plt
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 from data import load_connectivity_data, extract_connection_columns
-from features import create_classification_dataset
-from model import predict, load_model
+from features import extract_regions
 from utils import load_config, set_random_seeds, print_section
 
 
@@ -421,7 +422,7 @@ def main():
     parser.add_argument('--sample', action='store_true')
     args = parser.parse_args()
     
-    print_section("ATLAS PERFORMANCE ANALYSIS - SIMPLIFIED")
+    print_section("ATLAS PERFORMANCE ANALYSIS - USING EXISTING PREDICTIONS")
     
     config = load_config(args.config)
     set_random_seeds(config.get('random_seed', 42))
@@ -439,37 +440,43 @@ def main():
     df_task = load_connectivity_data(piop1_file)
     conn_cols = extract_connection_columns(df_rest)
     
-    # Create datasets
-    print_section("Creating Datasets")
-    X_rest, y_rest, _, region_list = create_classification_dataset(
-        df_rest, conn_cols,
-        diagonal_strategy=config.get('diagonal_strategy', 'network_mean')
-    )
+    # Extract region information (no feature creation needed)
+    print_section("Extracting Region Information")
+    region_list, region_to_idx, n_regions = extract_regions(conn_cols)
     
-    X_task, y_task, _, _ = create_classification_dataset(
-        df_task, conn_cols,
-        diagonal_strategy=config.get('diagonal_strategy', 'network_mean')
-    )
+    print(f"Regions: {n_regions}")
+    print(f"Rest samples in data: {len(df_rest)}")
+    print(f"Task samples in data: {len(df_task)}")
     
-    print(f"Regions: {len(region_list)}")
-    print(f"Rest samples: {len(X_rest)}")
-    print(f"Task samples: {len(X_task)}")
+    # Load existing predictions
+    print_section("Loading Existing Predictions")
+    predictions_dir = Path(config.get('output_dirs', {}).get('processed', 'data/processed'))
     
-    # Load model
-    print_section("Loading Model")
-    model_path = Path(config['output_dirs']['models']) / 'trained_model.pkl'
+    pred_rest_path = predictions_dir / 'predictions_train.csv'
+    pred_task_path = predictions_dir / 'predictions_task.csv'
     
-    if not model_path.exists():
-        print("✗ Model not found. Train model first.")
+    if not pred_rest_path.exists():
+        print(f"✗ Rest predictions not found: {pred_rest_path}")
+        print("  Run the main pipeline first to generate predictions.")
         return 1
     
-    model, scaler = load_model(str(model_path))
-    print("✓ Model loaded")
+    if not pred_task_path.exists():
+        print(f"✗ Task predictions not found: {pred_task_path}")
+        print("  Run the main pipeline first to generate predictions.")
+        return 1
     
-    # Predictions
-    print_section("Generating Predictions")
-    y_rest_pred, _ = predict(model, scaler, X_rest)
-    y_task_pred, _ = predict(model, scaler, X_task)
+    # Load prediction CSVs
+    df_pred_rest = pd.read_csv(pred_rest_path)
+    df_pred_task = pd.read_csv(pred_task_path)
+    
+    print(f"✓ Loaded rest predictions: {len(df_pred_rest)} samples")
+    print(f"✓ Loaded task predictions: {len(df_pred_task)} samples")
+    
+    # Extract true and predicted labels
+    y_rest = df_pred_rest['true_region'].values
+    y_rest_pred = df_pred_rest['predicted_region'].values
+    y_task = df_pred_task['true_region'].values
+    y_task_pred = df_pred_task['predicted_region'].values
     
     print(f"Rest accuracy: {accuracy_score(y_rest, y_rest_pred):.4f}")
     print(f"Task accuracy: {accuracy_score(y_task, y_task_pred):.4f}")
@@ -638,6 +645,7 @@ Figures: {figures_dir}
 ✓ All analyses use 2×2 plots (Rest/Task × Raw/Normalized)
 ✓ Normalized confusion matrices show row-wise percentages
 ✓ Easy comparison of rest vs task performance
+✓ Uses existing predictions from main pipeline (no retraining)
 """)
     
     return 0

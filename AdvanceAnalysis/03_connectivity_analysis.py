@@ -6,6 +6,8 @@ Generates THREE separate analyses:
 1. N7 Cortical (Schaefer 7-network)
 2. Tian Scale I Subcortical
 3. Combined N7 + Tian I
+
+UPDATED: Uses existing functions from features.py instead of redefining them.
 """
 
 import sys
@@ -19,6 +21,7 @@ import seaborn as sns
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 from data import load_connectivity_data, extract_connection_columns
+from features import extract_regions, reconstruct_connectivity_matrix
 from utils import load_config, set_random_seeds, print_section
 
 plt.style.use('seaborn-v0_8-paper')
@@ -85,34 +88,10 @@ def map_to_combined_networks(region_list):
 
 
 # =============================================================================
-# MATRIX & CONNECTIVITY
+# CONNECTIVITY ANALYSIS
 # =============================================================================
-def extract_regions_from_connections(connection_columns):
-    regions = set()
-    for col in connection_columns:
-        if '~' in col:
-            a, b = col.split('~')
-            regions.add(a.strip())
-            regions.add(b.strip())
-    region_list = sorted(list(regions))
-    return region_list, {r: i for i, r in enumerate(region_list)}
-
-
-def reconstruct_connectivity_matrix(subject_row, connection_columns, region_to_idx, n_regions):
-    matrix = np.zeros((n_regions, n_regions), dtype=float)
-    for col, value in zip(connection_columns, subject_row):
-        if '~' not in col:
-            continue
-        a, b = [x.strip() for x in col.split('~')]
-        if a in region_to_idx and b in region_to_idx:
-            i, j = region_to_idx[a], region_to_idx[b]
-            matrix[i, j] = value
-            matrix[j, i] = value
-    np.fill_diagonal(matrix, 1.0)
-    return matrix
-
-
 def calculate_inter_network_connectivity(connectivity_matrix, region_list, network_mapping):
+    """Calculate mean connectivity between networks."""
     networks = sorted({v for v in network_mapping.values() if v})
     n_net = len(networks)
     net_conn = np.zeros((n_net, n_net))
@@ -132,14 +111,14 @@ def calculate_inter_network_connectivity(connectivity_matrix, region_list, netwo
     return pd.DataFrame(net_conn, index=networks, columns=networks)
 
 
-def compute_group_connectivity(df, connection_columns, region_list, network_mapping):
-    region_to_idx = {r: i for i, r in enumerate(region_list)}
+def compute_group_connectivity(df, connection_columns, region_list, region_to_idx, network_mapping):
+    """Compute group-average connectivity matrices."""
     n_regions = len(region_list)
     n_subjects = len(df)
     group_mat = np.zeros((n_regions, n_regions))
 
     for idx in range(n_subjects):
-        values = df.iloc[idx, 1:].values.astype(float)
+        values = df.iloc[idx][connection_columns].values.astype(float)
         mat = reconstruct_connectivity_matrix(values, connection_columns, region_to_idx, n_regions)
         group_mat += mat
 
@@ -152,6 +131,7 @@ def compute_group_connectivity(df, connection_columns, region_list, network_mapp
 # TASK MODULATION
 # =============================================================================
 def identify_all_changed_connections(rest_matrix, task_matrix, region_list, network_mapping):
+    """Identify all connectivity changes between rest and task."""
     n = len(region_list)
     change_matrix = task_matrix - rest_matrix
     triu = np.triu_indices(n, k=1)
@@ -175,6 +155,7 @@ def identify_all_changed_connections(rest_matrix, task_matrix, region_list, netw
 
 
 def categorize_network_pair_type(net_i, net_j, is_cortical_analysis=False):
+    """Categorize connection type (cortical-cortical, subcortical-subcortical, or mixed)."""
     if is_cortical_analysis:
         return 'Cortical-Cortical'
     cortical_nets = {'Visual', 'Somatomotor', 'DorsalAttention', 'VentralAttention',
@@ -194,6 +175,7 @@ def categorize_network_pair_type(net_i, net_j, is_cortical_analysis=False):
 # =============================================================================
 def plot_connectivity_analysis(rest_net, task_net, change_net, all_changes_df,
                                output_path, title_prefix='', is_cortical=False):
+    """Create comprehensive connectivity analysis figure."""
     fig = plt.figure(figsize=(18, 12))
     gs = fig.add_gridspec(2, 3, hspace=0.35, wspace=0.35)
 
@@ -332,8 +314,9 @@ def main():
     print(f"Loaded: {len(df_rest)} rest, {len(df_task)} task subjects")
     print(f"Found {len(connection_columns):,} connections")
 
-    region_list, _ = extract_regions_from_connections(connection_columns)
-    print(f"Extracted {len(region_list)} regions")
+    # Use existing extract_regions function
+    region_list, region_to_idx, n_regions = extract_regions(connection_columns)
+    print(f"Extracted {n_regions} regions")
 
     out_tables = Path('reports/tables/connectivity_analysis')
     out_figures = Path('reports/figures/connectivity_analysis')
@@ -348,8 +331,10 @@ def main():
     if not n7_mapping:
         print("No cortical regions mapped. Skipping N7.")
     else:
-        n7_rest_net, n7_rest_mat = compute_group_connectivity(df_rest, connection_columns, region_list, n7_mapping)
-        n7_task_net, n7_task_mat = compute_group_connectivity(df_task, connection_columns, region_list, n7_mapping)
+        n7_rest_net, n7_rest_mat = compute_group_connectivity(
+            df_rest, connection_columns, region_list, region_to_idx, n7_mapping)
+        n7_task_net, n7_task_mat = compute_group_connectivity(
+            df_task, connection_columns, region_list, region_to_idx, n7_mapping)
         n7_change_net = n7_task_net - n7_rest_net
         n7_changes = identify_all_changed_connections(n7_rest_mat, n7_task_mat, region_list, n7_mapping)
 
@@ -372,8 +357,10 @@ def main():
     if not tian_mapping:
         print("No subcortical regions mapped. Skipping Tian I.")
     else:
-        tian_rest_net, tian_rest_mat = compute_group_connectivity(df_rest, connection_columns, region_list, tian_mapping)
-        tian_task_net, tian_task_mat = compute_group_connectivity(df_task, connection_columns, region_list, tian_mapping)
+        tian_rest_net, tian_rest_mat = compute_group_connectivity(
+            df_rest, connection_columns, region_list, region_to_idx, tian_mapping)
+        tian_task_net, tian_task_mat = compute_group_connectivity(
+            df_task, connection_columns, region_list, region_to_idx, tian_mapping)
         tian_change_net = tian_task_net - tian_rest_net
         tian_changes = identify_all_changed_connections(tian_rest_mat, tian_task_mat, region_list, tian_mapping)
 
@@ -393,8 +380,10 @@ def main():
     # ===================================
     print_section("3. COMBINED N7 + TIAN I ANALYSIS")
     combined_mapping = map_to_combined_networks(region_list)
-    combined_rest_net, combined_rest_mat = compute_group_connectivity(df_rest, connection_columns, region_list, combined_mapping)
-    combined_task_net, combined_task_mat = compute_group_connectivity(df_task, connection_columns, region_list, combined_mapping)
+    combined_rest_net, combined_rest_mat = compute_group_connectivity(
+        df_rest, connection_columns, region_list, region_to_idx, combined_mapping)
+    combined_task_net, combined_task_mat = compute_group_connectivity(
+        df_task, connection_columns, region_list, region_to_idx, combined_mapping)
     combined_change_net = combined_task_net - combined_rest_net
     combined_changes = identify_all_changed_connections(combined_rest_mat, combined_task_mat, region_list, combined_mapping)
 

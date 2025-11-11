@@ -1,0 +1,9 @@
+,DefaultMode,DorsalAttention,FrontoParietal,Limbic,Somatomotor,Subcortical,VentralAttention,Visual
+DefaultMode,6795,21,280,98,7,80,45,18
+DorsalAttention,3,3967,65,15,120,20,154,49
+FrontoParietal,156,73,6887,67,14,50,125,10
+Limbic,44,23,94,2485,8,64,59,13
+Somatomotor,11,175,16,24,6339,76,111,34
+Subcortical,114,16,101,58,27,5942,33,14
+VentralAttention,18,194,121,44,76,60,4657,14
+Visual,15,49,7,22,47,40,14,4594

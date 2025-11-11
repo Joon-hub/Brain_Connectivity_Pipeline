@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Atlas Comparison Analysis - Enhanced Publication-Ready Figures
-Creates comprehensive multi-panel figures with statistical annotations.
-Includes full Tian II analysis and better visual explanations.
+Atlas Comparison Analysis - Ultra Clean Graphs
+Graphs are completely clean with no statistical annotations.
+All statistics are logged to console and saved in CSV tables.
 """
 
 import sys
@@ -12,16 +12,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sns
+from scipy import stats
 
 plt.style.use('seaborn-v0_8-paper')
 sns.set_palette("husl")
 
-# Custom color schemes
+# Professional color scheme
 COLORS = {
-    'rest': '#2E86AB',  # Deep blue
-    'task': '#A23B72',  # Burgundy
-    'cortical': '#06A77D',  # Teal
-    'subcortical': '#F18F01',  # Orange
+    'rest': '#2E86AB',
+    'task': '#A23B72',
+    'cortical': '#06A77D',
+    'subcortical': '#F18F01',
     'n7': '#4A90E2',
     'n17': '#E24A4A',
     'tian1': '#F39C12',
@@ -56,1034 +57,659 @@ def load_error_rates(tables_dir):
         filepath = tables_dir / filename
         if filepath.exists():
             data[key] = pd.read_csv(filepath)
-            print(f"  ✓ {filename} ({len(data[key])} networks)")
+            print(f"  ✓ {filename}")
     
     return data
 
 
 # =============================================================================
-# STATISTICS
+# STATISTICAL TESTS
 # =============================================================================
 
-def compare_resolution(error_data):
-    """Compare coarse vs fine parcellations with descriptive statistics."""
-    results = []
-    
-    # N7 vs N17
-    for cond, n7_key, n17_key in [
-        ('Rest', 'N7_rest', 'N17_rest'),
-        ('Task', 'N7_task', 'N17_task')
-    ]:
-        if n7_key in error_data and n17_key in error_data:
-            n7 = error_data[n7_key]['error_rate']
-            n17 = error_data[n17_key]['error_rate']
-            
-            # Effect size
-            pooled_std = np.sqrt(((len(n7)-1)*n7.std()**2 + 
-                                 (len(n17)-1)*n17.std()**2) / 
-                                (len(n7) + len(n17) - 2))
-            cohens_d = (n17.mean() - n7.mean()) / pooled_std
-            
-            results.append({
-                'comparison': f'Cortical N7 vs N17',
-                'condition': cond,
-                'coarse_mean': n7.mean(),
-                'coarse_std': n7.std(),
-                'fine_mean': n17.mean(),
-                'fine_std': n17.std(),
-                'difference': n17.mean() - n7.mean(),
-                'pct_change': (n17.mean() - n7.mean()) / n7.mean() * 100,
-                'cohens_d': cohens_d,
-                'n_coarse': len(n7),
-                'n_fine': len(n17)
-            })
-    
-    # Tian I vs II
-    for cond, t1_key, t2_key in [
-        ('Rest', 'TianI_rest', 'TianII_rest'),
-        ('Task', 'TianI_task', 'TianII_task')
-    ]:
-        if t1_key in error_data and t2_key in error_data:
-            t1 = error_data[t1_key]['error_rate']
-            t2 = error_data[t2_key]['error_rate']
-            
-            pooled_std = np.sqrt(((len(t1)-1)*t1.std()**2 + 
-                                 (len(t2)-1)*t2.std()**2) / 
-                                (len(t1) + len(t2) - 2))
-            cohens_d = (t2.mean() - t1.mean()) / pooled_std
-            
-            results.append({
-                'comparison': f'Subcortical Tian I vs II',
-                'condition': cond,
-                'coarse_mean': t1.mean(),
-                'coarse_std': t1.std(),
-                'fine_mean': t2.mean(),
-                'fine_std': t2.std(),
-                'difference': t2.mean() - t1.mean(),
-                'pct_change': (t2.mean() - t1.mean()) / t1.mean() * 100,
-                'cohens_d': cohens_d,
-                'n_coarse': len(t1),
-                'n_fine': len(t2)
-            })
-    
-    return pd.DataFrame(results)
-
-
-def compare_cortical_subcortical(error_data):
-    """Compare cortical vs subcortical performance with descriptive statistics."""
-    results = []
-    
-    # Compare N7 vs Tian I
-    for cond, n7_key, tian_key in [
-        ('Rest', 'N7_rest', 'TianI_rest'),
-        ('Task', 'N7_task', 'TianI_task')
-    ]:
-        if n7_key in error_data and tian_key in error_data:
-            cort = error_data[n7_key]['error_rate']
-            subcort = error_data[tian_key]['error_rate']
-            
-            pooled_std = np.sqrt(((len(cort)-1)*cort.std()**2 + 
-                                 (len(subcort)-1)*subcort.std()**2) / 
-                                (len(cort) + len(subcort) - 2))
-            cohens_d = (subcort.mean() - cort.mean()) / pooled_std
-            
-            results.append({
-                'comparison': 'N7 vs Tian I',
-                'condition': cond,
-                'cortical_mean': cort.mean(),
-                'cortical_std': cort.std(),
-                'subcortical_mean': subcort.mean(),
-                'subcortical_std': subcort.std(),
-                'difference': subcort.mean() - cort.mean(),
-                'pct_difference': (subcort.mean() - cort.mean()) / cort.mean() * 100,
-                'cohens_d': cohens_d
-            })
-    
-    # Compare N17 vs Tian II
-    for cond, n17_key, tian_key in [
-        ('Rest', 'N17_rest', 'TianII_rest'),
-        ('Task', 'N17_task', 'TianII_task')
-    ]:
-        if n17_key in error_data and tian_key in error_data:
-            cort = error_data[n17_key]['error_rate']
-            subcort = error_data[tian_key]['error_rate']
-            
-            pooled_std = np.sqrt(((len(cort)-1)*cort.std()**2 + 
-                                 (len(subcort)-1)*subcort.std()**2) / 
-                                (len(cort) + len(subcort) - 2))
-            cohens_d = (subcort.mean() - cort.mean()) / pooled_std
-            
-            results.append({
-                'comparison': 'N17 vs Tian II',
-                'condition': cond,
-                'cortical_mean': cort.mean(),
-                'cortical_std': cort.std(),
-                'subcortical_mean': subcort.mean(),
-                'subcortical_std': subcort.std(),
-                'difference': subcort.mean() - cort.mean(),
-                'pct_difference': (subcort.mean() - cort.mean()) / cort.mean() * 100,
-                'cohens_d': cohens_d
-            })
-    
-    return pd.DataFrame(results)
-
-
-def compare_rest_task(error_data):
-    """Compare rest vs task conditions with descriptive statistics."""
-    results = []
-    
-    comparisons = [
-        ('N7 Cortical', 'N7_rest', 'N7_task'),
-        ('N17 Cortical', 'N17_rest', 'N17_task'),
-        ('Tian I Subcortical', 'TianI_rest', 'TianI_task'),
-        ('Tian II Subcortical', 'TianII_rest', 'TianII_task'),
-        ('Combined', 'Combined_rest', 'Combined_task')
-    ]
-    
-    for name, rest_key, task_key in comparisons:
-        if rest_key in error_data and task_key in error_data:
-            rest_df = error_data[rest_key]
-            task_df = error_data[task_key]
-            
-            merged = pd.merge(
-                rest_df[['network', 'error_rate']],
-                task_df[['network', 'error_rate']],
-                on='network',
-                suffixes=('_rest', '_task')
-            )
-            
-            if len(merged) > 0:
-                diff = merged['error_rate_task'] - merged['error_rate_rest']
-                cohens_d = diff.mean() / diff.std()
-                
-                results.append({
-                    'atlas': name,
-                    'rest_mean': merged['error_rate_rest'].mean(),
-                    'rest_std': merged['error_rate_rest'].std(),
-                    'task_mean': merged['error_rate_task'].mean(),
-                    'task_std': merged['error_rate_task'].std(),
-                    'mean_increase': diff.mean(),
-                    'pct_increase': (diff.mean() / merged['error_rate_rest'].mean()) * 100,
-                    'cohens_d': cohens_d,
-                    'n_networks': len(merged)
-                })
-    
-    return pd.DataFrame(results)
-
-
-# =============================================================================
-# UTILITY FUNCTIONS
-# =============================================================================
-
-def annotate_outliers(ax, data, positions, labels, n_outliers=3):
-    """Add text labels for top N outliers in boxplot."""
-    for i, (arr, pos) in enumerate(zip(data, positions)):
-        if len(arr) == 0:
-            continue
-        
-        q1, q3 = np.percentile(arr, [25, 75])
-        iqr = q3 - q1
-        lower_bound = q1 - 1.5 * iqr
-        upper_bound = q3 + 1.5 * iqr
-        
-        if isinstance(labels[i], pd.Series):
-            net_names = labels[i].values
-        else:
-            net_names = np.array(labels[i])
-        
-        if len(net_names) != len(arr):
-            continue
-        
-        outlier_mask = (arr < lower_bound) | (arr > upper_bound)
-        outlier_vals = arr[outlier_mask]
-        outlier_names = net_names[outlier_mask]
-        
-        if len(outlier_vals) == 0:
-            continue
-        
-        outlier_df = pd.DataFrame({
-            'value': outlier_vals,
-            'name': outlier_names,
-            'distance': np.abs(outlier_vals - np.median(arr))
-        })
-        outlier_df = outlier_df.nlargest(min(n_outliers, len(outlier_df)), 'distance')
-        
-        for _, row in outlier_df.iterrows():
-            ax.annotate(
-                row['name'],
-                xy=(pos, row['value']),
-                xytext=(10, 0),
-                textcoords='offset points',
-                fontsize=7,
-                color='darkred',
-                fontweight='bold',
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', 
-                         alpha=0.7, edgecolor='darkred', linewidth=1),
-                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0.2',
-                              color='darkred', lw=1.2)
-            )
-
-
-# =============================================================================
-# FIGURE 1: COMPREHENSIVE RESOLUTION COMPARISON
-# =============================================================================
-
-def plot_figure1_resolution_comparison(error_data, stats_df, output_path):
+def compute_statistics(group1, group2, name1="Group1", name2="Group2"):
     """
-    Figure 1: Comprehensive Resolution Effects (2x3 grid)
-    Shows both cortical and subcortical resolution effects with statistics.
+    Compute comprehensive statistics comparing two groups.
+    Returns dictionary with all statistical measures.
+    """
+    # Descriptive statistics
+    stats_dict = {
+        'group1_name': name1,
+        'group2_name': name2,
+        'n1': len(group1),
+        'n2': len(group2),
+        'mean1': np.mean(group1),
+        'mean2': np.mean(group2),
+        'std1': np.std(group1, ddof=1),
+        'std2': np.std(group2, ddof=1),
+        'median1': np.median(group1),
+        'median2': np.median(group2),
+        'min1': np.min(group1),
+        'min2': np.min(group2),
+        'max1': np.max(group1),
+        'max2': np.max(group2),
+    }
+    
+    # Difference measures
+    stats_dict['mean_diff'] = stats_dict['mean2'] - stats_dict['mean1']
+    stats_dict['median_diff'] = stats_dict['median2'] - stats_dict['median1']
+    stats_dict['pct_change'] = (stats_dict['mean_diff'] / stats_dict['mean1']) * 100
+    
+    # Effect size (Cohen's d)
+    pooled_std = np.sqrt(((len(group1)-1)*stats_dict['std1']**2 + 
+                          (len(group2)-1)*stats_dict['std2']**2) / 
+                         (len(group1) + len(group2) - 2))
+    stats_dict['cohens_d'] = stats_dict['mean_diff'] / pooled_std
+    
+    # Interpret effect size
+    abs_d = abs(stats_dict['cohens_d'])
+    if abs_d < 0.2:
+        stats_dict['effect_interpretation'] = 'negligible'
+    elif abs_d < 0.5:
+        stats_dict['effect_interpretation'] = 'small'
+    elif abs_d < 0.8:
+        stats_dict['effect_interpretation'] = 'medium'
+    else:
+        stats_dict['effect_interpretation'] = 'large'
+    
+    # Statistical tests
+    # 1. Independent t-test
+    t_stat, p_val = stats.ttest_ind(group1, group2)
+    stats_dict['t_statistic'] = t_stat
+    stats_dict['t_pvalue'] = p_val
+    
+    # 2. Welch's t-test (unequal variances)
+    t_welch, p_welch = stats.ttest_ind(group1, group2, equal_var=False)
+    stats_dict['welch_t'] = t_welch
+    stats_dict['welch_p'] = p_welch
+    
+    # 3. Mann-Whitney U test (non-parametric)
+    u_stat, p_mann = stats.mannwhitneyu(group1, group2, alternative='two-sided')
+    stats_dict['mann_whitney_u'] = u_stat
+    stats_dict['mann_whitney_p'] = p_mann
+    
+    # 4. Levene's test for equal variances
+    levene_stat, levene_p = stats.levene(group1, group2)
+    stats_dict['levene_statistic'] = levene_stat
+    stats_dict['levene_p'] = levene_p
+    
+    # Significance interpretation
+    stats_dict['significant_005'] = p_val < 0.05
+    stats_dict['significant_001'] = p_val < 0.01
+    stats_dict['significant_0001'] = p_val < 0.001
+    
+    # Confidence intervals (95%)
+    ci1 = stats.t.interval(0.95, len(group1)-1, 
+                          loc=stats_dict['mean1'], 
+                          scale=stats.sem(group1))
+    ci2 = stats.t.interval(0.95, len(group2)-1,
+                          loc=stats_dict['mean2'],
+                          scale=stats.sem(group2))
+    stats_dict['ci95_lower1'] = ci1[0]
+    stats_dict['ci95_upper1'] = ci1[1]
+    stats_dict['ci95_lower2'] = ci2[0]
+    stats_dict['ci95_upper2'] = ci2[1]
+    
+    return stats_dict
+
+
+def paired_statistics(group1, group2, name1="Pre", name2="Post"):
+    """
+    Compute paired statistics (for rest vs task within same networks).
+    """
+    if len(group1) != len(group2):
+        return compute_statistics(group1, group2, name1, name2)
+    
+    stats_dict = compute_statistics(group1, group2, name1, name2)
+    
+    # Paired t-test
+    t_paired, p_paired = stats.ttest_rel(group1, group2)
+    stats_dict['paired_t'] = t_paired
+    stats_dict['paired_p'] = p_paired
+    
+    # Wilcoxon signed-rank test
+    wilcoxon_stat, wilcoxon_p = stats.wilcoxon(group1, group2)
+    stats_dict['wilcoxon_statistic'] = wilcoxon_stat
+    stats_dict['wilcoxon_p'] = wilcoxon_p
+    
+    return stats_dict
+
+
+def format_pvalue(p):
+    """Format p-value for display."""
+    if p < 0.001:
+        return "p < 0.001***"
+    elif p < 0.01:
+        return f"p = {p:.3f}**"
+    elif p < 0.05:
+        return f"p = {p:.3f}*"
+    else:
+        return f"p = {p:.3f}ns"
+
+
+def get_significance_stars(p):
+    """Get significance stars."""
+    if p < 0.001:
+        return "***"
+    elif p < 0.01:
+        return "**"
+    elif p < 0.05:
+        return "*"
+    else:
+        return "ns"
+
+
+def log_statistics(stat, comparison_name):
+    """Log comprehensive statistics to console."""
+    print(f"\n{'='*70}")
+    print(f"  {comparison_name}")
+    print(f"{'='*70}")
+    
+    print(f"\nDESCRIPTIVE STATISTICS:")
+    print(f"  {stat['group1_name']:12s}: n={stat['n1']:2d}, μ={stat['mean1']:.4f}, σ={stat['std1']:.4f}, median={stat['median1']:.4f}")
+    print(f"  {stat['group2_name']:12s}: n={stat['n2']:2d}, μ={stat['mean2']:.4f}, σ={stat['std2']:.4f}, median={stat['median2']:.4f}")
+    print(f"  Range {stat['group1_name']:7s}: [{stat['min1']:.4f}, {stat['max1']:.4f}]")
+    print(f"  Range {stat['group2_name']:7s}: [{stat['min2']:.4f}, {stat['max2']:.4f}]")
+    
+    print(f"\nDIFFERENCE MEASURES:")
+    print(f"  Mean difference:     {stat['mean_diff']:+.4f} ({stat['pct_change']:+.1f}%)")
+    print(f"  Median difference:   {stat['median_diff']:+.4f}")
+    
+    print(f"\nEFFECT SIZE:")
+    print(f"  Cohen's d:           {stat['cohens_d']:.3f} ({stat['effect_interpretation']})")
+    
+    print(f"\nSTATISTICAL TESTS:")
+    print(f"  Independent t-test:  t({stat['n1']+stat['n2']-2}) = {stat['t_statistic']:.3f}, {format_pvalue(stat['t_pvalue'])}")
+    print(f"  Welch's t-test:      t = {stat['welch_t']:.3f}, {format_pvalue(stat['welch_p'])}")
+    print(f"  Mann-Whitney U:      U = {stat['mann_whitney_u']:.1f}, {format_pvalue(stat['mann_whitney_p'])}")
+    print(f"  Levene's test:       F = {stat['levene_statistic']:.3f}, p = {stat['levene_p']:.3f}")
+    
+    print(f"\nCONFIDENCE INTERVALS (95%):")
+    print(f"  {stat['group1_name']:12s}: [{stat['ci95_lower1']:.4f}, {stat['ci95_upper1']:.4f}]")
+    print(f"  {stat['group2_name']:12s}: [{stat['ci95_lower2']:.4f}, {stat['ci95_upper2']:.4f}]")
+    
+    if 'paired_t' in stat:
+        print(f"\nPAIRED TESTS:")
+        print(f"  Paired t-test:       t({stat['n1']-1}) = {stat['paired_t']:.3f}, {format_pvalue(stat['paired_p'])}")
+        print(f"  Wilcoxon signed-rank: W = {stat['wilcoxon_statistic']:.1f}, {format_pvalue(stat['wilcoxon_p'])}")
+
+
+# =============================================================================
+# OUTLIER DETECTION AND ANNOTATION
+# =============================================================================
+
+def identify_outliers(data, labels):
+    """Identify outliers using IQR method."""
+    q1, q3 = np.percentile(data, [25, 75])
+    iqr = q3 - q1
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+    
+    outlier_mask = (data < lower_bound) | (data > upper_bound)
+    
+    outliers = []
+    for i, is_outlier in enumerate(outlier_mask):
+        if is_outlier:
+            outliers.append({
+                'index': i,
+                'label': labels[i],
+                'value': data[i],
+                'distance': abs(data[i] - np.median(data))
+            })
+    
+    return pd.DataFrame(outliers)
+
+
+def annotate_outliers(ax, data, position, labels, n_top=3, direction='right'):
+    """Add outlier annotations with arrows."""
+    outliers_df = identify_outliers(data, labels)
+    
+    if len(outliers_df) == 0:
+        return
+    
+    # Select top N outliers by distance from median
+    top_outliers = outliers_df.nlargest(min(n_top, len(outliers_df)), 'distance')
+    
+    for _, outlier in top_outliers.iterrows():
+        if direction == 'right':
+            xytext = (15, 0)
+        else:
+            xytext = (-15, 0)
+        
+        ax.annotate(
+            outlier['label'],
+            xy=(position, outlier['value']),
+            xytext=xytext,
+            textcoords='offset points',
+            fontsize=8,
+            color='darkred',
+            fontweight='bold',
+            bbox=dict(boxstyle='round,pad=0.4', facecolor='yellow',
+                     alpha=0.8, edgecolor='darkred', linewidth=1.5),
+            arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0.3',
+                          color='darkred', lw=1.5)
+        )
+
+
+# =============================================================================
+# FIGURE 1: RESOLUTION EFFECTS (ULTRA CLEAN)
+# =============================================================================
+
+def plot_resolution_effects(error_data, output_path):
+    """
+    Ultra clean resolution comparison - no statistical annotations on graphs.
+    All statistics logged to console and saved in tables.
     """
     fig = plt.figure(figsize=(18, 12))
-    gs = fig.add_gridspec(2, 3, hspace=0.35, wspace=0.3)
+    gs = fig.add_gridspec(2, 2, hspace=0.3, wspace=0.3)
     
-    fig.suptitle('Figure 1: Parcellation Resolution Effects on Classification Performance', 
-                 fontsize=17, fontweight='bold', y=0.98)
-    
-    # =============================================================================
-    # Panel A: N7 vs N17 (Rest) - Boxplot with statistics
-    # =============================================================================
-    ax = fig.add_subplot(gs[0, 0])
-    if 'N7_rest' in error_data and 'N17_rest' in error_data:
-        n7 = error_data['N7_rest']
-        n17 = error_data['N17_rest']
-        
-        data = [n7['error_rate'], n17['error_rate']]
-        labels_list = [n7['network'], n17['network']]
-        
-        bp = ax.boxplot(data, labels=['N7\n(7 networks)', 'N17\n(17 networks)'], 
-                       patch_artist=True, widths=0.6,
-                       boxprops=dict(linewidth=1.5),
-                       medianprops=dict(linewidth=2, color='black'),
-                       whiskerprops=dict(linewidth=1.5),
-                       capprops=dict(linewidth=1.5))
-        
-        for patch, color in zip(bp['boxes'], [COLORS['n7'], COLORS['n17']]):
-            patch.set_facecolor(color)
-            patch.set_alpha(0.7)
-        
-        means = [d.mean() for d in data]
-        ax.plot(range(1, len(means)+1), means, 'D', color='darkred', 
-               markersize=10, label='Mean', zorder=3, markeredgecolor='black', 
-               markeredgewidth=1.5)
-        
-        annotate_outliers(ax, data, [1, 2], labels_list, n_outliers=2)
-        
-        ax.set_ylabel('Error Rate', fontweight='bold', fontsize=12)
-        ax.set_title('A) Cortical Resolution (Rest)\nCoarse vs Fine Parcellation', 
-                     fontweight='bold', fontsize=11, pad=15)
-        ax.legend(fontsize=9, loc='upper left')
-        ax.grid(axis='y', alpha=0.3, linestyle='--')
-    
-    # =============================================================================
-    # Panel B: N7 vs N17 (Task) - Boxplot with statistics
-    # =============================================================================
-    ax = fig.add_subplot(gs[0, 1])
-    if 'N7_task' in error_data and 'N17_task' in error_data:
-        n7 = error_data['N7_task']
-        n17 = error_data['N17_task']
-        
-        data = [n7['error_rate'], n17['error_rate']]
-        labels_list = [n7['network'], n17['network']]
-        
-        bp = ax.boxplot(data, labels=['N7\n(7 networks)', 'N17\n(17 networks)'], 
-                       patch_artist=True, widths=0.6,
-                       boxprops=dict(linewidth=1.5),
-                       medianprops=dict(linewidth=2, color='black'),
-                       whiskerprops=dict(linewidth=1.5),
-                       capprops=dict(linewidth=1.5))
-        
-        for patch, color in zip(bp['boxes'], [COLORS['n7'], COLORS['n17']]):
-            patch.set_facecolor(color)
-            patch.set_alpha(0.7)
-        
-        means = [d.mean() for d in data]
-        ax.plot(range(1, len(means)+1), means, 'D', color='darkred', 
-               markersize=10, label='Mean', zorder=3, markeredgecolor='black', 
-               markeredgewidth=1.5)
-        
-        annotate_outliers(ax, data, [1, 2], labels_list, n_outliers=2)
-        
-        ax.set_ylabel('Error Rate', fontweight='bold', fontsize=12)
-        ax.set_title('B) Cortical Resolution (Task)\nCoarse vs Fine Parcellation', 
-                     fontweight='bold', fontsize=11, pad=15)
-        ax.legend(fontsize=9, loc='upper left')
-        ax.grid(axis='y', alpha=0.3, linestyle='--')
-    
-    # =============================================================================
-    # Panel C: Resolution Effect Summary
-    # =============================================================================
-    ax = fig.add_subplot(gs[0, 2])
-    
-    # Combine cortical and subcortical resolution effects
-    resolution_data = []
-    labels = []
-    colors_list = []
-    
-    for _, row in stats_df.iterrows():
-        resolution_data.append(row['pct_change'])
-        labels.append(f"{row['comparison'].split()[0]}\n{row['condition']}")
-        if 'Cortical' in row['comparison']:
-            colors_list.append(COLORS['cortical'])
-        else:
-            colors_list.append(COLORS['subcortical'])
-    
-    bars = ax.barh(range(len(resolution_data)), resolution_data, color=colors_list, 
-                   alpha=0.8, edgecolor='black', linewidth=1.5)
-    
-    # Add value labels
-    for i, (val, row) in enumerate(zip(resolution_data, stats_df.iterrows())):
-        _, stat_row = row
-        x_pos = val + (1 if val > 0 else -1)
-        ha = 'left' if val > 0 else 'right'
-        
-        label_text = f"{val:+.1f}%"
-        
-        ax.text(x_pos, i, label_text, va='center', ha=ha, 
-               fontsize=10, fontweight='bold')
-    
-    ax.set_yticks(range(len(labels)))
-    ax.set_yticklabels(labels, fontsize=10)
-    ax.set_xlabel('% Change in Error Rate\n(Fine - Coarse)', fontweight='bold', fontsize=11)
-    ax.set_title('C) Resolution Effect Summary\nFiner Parcellation Impact', 
-                 fontweight='bold', fontsize=11, pad=15)
-    ax.axvline(0, color='black', linewidth=2)
-    ax.grid(axis='x', alpha=0.3, linestyle='--')
-    ax.invert_yaxis()
-    
-    # Add legend
-    cortical_patch = mpatches.Patch(color=COLORS['cortical'], label='Cortical', alpha=0.8)
-    subcortical_patch = mpatches.Patch(color=COLORS['subcortical'], label='Subcortical', alpha=0.8)
-    ax.legend(handles=[cortical_patch, subcortical_patch], fontsize=9, loc='lower right')
-    
-    # =============================================================================
-    # Panel D: Tian I vs II (Rest) - Boxplot with statistics
-    # =============================================================================
-    ax = fig.add_subplot(gs[1, 0])
-    if 'TianI_rest' in error_data and 'TianII_rest' in error_data:
-        t1 = error_data['TianI_rest']
-        t2 = error_data['TianII_rest']
-        
-        data = [t1['error_rate'], t2['error_rate']]
-        labels_list = [t1['network'], t2['network']]
-        
-        bp = ax.boxplot(data, labels=['Tian I\n(16 regions)', 'Tian II\n(32 regions)'], 
-                       patch_artist=True, widths=0.6,
-                       boxprops=dict(linewidth=1.5),
-                       medianprops=dict(linewidth=2, color='black'),
-                       whiskerprops=dict(linewidth=1.5),
-                       capprops=dict(linewidth=1.5))
-        
-        for patch, color in zip(bp['boxes'], [COLORS['tian1'], COLORS['tian2']]):
-            patch.set_facecolor(color)
-            patch.set_alpha(0.7)
-        
-        means = [d.mean() for d in data]
-        ax.plot(range(1, len(means)+1), means, 'D', color='darkred', 
-               markersize=10, label='Mean', zorder=3, markeredgecolor='black', 
-               markeredgewidth=1.5)
-        
-        annotate_outliers(ax, data, [1, 2], labels_list, n_outliers=2)
-        
-        ax.set_ylabel('Error Rate', fontweight='bold', fontsize=12)
-        ax.set_title('D) Subcortical Resolution (Rest)\nCoarse vs Fine Parcellation', 
-                     fontweight='bold', fontsize=11, pad=15)
-        ax.legend(fontsize=9, loc='upper left')
-        ax.grid(axis='y', alpha=0.3, linestyle='--')
-    
-    # =============================================================================
-    # Panel E: Tian I vs II (Task) - Boxplot with statistics
-    # =============================================================================
-    ax = fig.add_subplot(gs[1, 1])
-    if 'TianI_task' in error_data and 'TianII_task' in error_data:
-        t1 = error_data['TianI_task']
-        t2 = error_data['TianII_task']
-        
-        data = [t1['error_rate'], t2['error_rate']]
-        labels_list = [t1['network'], t2['network']]
-        
-        bp = ax.boxplot(data, labels=['Tian I\n(16 regions)', 'Tian II\n(32 regions)'], 
-                       patch_artist=True, widths=0.6,
-                       boxprops=dict(linewidth=1.5),
-                       medianprops=dict(linewidth=2, color='black'),
-                       whiskerprops=dict(linewidth=1.5),
-                       capprops=dict(linewidth=1.5))
-        
-        for patch, color in zip(bp['boxes'], [COLORS['tian1'], COLORS['tian2']]):
-            patch.set_facecolor(color)
-            patch.set_alpha(0.7)
-        
-        means = [d.mean() for d in data]
-        ax.plot(range(1, len(means)+1), means, 'D', color='darkred', 
-               markersize=10, label='Mean', zorder=3, markeredgecolor='black', 
-               markeredgewidth=1.5)
-        
-        annotate_outliers(ax, data, [1, 2], labels_list, n_outliers=2)
-        
-        ax.set_ylabel('Error Rate', fontweight='bold', fontsize=12)
-        ax.set_title('E) Subcortical Resolution (Task)\nCoarse vs Fine Parcellation', 
-                     fontweight='bold', fontsize=11, pad=15)
-        ax.legend(fontsize=9, loc='upper left')
-        ax.grid(axis='y', alpha=0.3, linestyle='--')
-    
-    # =============================================================================
-    # Panel F: Key Findings Text
-    # =============================================================================
-    ax = fig.add_subplot(gs[1, 2])
-    ax.axis('off')
-    
-    findings_text = "KEY FINDINGS:\n\n"
-    
-    # Cortical findings
-    cortical_rest = stats_df[(stats_df['comparison'] == 'Cortical N7 vs N17') & 
-                            (stats_df['condition'] == 'Rest')].iloc[0]
-    cortical_task = stats_df[(stats_df['comparison'] == 'Cortical N7 vs N17') & 
-                            (stats_df['condition'] == 'Task')].iloc[0]
-    
-    findings_text += "CORTICAL (N7→N17):\n"
-    findings_text += f"• Rest: {cortical_rest['pct_change']:+.1f}% change\n"
-    findings_text += f"  (d={cortical_rest['cohens_d']:.2f})\n"
-    findings_text += f"• Task: {cortical_task['pct_change']:+.1f}% change\n"
-    findings_text += f"  (d={cortical_task['cohens_d']:.2f})\n\n"
-    
-    # Subcortical findings
-    if not stats_df[stats_df['comparison'] == 'Subcortical Tian I vs II'].empty:
-        subcort_rest = stats_df[(stats_df['comparison'] == 'Subcortical Tian I vs II') & 
-                               (stats_df['condition'] == 'Rest')].iloc[0]
-        subcort_task = stats_df[(stats_df['comparison'] == 'Subcortical Tian I vs II') & 
-                               (stats_df['condition'] == 'Task')].iloc[0]
-        
-        findings_text += "SUBCORTICAL (Tian I→II):\n"
-        findings_text += f"• Rest: {subcort_rest['pct_change']:+.1f}% change\n"
-        findings_text += f"  (d={subcort_rest['cohens_d']:.2f})\n"
-        findings_text += f"• Task: {subcort_task['pct_change']:+.1f}% change\n"
-        findings_text += f"  (d={subcort_task['cohens_d']:.2f})\n\n"
-    
-    findings_text += "\nINTERPRETATION:\n"
-    findings_text += "• Finer parcellation increases\n  classification difficulty\n"
-    findings_text += "• More regions = more subtle\n  connectivity differences\n"
-    findings_text += "• Effect consistent across\n  rest and task conditions\n"
-    findings_text += "• Cohen's d indicates effect\n  size magnitude"
-    
-    ax.text(0.1, 0.95, findings_text, transform=ax.transAxes,
-           fontsize=10, verticalalignment='top', fontfamily='monospace',
-           bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.3, pad=1))
-    
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"  ✓ Saved: {output_path.name}")
-
-
-# =============================================================================
-# FIGURE 2: BRAIN SYSTEM COMPARISON
-# =============================================================================
-
-def plot_figure2_cortical_vs_subcortical(error_data, stats_df, output_path):
-    """
-    Figure 2: Cortical vs Subcortical Comparison (2x3 grid)
-    Includes Tian II comparisons with N17.
-    """
-    fig = plt.figure(figsize=(18, 12))
-    gs = fig.add_gridspec(2, 3, hspace=0.35, wspace=0.3)
-    
-    fig.suptitle('Figure 2: Brain System Comparison - Cortical vs Subcortical Performance', 
-                 fontsize=17, fontweight='bold', y=0.98)
-    
-    # =============================================================================
-    # Panel A: N7 vs Tian I (Rest)
-    # =============================================================================
-    ax = fig.add_subplot(gs[0, 0])
-    if 'N7_rest' in error_data and 'TianI_rest' in error_data:
-        cort = error_data['N7_rest']
-        subcort = error_data['TianI_rest']
-        
-        data = [cort['error_rate'], subcort['error_rate']]
-        labels_list = [cort['network'], subcort['network']]
-        
-        bp = ax.boxplot(data, labels=['Cortical\nN7 (7 nets)', 'Subcortical\nTian I (16 reg)'], 
-                       patch_artist=True, widths=0.6,
-                       boxprops=dict(linewidth=1.5),
-                       medianprops=dict(linewidth=2, color='black'),
-                       whiskerprops=dict(linewidth=1.5),
-                       capprops=dict(linewidth=1.5))
-        
-        for patch, color in zip(bp['boxes'], [COLORS['cortical'], COLORS['subcortical']]):
-            patch.set_facecolor(color)
-            patch.set_alpha(0.7)
-        
-        means = [d.mean() for d in data]
-        ax.plot(range(1, len(means)+1), means, 'D', color='darkred', 
-               markersize=10, label='Mean', zorder=3, markeredgecolor='black', 
-               markeredgewidth=1.5)
-        
-        annotate_outliers(ax, data, [1, 2], labels_list, n_outliers=2)
-        
-        ax.set_ylabel('Error Rate', fontweight='bold', fontsize=12)
-        ax.set_title('A) Coarse Parcellations (Rest)\nN7 vs Tian I', 
-                     fontweight='bold', fontsize=11, pad=15)
-        ax.legend(fontsize=9, loc='upper left')
-        ax.grid(axis='y', alpha=0.3, linestyle='--')
-    
-    # =============================================================================
-    # Panel B: N7 vs Tian I (Task)
-    # =============================================================================
-    ax = fig.add_subplot(gs[0, 1])
-    if 'N7_task' in error_data and 'TianI_task' in error_data:
-        cort = error_data['N7_task']
-        subcort = error_data['TianI_task']
-        
-        data = [cort['error_rate'], subcort['error_rate']]
-        labels_list = [cort['network'], subcort['network']]
-        
-        bp = ax.boxplot(data, labels=['Cortical\nN7 (7 nets)', 'Subcortical\nTian I (16 reg)'], 
-                       patch_artist=True, widths=0.6,
-                       boxprops=dict(linewidth=1.5),
-                       medianprops=dict(linewidth=2, color='black'),
-                       whiskerprops=dict(linewidth=1.5),
-                       capprops=dict(linewidth=1.5))
-        
-        for patch, color in zip(bp['boxes'], [COLORS['cortical'], COLORS['subcortical']]):
-            patch.set_facecolor(color)
-            patch.set_alpha(0.7)
-        
-        means = [d.mean() for d in data]
-        ax.plot(range(1, len(means)+1), means, 'D', color='darkred', 
-               markersize=10, label='Mean', zorder=3, markeredgecolor='black', 
-               markeredgewidth=1.5)
-        
-        annotate_outliers(ax, data, [1, 2], labels_list, n_outliers=2)
-        
-        ax.set_ylabel('Error Rate', fontweight='bold', fontsize=12)
-        ax.set_title('B) Coarse Parcellations (Task)\nN7 vs Tian I', 
-                     fontweight='bold', fontsize=11, pad=15)
-        ax.legend(fontsize=9, loc='upper left')
-        ax.grid(axis='y', alpha=0.3, linestyle='--')
-    
-    # =============================================================================
-    # Panel C: System Comparison Summary
-    # =============================================================================
-    ax = fig.add_subplot(gs[0, 2])
-    
-    comparison_data = []
-    labels = []
-    colors_list = []
-    
-    for _, row in stats_df.iterrows():
-        comparison_data.append(row['pct_difference'])
-        comp_name = row['comparison'].replace(' vs ', '\nvs ')
-        labels.append(f"{comp_name}\n({row['condition']})")
-        if row['condition'] == 'Rest':
-            colors_list.append(COLORS['rest'])
-        else:
-            colors_list.append(COLORS['task'])
-    
-    bars = ax.barh(range(len(comparison_data)), comparison_data, color=colors_list, 
-                   alpha=0.8, edgecolor='black', linewidth=1.5)
-    
-    for i, (val, row) in enumerate(zip(comparison_data, stats_df.iterrows())):
-        _, stat_row = row
-        x_pos = val + (2 if val > 0 else -2)
-        ha = 'left' if val > 0 else 'right'
-        
-        label_text = f"{val:+.1f}%"
-        
-        ax.text(x_pos, i, label_text, va='center', ha=ha, 
-               fontsize=10, fontweight='bold')
-    
-    ax.set_yticks(range(len(labels)))
-    ax.set_yticklabels(labels, fontsize=9)
-    ax.set_xlabel('% Difference in Error Rate\n(Subcortical - Cortical)', 
-                  fontweight='bold', fontsize=11)
-    ax.set_title('C) System Comparison Summary\nSubcortical vs Cortical', 
-                 fontweight='bold', fontsize=11, pad=15)
-    ax.axvline(0, color='black', linewidth=2)
-    ax.grid(axis='x', alpha=0.3, linestyle='--')
-    ax.invert_yaxis()
-    
-    rest_patch = mpatches.Patch(color=COLORS['rest'], label='Rest', alpha=0.8)
-    task_patch = mpatches.Patch(color=COLORS['task'], label='Task', alpha=0.8)
-    ax.legend(handles=[rest_patch, task_patch], fontsize=9, loc='lower right')
-    
-    # =============================================================================
-    # Panel D: N17 vs Tian II (Rest)
-    # =============================================================================
-    ax = fig.add_subplot(gs[1, 0])
-    if 'N17_rest' in error_data and 'TianII_rest' in error_data:
-        cort = error_data['N17_rest']
-        subcort = error_data['TianII_rest']
-        
-        data = [cort['error_rate'], subcort['error_rate']]
-        labels_list = [cort['network'], subcort['network']]
-        
-        bp = ax.boxplot(data, labels=['Cortical\nN17 (17 nets)', 'Subcortical\nTian II (32 reg)'], 
-                       patch_artist=True, widths=0.6,
-                       boxprops=dict(linewidth=1.5),
-                       medianprops=dict(linewidth=2, color='black'),
-                       whiskerprops=dict(linewidth=1.5),
-                       capprops=dict(linewidth=1.5))
-        
-        for patch, color in zip(bp['boxes'], [COLORS['cortical'], COLORS['subcortical']]):
-            patch.set_facecolor(color)
-            patch.set_alpha(0.7)
-        
-        means = [d.mean() for d in data]
-        ax.plot(range(1, len(means)+1), means, 'D', color='darkred', 
-               markersize=10, label='Mean', zorder=3, markeredgecolor='black', 
-               markeredgewidth=1.5)
-        
-        annotate_outliers(ax, data, [1, 2], labels_list, n_outliers=2)
-        
-        ax.set_ylabel('Error Rate', fontweight='bold', fontsize=12)
-        ax.set_title('D) Fine Parcellations (Rest)\nN17 vs Tian II', 
-                     fontweight='bold', fontsize=11, pad=15)
-        ax.legend(fontsize=9, loc='upper left')
-        ax.grid(axis='y', alpha=0.3, linestyle='--')
-    
-    # =============================================================================
-    # Panel E: N17 vs Tian II (Task)
-    # =============================================================================
-    ax = fig.add_subplot(gs[1, 1])
-    if 'N17_task' in error_data and 'TianII_task' in error_data:
-        cort = error_data['N17_task']
-        subcort = error_data['TianII_task']
-        
-        data = [cort['error_rate'], subcort['error_rate']]
-        labels_list = [cort['network'], subcort['network']]
-        
-        bp = ax.boxplot(data, labels=['Cortical\nN17 (17 nets)', 'Subcortical\nTian II (32 reg)'], 
-                       patch_artist=True, widths=0.6,
-                       boxprops=dict(linewidth=1.5),
-                       medianprops=dict(linewidth=2, color='black'),
-                       whiskerprops=dict(linewidth=1.5),
-                       capprops=dict(linewidth=1.5))
-        
-        for patch, color in zip(bp['boxes'], [COLORS['cortical'], COLORS['subcortical']]):
-            patch.set_facecolor(color)
-            patch.set_alpha(0.7)
-        
-        means = [d.mean() for d in data]
-        ax.plot(range(1, len(means)+1), means, 'D', color='darkred', 
-               markersize=10, label='Mean', zorder=3, markeredgecolor='black', 
-               markeredgewidth=1.5)
-        
-        annotate_outliers(ax, data, [1, 2], labels_list, n_outliers=2)
-        
-        ax.set_ylabel('Error Rate', fontweight='bold', fontsize=12)
-        ax.set_title('E) Fine Parcellations (Task)\nN17 vs Tian II', 
-                     fontweight='bold', fontsize=11, pad=15)
-        ax.legend(fontsize=9, loc='upper left')
-        ax.grid(axis='y', alpha=0.3, linestyle='--')
-    
-    # =============================================================================
-    # Panel F: Key Findings
-    # =============================================================================
-    ax = fig.add_subplot(gs[1, 2])
-    ax.axis('off')
-    
-    findings_text = "KEY FINDINGS:\n\n"
-    
-    # Coarse comparison
-    if not stats_df[stats_df['comparison'] == 'N7 vs Tian I'].empty:
-        n7_tian1_rest = stats_df[(stats_df['comparison'] == 'N7 vs Tian I') & 
-                                (stats_df['condition'] == 'Rest')].iloc[0]
-        n7_tian1_task = stats_df[(stats_df['comparison'] == 'N7 vs Tian I') & 
-                                (stats_df['condition'] == 'Task')].iloc[0]
-        
-        findings_text += "COARSE (N7 vs Tian I):\n"
-        findings_text += f"• Rest: {n7_tian1_rest['pct_difference']:+.1f}% diff\n"
-        findings_text += f"  (d={n7_tian1_rest['cohens_d']:.2f})\n"
-        findings_text += f"• Task: {n7_tian1_task['pct_difference']:+.1f}% diff\n"
-        findings_text += f"  (d={n7_tian1_task['cohens_d']:.2f})\n\n"
-    
-    # Fine comparison
-    if not stats_df[stats_df['comparison'] == 'N17 vs Tian II'].empty:
-        n17_tian2_rest = stats_df[(stats_df['comparison'] == 'N17 vs Tian II') & 
-                                 (stats_df['condition'] == 'Rest')].iloc[0]
-        n17_tian2_task = stats_df[(stats_df['comparison'] == 'N17 vs Tian II') & 
-                                 (stats_df['condition'] == 'Task')].iloc[0]
-        
-        findings_text += "FINE (N17 vs Tian II):\n"
-        findings_text += f"• Rest: {n17_tian2_rest['pct_difference']:+.1f}% diff\n"
-        findings_text += f"  (d={n17_tian2_rest['cohens_d']:.2f})\n"
-        findings_text += f"• Task: {n17_tian2_task['pct_difference']:+.1f}% diff\n"
-        findings_text += f"  (d={n17_tian2_task['cohens_d']:.2f})\n\n"
-    
-    findings_text += "\nINTERPRETATION:\n"
-    findings_text += "• Subcortical regions show\n  higher error rates\n"
-    findings_text += "• Subcortical connectivity\n  patterns may be more\n  variable across subjects\n"
-    findings_text += "• Effect consistent across\n  both resolutions\n"
-    findings_text += "• Cohen's d shows effect\n  size magnitude"
-    
-    ax.text(0.1, 0.95, findings_text, transform=ax.transAxes,
-           fontsize=10, verticalalignment='top', fontfamily='monospace',
-           bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.3, pad=1))
-    
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"  ✓ Saved: {output_path.name}")
-
-
-# =============================================================================
-# FIGURE 3: REST VS TASK COMPREHENSIVE
-# =============================================================================
-
-def plot_figure3_rest_vs_task(error_data, stats_df, output_path):
-    """
-    Figure 3: Comprehensive Rest vs Task Analysis (2x3 grid)
-    Includes all atlases including Tian II.
-    """
-    fig = plt.figure(figsize=(18, 12))
-    gs = fig.add_gridspec(2, 3, hspace=0.35, wspace=0.3)
-    
-    fig.suptitle('Figure 3: Task Effects on Classification Performance Across All Atlases', 
-                 fontsize=17, fontweight='bold', y=0.98)
-    
-    # =============================================================================
-    # Panel A: Overall Rest vs Task Comparison
-    # =============================================================================
-    ax = fig.add_subplot(gs[0, 0])
-    
-    atlas_names = []
-    rest_means = []
-    task_means = []
-    
-    for _, row in stats_df.iterrows():
-        atlas_names.append(row['atlas'])
-        rest_means.append(row['rest_mean'])
-        task_means.append(row['task_mean'])
-    
-    x = np.arange(len(atlas_names))
-    width = 0.35
-    
-    bars1 = ax.bar(x - width/2, rest_means, width, label='Rest', 
-                  color=COLORS['rest'], alpha=0.85, edgecolor='black', linewidth=1.5)
-    bars2 = ax.bar(x + width/2, task_means, width, label='Task',
-                  color=COLORS['task'], alpha=0.85, edgecolor='black', linewidth=1.5)
-    
-    # Add value labels
-    for bars in [bars1, bars2]:
-        for bar in bars:
-            height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2., height + 0.005,
-                   f'{height:.3f}', ha='center', va='bottom', 
-                   fontsize=8, fontweight='bold')
-    
-    ax.set_ylabel('Mean Error Rate', fontweight='bold', fontsize=12)
-    ax.set_xlabel('Atlas', fontweight='bold', fontsize=12)
-    ax.set_title('A) Overall Comparison\nRest vs Task Performance', 
-                 fontweight='bold', fontsize=11, pad=15)
-    ax.set_xticks(x)
-    ax.set_xticklabels(atlas_names, fontsize=9, rotation=15, ha='right')
-    ax.legend(fontsize=10, loc='upper left')
-    ax.grid(axis='y', alpha=0.3, linestyle='--')
-    
-    # =============================================================================
-    # Panel B: Task-Induced Changes (% increase)
-    # =============================================================================
-    ax = fig.add_subplot(gs[0, 1])
-    
-    pct_increases = []
-    colors_list = []
-    
-    for _, row in stats_df.iterrows():
-        pct_increases.append(row['pct_increase'])
-        if 'Cortical' in row['atlas']:
-            colors_list.append(COLORS['cortical'])
-        else:
-            colors_list.append(COLORS['subcortical'])
-    
-    bars = ax.barh(range(len(atlas_names)), pct_increases, color=colors_list,
-                   alpha=0.8, edgecolor='black', linewidth=1.5)
-    
-    # Add labels with effect sizes
-    for i, (val, row) in enumerate(zip(pct_increases, stats_df.iterrows())):
-        _, stat_row = row
-        x_pos = val + 2
-        
-        label_text = f"{val:+.1f}%"
-        
-        ax.text(x_pos, i, label_text, va='center', ha='left', 
-               fontsize=10, fontweight='bold')
-    
-    ax.set_yticks(range(len(atlas_names)))
-    ax.set_yticklabels(atlas_names, fontsize=10)
-    ax.set_xlabel('% Increase in Error Rate\n(Task - Rest)', fontweight='bold', fontsize=11)
-    ax.set_title('B) Task-Induced Changes\nRelative Performance Degradation', 
-                 fontweight='bold', fontsize=11, pad=15)
-    ax.axvline(0, color='black', linewidth=2)
-    ax.grid(axis='x', alpha=0.3, linestyle='--')
-    ax.invert_yaxis()
-    
-    # Legend
-    cortical_patch = mpatches.Patch(color=COLORS['cortical'], label='Cortical', alpha=0.8)
-    subcortical_patch = mpatches.Patch(color=COLORS['subcortical'], label='Subcortical', alpha=0.8)
-    ax.legend(handles=[cortical_patch, subcortical_patch], fontsize=9)
-    
-    # =============================================================================
-    # Panel C: Effect Sizes
-    # =============================================================================
-    ax = fig.add_subplot(gs[0, 2])
-    
-    cohens_d_values = [row['cohens_d'] for _, row in stats_df.iterrows()]
-    
-    # Color by effect size magnitude
-    effect_colors = []
-    for d in cohens_d_values:
-        if abs(d) < 0.2:
-            effect_colors.append('#95A5A6')  # Small
-        elif abs(d) < 0.5:
-            effect_colors.append('#3498DB')  # Medium
-        elif abs(d) < 0.8:
-            effect_colors.append('#F39C12')  # Large
-        else:
-            effect_colors.append('#E74C3C')  # Very large
-    
-    bars = ax.barh(range(len(atlas_names)), cohens_d_values, color=effect_colors,
-                   alpha=0.8, edgecolor='black', linewidth=1.5)
-    
-    for i, val in enumerate(cohens_d_values):
-        x_pos = val + 0.05 if val > 0 else val - 0.05
-        ha = 'left' if val > 0 else 'right'
-        ax.text(x_pos, i, f'{val:.2f}', va='center', ha=ha, 
-               fontsize=10, fontweight='bold')
-    
-    ax.set_yticks(range(len(atlas_names)))
-    ax.set_yticklabels(atlas_names, fontsize=10)
-    ax.set_xlabel("Cohen's d Effect Size", fontweight='bold', fontsize=11)
-    ax.set_title("C) Effect Sizes\nMagnitude of Task Impact", 
-                 fontweight='bold', fontsize=11, pad=15)
-    ax.axvline(0, color='black', linewidth=2)
-    ax.grid(axis='x', alpha=0.3, linestyle='--')
-    ax.invert_yaxis()
-    
-    # Effect size legend
-    small_patch = mpatches.Patch(color='#95A5A6', label='Small (d<0.2)', alpha=0.8)
-    medium_patch = mpatches.Patch(color='#3498DB', label='Medium (d<0.5)', alpha=0.8)
-    large_patch = mpatches.Patch(color='#F39C12', label='Large (d<0.8)', alpha=0.8)
-    vlarge_patch = mpatches.Patch(color='#E74C3C', label='Very Large (d≥0.8)', alpha=0.8)
-    ax.legend(handles=[small_patch, medium_patch, large_patch, vlarge_patch], 
-             fontsize=8, loc='lower right')
-    
-    # =============================================================================
-    # Panels D & E: Network-specific changes for cortical atlases
-    # =============================================================================
-    for idx, (atlas_name, rest_key, task_key, panel) in enumerate([
-        ('N7', 'N7_rest', 'N7_task', 'D'),
-        ('N17', 'N17_rest', 'N17_task', 'E')
-    ]):
-        ax = fig.add_subplot(gs[1, idx])
-        
-        if rest_key in error_data and task_key in error_data:
-            rest_df = error_data[rest_key]
-            task_df = error_data[task_key]
-            
-            merged = pd.merge(
-                rest_df[['network', 'error_rate']],
-                task_df[['network', 'error_rate']],
-                on='network', suffixes=('_rest', '_task')
-            )
-            
-            merged['change'] = merged['error_rate_task'] - merged['error_rate_rest']
-            merged['pct'] = (merged['change'] / merged['error_rate_rest'] * 100)
-            merged = merged.sort_values('change', ascending=False)
-            
-            colors = [COLORS['increase'] if x > 0 else COLORS['decrease'] 
-                     for x in merged['change']]
-            bars = ax.barh(range(len(merged)), merged['change'], 
-                          color=colors, alpha=0.8, edgecolor='black', linewidth=1)
-            
-            # Add percentage labels
-            for i, (val, pct) in enumerate(zip(merged['change'], merged['pct'])):
-                x_pos = val + (0.006 if val > 0 else -0.006)
-                ha = 'left' if val > 0 else 'right'
-                fontsize = 7 if atlas_name == 'N17' else 8
-                ax.text(x_pos, i, f'{pct:+.0f}%', va='center', ha=ha, 
-                       fontsize=fontsize, fontweight='bold')
-            
-            fontsize = 7 if atlas_name == 'N17' else 9
-            ax.set_yticks(range(len(merged)))
-            ax.set_yticklabels(merged['network'], fontsize=fontsize)
-            ax.set_xlabel('Error Change (Task - Rest)', fontweight='bold', fontsize=11)
-            ax.set_title(f'{panel}) {atlas_name}: Network-Specific Changes\n'
-                        f'Task Impact on Each Network', 
-                        fontweight='bold', fontsize=11, pad=15)
-            ax.axvline(0, color='black', linewidth=2)
-            ax.invert_yaxis()
-            ax.grid(axis='x', alpha=0.3, linestyle='--')
-    
-    # =============================================================================
-    # Panel F: Key Findings
-    # =============================================================================
-    ax = fig.add_subplot(gs[1, 2])
-    ax.axis('off')
-    
-    findings_text = "KEY FINDINGS:\n\n"
-    findings_text += "TASK EFFECTS:\n"
-    
-    for _, row in stats_df.iterrows():
-        findings_text += f"• {row['atlas']}:\n"
-        findings_text += f"  {row['pct_increase']:+.1f}% increase\n"
-        findings_text += f"  (d={row['cohens_d']:.2f})\n"
-    
-    findings_text += "\nINTERPRETATION:\n"
-    findings_text += "• All atlases show increased\n  classification difficulty\n  during task\n"
-    findings_text += "• Task alters connectivity\n  patterns across brain\n"
-    findings_text += "• Effect magnitude varies\n  by parcellation scheme\n"
-    findings_text += "• Consistent direction\n  across all comparisons\n"
-    findings_text += "• Cohen's d shows effect\n  size magnitude"
-    
-    ax.text(0.1, 0.95, findings_text, transform=ax.transAxes,
-           fontsize=9, verticalalignment='top', fontfamily='monospace',
-           bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.3, pad=1))
-    
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"  ✓ Saved: {output_path.name}")
-
-
-# =============================================================================
-# FIGURE 4: NETWORK-LEVEL DETAIL WITH TIAN II
-# =============================================================================
-
-def plot_figure4_error_increase_focus(error_data, output_path):
-    """
-    Simplified version focusing on error increase with diverging bars.
-    """
-    fig, axes = plt.subplots(2, 2, figsize=(18, 14))
-    fig.suptitle('Task-Induced Error Increase by Network (Diverging View)', 
+    fig.suptitle('Parcellation Resolution Effects on Classification Performance',
                  fontsize=18, fontweight='bold', y=0.995)
     
-    atlas_configs = [
-        ('N7 Cortical', 'N7_rest', 'N7_task', axes[0, 0], 'A', 10),
-        ('N17 Cortical', 'N17_rest', 'N17_task', axes[0, 1], 'B', 8),
-        ('Tian I Subcortical', 'TianI_rest', 'TianI_task', axes[1, 0], 'C', 10),
-        ('Tian II Subcortical', 'TianII_rest', 'TianII_task', axes[1, 1], 'D', 8)
+    all_stats = []
+    
+    # =========================================================================
+    # Panel A: N7 vs N17 Rest
+    # =========================================================================
+    ax = fig.add_subplot(gs[0, 0])
+    if 'N7_rest' in error_data and 'N17_rest' in error_data:
+        n7 = error_data['N7_rest']['error_rate'].values
+        n17 = error_data['N17_rest']['error_rate'].values
+        n7_labels = error_data['N7_rest']['network'].values
+        n17_labels = error_data['N17_rest']['network'].values
+        
+        stat = compute_statistics(n7, n17, "N7", "N17")
+        all_stats.append({**stat, 'comparison': 'Cortical N7 vs N17', 'condition': 'Rest'})
+        
+        log_statistics(stat, "Cortical Resolution (Rest): N7 vs N17")
+        
+        bp = ax.boxplot([n7, n17], labels=['N7\n(7 networks)', 'N17\n(17 networks)'],
+                       patch_artist=True, widths=0.5,
+                       boxprops=dict(linewidth=2),
+                       medianprops=dict(linewidth=3, color='black'),
+                       whiskerprops=dict(linewidth=2),
+                       capprops=dict(linewidth=2))
+        
+        bp['boxes'][0].set_facecolor(COLORS['n7'])
+        bp['boxes'][1].set_facecolor(COLORS['n17'])
+        
+        # Add means
+        means = [stat['mean1'], stat['mean2']]
+        ax.plot([1, 2], means, 'D', color='white', markersize=14,
+               markeredgecolor='black', markeredgewidth=2.5, label='Mean', zorder=5)
+        
+        # Annotate outliers
+        annotate_outliers(ax, n7, 1, n7_labels, n_top=2, direction='left')
+        annotate_outliers(ax, n17, 2, n17_labels, n_top=2, direction='right')
+        
+        ax.set_ylabel('Error Rate', fontsize=12, fontweight='bold')
+        ax.set_title('A) Cortical Networks (Rest)', fontsize=13, fontweight='bold', pad=10)
+        ax.legend(fontsize=10)
+        ax.grid(axis='y', alpha=0.3)
+    
+    # =========================================================================
+    # Panel B: N7 vs N17 Task
+    # =========================================================================
+    ax = fig.add_subplot(gs[0, 1])
+    if 'N7_task' in error_data and 'N17_task' in error_data:
+        n7 = error_data['N7_task']['error_rate'].values
+        n17 = error_data['N17_task']['error_rate'].values
+        n7_labels = error_data['N7_task']['network'].values
+        n17_labels = error_data['N17_task']['network'].values
+        
+        stat = compute_statistics(n7, n17, "N7", "N17")
+        all_stats.append({**stat, 'comparison': 'Cortical N7 vs N17', 'condition': 'Task'})
+        
+        log_statistics(stat, "Cortical Resolution (Task): N7 vs N17")
+        
+        bp = ax.boxplot([n7, n17], labels=['N7\n(7 networks)', 'N17\n(17 networks)'],
+                       patch_artist=True, widths=0.5,
+                       boxprops=dict(linewidth=2),
+                       medianprops=dict(linewidth=3, color='black'),
+                       whiskerprops=dict(linewidth=2),
+                       capprops=dict(linewidth=2))
+        
+        bp['boxes'][0].set_facecolor(COLORS['n7'])
+        bp['boxes'][1].set_facecolor(COLORS['n17'])
+        
+        means = [stat['mean1'], stat['mean2']]
+        ax.plot([1, 2], means, 'D', color='white', markersize=14,
+               markeredgecolor='black', markeredgewidth=2.5, label='Mean', zorder=5)
+        
+        annotate_outliers(ax, n7, 1, n7_labels, n_top=2, direction='left')
+        annotate_outliers(ax, n17, 2, n17_labels, n_top=2, direction='right')
+        
+        ax.set_ylabel('Error Rate', fontsize=12, fontweight='bold')
+        ax.set_title('B) Cortical Networks (Task)', fontsize=13, fontweight='bold', pad=10)
+        ax.legend(fontsize=10)
+        ax.grid(axis='y', alpha=0.3)
+    
+    # =========================================================================
+    # Panel C: Tian I vs II Rest
+    # =========================================================================
+    ax = fig.add_subplot(gs[1, 0])
+    if 'TianI_rest' in error_data and 'TianII_rest' in error_data:
+        t1 = error_data['TianI_rest']['error_rate'].values
+        t2 = error_data['TianII_rest']['error_rate'].values
+        t1_labels = error_data['TianI_rest']['network'].values
+        t2_labels = error_data['TianII_rest']['network'].values
+        
+        stat = compute_statistics(t1, t2, "Tian I", "Tian II")
+        all_stats.append({**stat, 'comparison': 'Subcortical Tian I vs II', 'condition': 'Rest'})
+        
+        log_statistics(stat, "Subcortical Resolution (Rest): Tian I vs II")
+        
+        bp = ax.boxplot([t1, t2], labels=['Tian I\n(8 regions)', 'Tian II\n(16 regions)'],
+                       patch_artist=True, widths=0.5,
+                       boxprops=dict(linewidth=2),
+                       medianprops=dict(linewidth=3, color='black'),
+                       whiskerprops=dict(linewidth=2),
+                       capprops=dict(linewidth=2))
+        
+        bp['boxes'][0].set_facecolor(COLORS['tian1'])
+        bp['boxes'][1].set_facecolor(COLORS['tian2'])
+        
+        means = [stat['mean1'], stat['mean2']]
+        ax.plot([1, 2], means, 'D', color='white', markersize=14,
+               markeredgecolor='black', markeredgewidth=2.5, label='Mean', zorder=5)
+        
+        annotate_outliers(ax, t1, 1, t1_labels, n_top=2, direction='left')
+        annotate_outliers(ax, t2, 2, t2_labels, n_top=2, direction='right')
+        
+        ax.set_ylabel('Error Rate', fontsize=12, fontweight='bold')
+        ax.set_title('C) Subcortical Regions (Rest)', fontsize=13, fontweight='bold', pad=10)
+        ax.legend(fontsize=10)
+        ax.grid(axis='y', alpha=0.3)
+    
+    # =========================================================================
+    # Panel D: Tian I vs II Task
+    # =========================================================================
+    ax = fig.add_subplot(gs[1, 1])
+    if 'TianI_task' in error_data and 'TianII_task' in error_data:
+        t1 = error_data['TianI_task']['error_rate'].values
+        t2 = error_data['TianII_task']['error_rate'].values
+        t1_labels = error_data['TianI_task']['network'].values
+        t2_labels = error_data['TianII_task']['network'].values
+        
+        stat = compute_statistics(t1, t2, "Tian I", "Tian II")
+        all_stats.append({**stat, 'comparison': 'Subcortical Tian I vs II', 'condition': 'Task'})
+        
+        log_statistics(stat, "Subcortical Resolution (Task): Tian I vs II")
+        
+        bp = ax.boxplot([t1, t2], labels=['Tian I\n(8 regions)', 'Tian II\n(16 regions)'],
+                       patch_artist=True, widths=0.5,
+                       boxprops=dict(linewidth=2),
+                       medianprops=dict(linewidth=3, color='black'),
+                       whiskerprops=dict(linewidth=2),
+                       capprops=dict(linewidth=2))
+        
+        bp['boxes'][0].set_facecolor(COLORS['tian1'])
+        bp['boxes'][1].set_facecolor(COLORS['tian2'])
+        
+        means = [stat['mean1'], stat['mean2']]
+        ax.plot([1, 2], means, 'D', color='white', markersize=14,
+               markeredgecolor='black', markeredgewidth=2.5, label='Mean', zorder=5)
+        
+        annotate_outliers(ax, t1, 1, t1_labels, n_top=2, direction='left')
+        annotate_outliers(ax, t2, 2, t2_labels, n_top=2, direction='right')
+        
+        ax.set_ylabel('Error Rate', fontsize=12, fontweight='bold')
+        ax.set_title('D) Subcortical Regions (Task)', fontsize=13, fontweight='bold', pad=10)
+        ax.legend(fontsize=10)
+        ax.grid(axis='y', alpha=0.3)
+    
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"\n✓ Saved: {output_path.name}")
+    
+    return pd.DataFrame(all_stats)
+
+
+# =============================================================================
+# FIGURE 2: CORTICAL VS SUBCORTICAL (ULTRA CLEAN)
+# =============================================================================
+
+def plot_cortical_vs_subcortical(error_data, output_path):
+    """
+    Ultra clean cortical vs subcortical comparison.
+    No statistical annotations on graphs, full stats logged.
+    """
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+    fig.suptitle('Cortical vs Subcortical Classification Performance',
+                 fontsize=18, fontweight='bold', y=0.995)
+    
+    all_stats = []
+    
+    comparisons = [
+        ('N7_rest', 'TianI_rest', 'Coarse (Rest)', axes[0, 0], 'A'),
+        ('N7_task', 'TianI_task', 'Coarse (Task)', axes[0, 1], 'B'),
+        ('N17_rest', 'TianII_rest', 'Fine (Rest)', axes[1, 0], 'C'),
+        ('N17_task', 'TianII_task', 'Fine (Task)', axes[1, 1], 'D'),
     ]
     
-    for name, rest_key, task_key, ax, panel, fontsize in atlas_configs:
-        if rest_key in error_data and task_key in error_data:
-            rest_df = error_data[rest_key]
-            task_df = error_data[task_key]
+    for cort_key, subcort_key, title, ax, panel in comparisons:
+        if cort_key in error_data and subcort_key in error_data:
+            cort = error_data[cort_key]['error_rate'].values
+            subcort = error_data[subcort_key]['error_rate'].values
+            cort_labels = error_data[cort_key]['network'].values
+            subcort_labels = error_data[subcort_key]['network'].values
             
-            merged = pd.merge(
-                rest_df[['network', 'error_rate']],
-                task_df[['network', 'error_rate']],
-                on='network', suffixes=('_rest', '_task')
-            )
+            stat = compute_statistics(cort, subcort, "Cortical", "Subcortical")
+            all_stats.append({**stat, 'comparison': title})
             
-            if len(merged) > 0:
-                merged['error_increase'] = merged['error_rate_task'] - merged['error_rate_rest']
-                merged = merged.sort_values('error_increase', ascending=False)
-                
-                y_pos = np.arange(len(merged))
-                
-                # Diverging color scheme
-                colors = [COLORS['increase'] if x > 0 else COLORS['decrease'] 
-                         for x in merged['error_increase']]
-                
-                bars = ax.barh(y_pos, merged['error_increase'], 
-                             color=colors, alpha=0.85, edgecolor='black', linewidth=0.8)
-                
-                # Add zero line
-                ax.axvline(0, color='black', linewidth=2, linestyle='--', alpha=0.7)
-                
-                # Add significance markers
-                for i, (idx, row) in enumerate(merged.iterrows()):
-                    if abs(row['error_increase']) > 0.10:
-                        marker = '***'
-                    elif abs(row['error_increase']) > 0.05:
-                        marker = '**'
-                    else:
-                        marker = ''
-                    
-                    if marker:
-                        ax.text(row['error_increase'], i, f' {marker}',
-                               va='center', ha='left' if row['error_increase'] > 0 else 'right',
-                               fontsize=10, fontweight='bold', color='darkred')
-                
-                ax.set_yticks(y_pos)
-                ax.set_yticklabels(merged['network'], fontsize=fontsize)
-                ax.set_xlabel('Error Increase (Task - Rest)', fontweight='bold', fontsize=11)
-                ax.set_title(f'{panel}) {name}', fontweight='bold', fontsize=13, pad=10)
-                ax.grid(axis='x', alpha=0.3, linestyle='--', linewidth=0.5)
-                ax.invert_yaxis()
-                
-                # Add legend
-                legend_elements = [
-                    plt.Rectangle((0, 0), 1, 1, fc=COLORS['increase'], alpha=0.85, 
-                                 edgecolor='black', label='Task-Engaged'),
-                    plt.Rectangle((0, 0), 1, 1, fc=COLORS['decrease'], alpha=0.85,
-                                 edgecolor='black', label='Task-Suppressed')
-                ]
-                ax.legend(handles=legend_elements, fontsize=9, loc='best')
-        else:
-            ax.text(0.5, 0.5, f'No {name} data', ha='center', va='center', fontsize=12)
-            ax.set_title(f'{panel}) {name}', fontweight='bold', fontsize=13)
-            ax.axis('off')
+            log_statistics(stat, f"Cortical vs Subcortical: {title}")
+            
+            bp = ax.boxplot([cort, subcort],
+                           labels=['Cortical', 'Subcortical'],
+                           patch_artist=True, widths=0.5,
+                           boxprops=dict(linewidth=2),
+                           medianprops=dict(linewidth=3, color='black'),
+                           whiskerprops=dict(linewidth=2),
+                           capprops=dict(linewidth=2))
+            
+            bp['boxes'][0].set_facecolor(COLORS['cortical'])
+            bp['boxes'][1].set_facecolor(COLORS['subcortical'])
+            
+            means = [stat['mean1'], stat['mean2']]
+            ax.plot([1, 2], means, 'D', color='white', markersize=14,
+                   markeredgecolor='black', markeredgewidth=2.5, label='Mean', zorder=5)
+            
+            annotate_outliers(ax, cort, 1, cort_labels, n_top=2, direction='left')
+            annotate_outliers(ax, subcort, 2, subcort_labels, n_top=2, direction='right')
+            
+            ax.set_ylabel('Error Rate', fontsize=12, fontweight='bold')
+            ax.set_title(f'{panel}) {title}', fontsize=13, fontweight='bold', pad=10)
+            ax.legend(fontsize=10)
+            ax.grid(axis='y', alpha=0.3)
     
     plt.tight_layout()
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"  ✓ Saved diverging figure: {output_path.name}")
+    print(f"\n✓ Saved: {output_path.name}")
+    
+    return pd.DataFrame(all_stats)
+
+
+# =============================================================================
+# FIGURE 3: TASK EFFECTS (ULTRA CLEAN)
+# =============================================================================
+
+def plot_task_effects(error_data, output_path):
+    """
+    Ultra clean task effects - no statistical annotations.
+    Full paired statistics logged to console.
+    """
+    fig, axes = plt.subplots(2, 2, figsize=(18, 14))
+    fig.suptitle('Task-Induced Changes in Classification Performance',
+                 fontsize=18, fontweight='bold', y=0.995)
+    
+    all_stats = []
+    
+    atlas_configs = [
+        ('N7 Cortical', 'N7_rest', 'N7_task', axes[0, 0], 'A'),
+        ('N17 Cortical', 'N17_rest', 'N17_task', axes[0, 1], 'B'),
+        ('Tian I Subcortical', 'TianI_rest', 'TianI_task', axes[1, 0], 'C'),
+        ('Tian II Subcortical', 'TianII_rest', 'TianII_task', axes[1, 1], 'D'),
+    ]
+    
+    for name, rest_key, task_key, ax, panel in atlas_configs:
+        if rest_key in error_data and task_key in error_data:
+            rest_df = error_data[rest_key]
+            task_df = error_data[task_key]
+            
+            # Merge on network names
+            merged = pd.merge(
+                rest_df[['network', 'error_rate']],
+                task_df[['network', 'error_rate']],
+                on='network', suffixes=('_rest', '_task')
+            )
+            
+            if len(merged) > 0:
+                rest_vals = merged['error_rate_rest'].values
+                task_vals = merged['error_rate_task'].values
+                
+                stat = paired_statistics(rest_vals, task_vals, "Rest", "Task")
+                all_stats.append({**stat, 'atlas': name})
+                
+                log_statistics(stat, f"Task Effects: {name}")
+                
+                # Create paired plot
+                y_pos = np.arange(len(merged))
+                
+                ax.barh(y_pos - 0.2, rest_vals, 0.4, label='Rest',
+                       color=COLORS['rest'], alpha=0.8, edgecolor='black', linewidth=1)
+                ax.barh(y_pos + 0.2, task_vals, 0.4, label='Task',
+                       color=COLORS['task'], alpha=0.8, edgecolor='black', linewidth=1)
+                
+                # Connect pairs with lines
+                for i, (r, t) in enumerate(zip(rest_vals, task_vals)):
+                    if t > r:
+                        ax.plot([r, t], [i-0.2, i+0.2], 'r-', alpha=0.3, linewidth=1)
+                    else:
+                        ax.plot([r, t], [i-0.2, i+0.2], 'b-', alpha=0.3, linewidth=1)
+                
+                ax.set_yticks(y_pos)
+                ax.set_yticklabels(merged['network'], fontsize=10 if len(merged) < 10 else 8)
+                ax.set_xlabel('Error Rate', fontsize=11, fontweight='bold')
+                ax.set_title(f'{panel}) {name}', fontsize=12, fontweight='bold', pad=10)
+                ax.legend(fontsize=10)
+                ax.grid(axis='x', alpha=0.3)
+                ax.invert_yaxis()
+    
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"\n✓ Saved: {output_path.name}")
+    
+    return pd.DataFrame(all_stats)
+
+
+# =============================================================================
+# FIGURE 4: DISTRIBUTION PLOTS
+# =============================================================================
+
+def plot_distributions(error_data, output_path):
+    """
+    Distribution comparisons across atlases.
+    """
+    fig = plt.figure(figsize=(18, 12))
+    gs = fig.add_gridspec(2, 2, hspace=0.3, wspace=0.3)
+    
+    fig.suptitle('Error Rate Distributions Across Parcellation Schemes',
+                 fontsize=16, fontweight='bold', y=0.995)
+    
+    # Panel A: Violin plots (Rest)
+    ax = fig.add_subplot(gs[0, 0])
+    
+    data_rest = []
+    labels_rest = []
+    colors_rest = []
+    
+    for key, label, color in [
+        ('N7_rest', 'N7\nCortical', COLORS['n7']),
+        ('N17_rest', 'N17\nCortical', COLORS['n17']),
+        ('TianI_rest', 'Tian I\nSubcort', COLORS['tian1']),
+        ('TianII_rest', 'Tian II\nSubcort', COLORS['tian2']),
+    ]:
+        if key in error_data:
+            data_rest.append(error_data[key]['error_rate'].values)
+            labels_rest.append(label)
+            colors_rest.append(color)
+    
+    if data_rest:
+        parts = ax.violinplot(data_rest, positions=range(len(data_rest)),
+                             widths=0.7, showmeans=True, showmedians=True)
+        
+        for i, (pc, color) in enumerate(zip(parts['bodies'], colors_rest)):
+            pc.set_facecolor(color)
+            pc.set_alpha(0.7)
+        
+        ax.set_xticks(range(len(labels_rest)))
+        ax.set_xticklabels(labels_rest, fontsize=11)
+        ax.set_ylabel('Error Rate', fontsize=12, fontweight='bold')
+        ax.set_title('A) Distribution Comparison (Rest)', fontsize=13, fontweight='bold', pad=10)
+        ax.grid(axis='y', alpha=0.3)
+    
+    # Panel B: Violin plots (Task)
+    ax = fig.add_subplot(gs[0, 1])
+    
+    data_task = []
+    labels_task = []
+    colors_task = []
+    
+    for key, label, color in [
+        ('N7_task', 'N7\nCortical', COLORS['n7']),
+        ('N17_task', 'N17\nCortical', COLORS['n17']),
+        ('TianI_task', 'Tian I\nSubcort', COLORS['tian1']),
+        ('TianII_task', 'Tian II\nSubcort', COLORS['tian2']),
+    ]:
+        if key in error_data:
+            data_task.append(error_data[key]['error_rate'].values)
+            labels_task.append(label)
+            colors_task.append(color)
+    
+    if data_task:
+        parts = ax.violinplot(data_task, positions=range(len(data_task)),
+                             widths=0.7, showmeans=True, showmedians=True)
+        
+        for i, (pc, color) in enumerate(zip(parts['bodies'], colors_task)):
+            pc.set_facecolor(color)
+            pc.set_alpha(0.7)
+        
+        ax.set_xticks(range(len(labels_task)))
+        ax.set_xticklabels(labels_task, fontsize=11)
+        ax.set_ylabel('Error Rate', fontsize=12, fontweight='bold')
+        ax.set_title('B) Distribution Comparison (Task)', fontsize=13, fontweight='bold', pad=10)
+        ax.grid(axis='y', alpha=0.3)
+    
+    # Panel C: Histograms (Rest)
+    ax = fig.add_subplot(gs[1, 0])
+    
+    for data, label, color in zip(data_rest, labels_rest, colors_rest):
+        ax.hist(data, bins=15, alpha=0.5, label=label.replace('\n', ' '),
+               color=color, edgecolor='black', linewidth=1)
+    
+    ax.set_xlabel('Error Rate', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Frequency', fontsize=12, fontweight='bold')
+    ax.set_title('C) Error Rate Histograms (Rest)', fontsize=13, fontweight='bold', pad=10)
+    ax.legend(fontsize=10)
+    ax.grid(axis='y', alpha=0.3)
+    
+    # Panel D: Histograms (Task)
+    ax = fig.add_subplot(gs[1, 1])
+    
+    for data, label, color in zip(data_task, labels_task, colors_task):
+        ax.hist(data, bins=15, alpha=0.5, label=label.replace('\n', ' '),
+               color=color, edgecolor='black', linewidth=1)
+    
+    ax.set_xlabel('Error Rate', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Frequency', fontsize=12, fontweight='bold')
+    ax.set_title('D) Error Rate Histograms (Task)', fontsize=13, fontweight='bold', pad=10)
+    ax.legend(fontsize=10)
+    ax.grid(axis='y', alpha=0.3)
+    
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"\n✓ Saved: {output_path.name}")
 
 
 # =============================================================================
@@ -1092,8 +718,10 @@ def plot_figure4_error_increase_focus(error_data, output_path):
 
 def main():
     print("="*80)
-    print("ATLAS COMPARISON ANALYSIS - ENHANCED PUBLICATION VERSION")
+    print("ATLAS COMPARISON - ULTRA CLEAN GRAPHS")
     print("="*80)
+    print("\nGraphs are completely clean with NO statistical annotations")
+    print("All detailed statistics are logged below and saved in CSV tables\n")
     
     # Load data
     tables_dir = Path('reports/tables/atlas_analysis')
@@ -1110,125 +738,74 @@ def main():
         print("✗ No data found!")
         return 1
     
-    print(f"\n✓ Loaded {len(error_data)} files")
+    print(f"✓ Loaded {len(error_data)} datasets\n")
     
     # Output directories
-    output_tables = Path('reports/tables/atlas_comparison')
     output_figures = Path('reports/figures/atlas_comparison')
-    output_tables.mkdir(parents=True, exist_ok=True)
+    output_tables = Path('reports/tables/atlas_comparison')
     output_figures.mkdir(parents=True, exist_ok=True)
+    output_tables.mkdir(parents=True, exist_ok=True)
     
-    # Statistics
+    # Generate figures with comprehensive statistics logged
     print("\n" + "="*80)
-    print("COMPUTING STATISTICS")
+    print("GENERATING ULTRA CLEAN FIGURES AND LOGGING STATISTICS")
     print("="*80)
     
-    print("\n1. Resolution effects...")
-    resolution_stats = compare_resolution(error_data)
-    if not resolution_stats.empty:
-        resolution_stats.to_csv(output_tables / 'resolution_comparison.csv', index=False)
-        print("✓ Resolution comparison saved")
-        print(f"  • {len(resolution_stats)} comparisons analyzed")
+    print("\n" + "▶"*40)
+    print("  FIGURE 1: RESOLUTION EFFECTS")
+    print("▶"*40)
+    resolution_stats = plot_resolution_effects(error_data,
+                                               output_figures / 'fig1_resolution_effects.png')
+    if resolution_stats is not None and len(resolution_stats) > 0:
+        resolution_stats.to_csv(output_tables / 'resolution_statistics.csv', index=False)
+        print(f"\n✓ Saved statistics table: resolution_statistics.csv")
     
-    print("\n2. Cortical vs subcortical...")
-    system_stats = compare_cortical_subcortical(error_data)
-    if not system_stats.empty:
-        system_stats.to_csv(output_tables / 'cortical_vs_subcortical.csv', index=False)
-        print("✓ Cortical vs subcortical saved")
-        print(f"  • {len(system_stats)} comparisons analyzed")
+    print("\n" + "▶"*40)
+    print("  FIGURE 2: CORTICAL VS SUBCORTICAL")
+    print("▶"*40)
+    system_stats = plot_cortical_vs_subcortical(error_data,
+                                                output_figures / 'fig2_cortical_vs_subcortical.png')
+    if system_stats is not None and len(system_stats) > 0:
+        system_stats.to_csv(output_tables / 'system_statistics.csv', index=False)
+        print(f"\n✓ Saved statistics table: system_statistics.csv")
     
-    print("\n3. Rest vs task...")
-    rest_task_stats = compare_rest_task(error_data)
-    if not rest_task_stats.empty:
-        rest_task_stats.to_csv(output_tables / 'rest_vs_task_comparison.csv', index=False)
-        print("✓ Rest vs task saved")
-        print(f"  • {len(rest_task_stats)} atlases analyzed")
+    print("\n" + "▶"*40)
+    print("  FIGURE 3: TASK EFFECTS")
+    print("▶"*40)
+    task_stats = plot_task_effects(error_data,
+                                   output_figures / 'fig3_task_effects.png')
+    if task_stats is not None and len(task_stats) > 0:
+        task_stats.to_csv(output_tables / 'task_statistics.csv', index=False)
+        print(f"\n✓ Saved statistics table: task_statistics.csv")
     
-    # Figures
-    print("\n" + "="*80)
-    print("GENERATING PUBLICATION-READY FIGURES")
-    print("="*80)
-    
-    print("\nFigure 1: Resolution Effects (with Tian II)...")
-    plot_figure1_resolution_comparison(error_data, resolution_stats,
-                                      output_figures / 'figure1_resolution_comparison.png')
-    
-    print("\nFigure 2: Cortical vs Subcortical (with Tian II)...")
-    plot_figure2_cortical_vs_subcortical(error_data, system_stats,
-                                         output_figures / 'figure2_cortical_vs_subcortical.png')
-    
-    print("\nFigure 3: Rest vs Task (comprehensive)...")
-    plot_figure3_rest_vs_task(error_data, rest_task_stats,
-                              output_figures / 'figure3_rest_vs_task_comprehensive.png')
-    
-    print("\nFigure 4: Network Detail (with Tian II)...")
-    plot_figure4_network_detail(error_data,
-                                output_figures / 'figure4_network_detail_all.png')
-    
-    # Summary
-    print("\n" + "="*80)
-    print("STATISTICAL SUMMARY")
-    print("="*80)
-    
-    if not resolution_stats.empty:
-        print("\n1. RESOLUTION EFFECTS:")
-        print("-" * 60)
-        for _, row in resolution_stats.iterrows():
-            print(f"\n{row['comparison']} ({row['condition']}):")
-            print(f"  Coarse: {row['coarse_mean']:.4f} ± {row['coarse_std']:.4f}")
-            print(f"  Fine:   {row['fine_mean']:.4f} ± {row['fine_std']:.4f}")
-            print(f"  Change: {row['difference']:+.4f} ({row['pct_change']:+.1f}%)")
-            print(f"  Cohen's d: {row['cohens_d']:.2f}")
-    
-    if not system_stats.empty:
-        print("\n2. CORTICAL VS SUBCORTICAL:")
-        print("-" * 60)
-        for _, row in system_stats.iterrows():
-            print(f"\n{row['comparison']} ({row['condition']}):")
-            print(f"  Cortical:    {row['cortical_mean']:.4f} ± {row['cortical_std']:.4f}")
-            print(f"  Subcortical: {row['subcortical_mean']:.4f} ± {row['subcortical_std']:.4f}")
-            print(f"  Difference:  {row['difference']:+.4f} ({row['pct_difference']:+.1f}%)")
-            print(f"  Cohen's d: {row['cohens_d']:.2f}")
-    
-    if not rest_task_stats.empty:
-        print("\n3. REST VS TASK EFFECTS:")
-        print("-" * 60)
-        for _, row in rest_task_stats.iterrows():
-            print(f"\n{row['atlas']} ({row['n_networks']} networks):")
-            print(f"  Rest: {row['rest_mean']:.4f} ± {row['rest_std']:.4f}")
-            print(f"  Task: {row['task_mean']:.4f} ± {row['task_std']:.4f}")
-            print(f"  Increase: {row['mean_increase']:+.4f} ({row['pct_increase']:+.1f}%)")
-            print(f"  Cohen's d: {row['cohens_d']:.2f}")
+    print("\n" + "▶"*40)
+    print("  FIGURE 4: DISTRIBUTIONS")
+    print("▶"*40)
+    plot_distributions(error_data,
+                      output_figures / 'fig4_distributions.png')
     
     print(f"""
+
 {"="*80}
-GENERATED FILES
+✓ ANALYSIS COMPLETE
 {"="*80}
 
-Tables ({output_tables}):
-  • resolution_comparison.csv
-  • cortical_vs_subcortical.csv
-  • rest_vs_task_comparison.csv
+Generated Files:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Figures ({output_figures}):
-  • figure1_resolution_comparison.png (2x3 grid with Tian II)
-  • figure2_cortical_vs_subcortical.png (2x3 grid with Tian II)
-  • figure3_rest_vs_task_comprehensive.png (2x3 grid with all atlases)
-  • figure4_network_detail_all.png (2x2 grid with all atlases)
+  • fig1_resolution_effects.png
+  • fig2_cortical_vs_subcortical.png
+  • fig3_task_effects.png
+  • fig4_distributions.png
 
-FEATURES:
-  ✓ Effect sizes (Cohen's d) on all comparisons
-  ✓ Outlier network annotations
-  ✓ Publication-ready styling
-  ✓ Comprehensive Tian II analysis
-  ✓ Effect size magnitude color coding
-  ✓ Key findings panels
-  ✓ Professional color schemes
-  ✓ Descriptive statistics (mean ± SD)
-  ✓ Percentage changes highlighted
+Statistical Tables ({output_tables}):
+  • resolution_statistics.csv
+  • system_statistics.csv
+  • task_statistics.csv
 
 {"="*80}
-✓ All analyses complete! Ready for presentation.
+Perfect: Ultra clean graphs + Complete statistics documented!
 {"="*80}
 """)
     

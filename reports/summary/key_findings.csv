@@ -1,0 +1,3 @@
+finding,result,interpretation,significance
+Classification Performance,96.3% accuracy across 8 networks (7.7× better than chance),Networks have unique connectivity fingerprints that can be reliably identified,High
+Network Variability,"Best: Visual (98.6%), Worst: Limbic (94.1%)","Sensory networks more stable than cognitive networks, supporting hierarchical organization",Moderate
