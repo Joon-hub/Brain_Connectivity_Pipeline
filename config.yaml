@@ -19,14 +19,14 @@ output_dirs:
   figures: "reports/figures/basic_analysis"          # PNGs: error maps, comparisons
 
 # Feature extraction
-diagonal_strategy: "random"           # Options: "zero", "region_mean", "network_mean", "random", "regression_predictive","knn_imputation"
+diagonal_strategy: "zero"           # Options: "zero", "region_mean", "network_mean", "random", "regression_predictive","knn_imputation"
                                                              
 # Model training
 model:
   scaler_type: "fisher_z"                            # CRITICAL: "fisher_z" (recommended) or "standard"
   C: 0.01                                            # L2 regularization strength (smaller = stronger)
   max_iter: 1000
-  n_splits: 5                                        # GroupKFold cross-validation
+  n_splits: 3                                        # GroupKFold cross-validation
   random_seed: 42
 
 # Evaluation & Visualization

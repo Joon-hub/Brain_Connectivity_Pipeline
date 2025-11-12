@@ -16,6 +16,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from sklearn.metrics import accuracy_score
 
 # Add src/ to path
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
@@ -293,6 +294,7 @@ def main() -> int:
         results.update({
             'n_test_samples': len(X_test),
             'n_test_subjects': len(np.unique(subjects_test_ids)),
+            'test_accuracy': accuracy_score(y_test, y_test_pred),
         })
         task_data_available = True
         print(f"Task prediction complete: {len(X_test)} samples, {len(np.unique(subjects_test_ids))} subjects")
