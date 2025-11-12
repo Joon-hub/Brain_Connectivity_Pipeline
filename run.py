@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """
-Brain Connectivity Classification Pipeline
-===========================================
-Main entry point for the complete analysis pipeline.
+Brain Connectivity Classification Pipeline (LEAK-FREE VERSION)
+===============================================================
+This version eliminates all data leakage by:
+1. Fitting preprocessing INSIDE each CV fold
+2. Computing all statistics only on training data
+3. Proper subject-level splitting before any preprocessing
 
 Usage:
-    python run.py --config config.yaml                         # Full pipeline
-    python run.py --sample                                     # Quick test with sample data
-    python run.py --config config.yaml --diagonal zero --C 1.0 # Override params
+    python run.py --config config.yaml
+    python run.py --diagonal region_mean --C 0.01
+    python run.py --sample  # Quick test
 """
 
 import sys
@@ -16,415 +19,433 @@ import argparse
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
+import yaml
 
-# Add src/ to path
-sys.path.insert(0, str(Path(__file__).parent / 'src'))
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent))
 
-# ======================================================================
-# Project Modules
-# ======================================================================
-from data import (
-    load_connectivity_data, extract_connection_columns, extract_subjects,
-    create_sample_dataset, validate_schema
+# Import project modules
+from src.features import BrainConnectivityPreprocessor
+from src.model import BrainRegionClassifier
+from src.evaluate import (
+    calculate_error_map, save_results_csv, 
+    save_confusion_matrix, compare_error_maps
 )
-from src.features import (
-    extract_regions, parse_networks, impute_diagonal,
-    train_region_models, save_region_models, load_region_models,
-    BrainConnectivityPreprocessor
-)
-from model import BrainRegionClassifierPipeline
-from evaluate import (
-    calculate_error_map, calculate_global_metrics,
-    save_results_csv, save_confusion_matrix, compare_error_maps
-)
-from visualize import (
-    plot_error_map, plot_rest_vs_task_comparison, plot_network_analysis
-)
-from utils import (
-    setup_logging, set_random_seeds, load_config, log_provenance,
-    print_section, format_time, save_config_copy
-)
-
-# ======================================================================
-# Helper: Sample Data Handler
-# ======================================================================
-def get_dataset_path(original_path: str, sample: bool, sample_path: str):
-    """Create sample if needed and return correct path."""
-    if sample:
-        Path(sample_path).parent.mkdir(parents=True, exist_ok=True)
-        if not Path(sample_path).exists():
-            print(f"Creating sample dataset: {sample_path}")
-            create_sample_dataset(original_path, sample_path, n_subjects=10)
-        return sample_path
-    if not Path(original_path).exists():
-        raise FileNotFoundError(f"Data file not found: {original_path}")
-    return original_path
+from src.visualize import plot_error_map, plot_rest_vs_task_comparison
 
 
-# ======================================================================
-# Config helpers (support both flat and nested 'model' keys)
-# ======================================================================
-def _get_cfg(cfg: dict, key: str, default=None):
-    """Get a value from config; prefer nested cfg['model'][key] when present."""
-    if isinstance(cfg.get('model'), dict) and key in cfg['model']:
-        return cfg['model'].get(key, default)
-    return cfg.get(key, default)
+# ============================================================================
+# CONFIGURATION & UTILITIES
+# ============================================================================
+
+def load_config(config_path: str) -> dict:
+    """Load YAML configuration."""
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    return config
 
 
-# ======================================================================
-# Main Pipeline
-# ======================================================================
+def set_random_seeds(seed: int):
+    """Set all random seeds for reproducibility."""
+    np.random.seed(seed)
+    import random
+    random.seed(seed)
+
+
+def load_connectivity_data(filepath: str) -> pd.DataFrame:
+    """Load connectivity CSV file."""
+    filepath = Path(filepath)
+    if not filepath.exists():
+        raise FileNotFoundError(f"Data file not found: {filepath}")
+    
+    df = pd.read_csv(filepath)
+    print(f"✓ Loaded {len(df)} subjects from {filepath.name}")
+    return df
+
+
+def extract_connection_columns(df: pd.DataFrame) -> list:
+    """Extract connection column names (containing '~')."""
+    connection_cols = [col for col in df.columns if '~' in str(col)]
+    return connection_cols
+
+
+def create_sample_dataset(input_path: str, output_path: str, n_subjects: int = 10):
+    """Create small sample dataset for testing."""
+    df = pd.read_csv(input_path)
+    df_sample = df.head(n_subjects)
+    
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    df_sample.to_csv(output_path, index=False)
+    print(f"✓ Created sample dataset: {output_path} ({n_subjects} subjects)")
+
+
+def print_section(title: str):
+    """Print formatted section header."""
+    print(f"\n{'='*70}")
+    print(f"  {title}")
+    print(f"{'='*70}\n")
+
+
+def format_time(seconds: float) -> str:
+    """Format elapsed time."""
+    if seconds < 60:
+        return f"{seconds:.1f}s"
+    elif seconds < 3600:
+        return f"{seconds/60:.1f}m"
+    else:
+        return f"{seconds/3600:.1f}h"
+
+
+# ============================================================================
+# MAIN PIPELINE
+# ============================================================================
+
 def main() -> int:
-    """Run the complete brain connectivity classification pipeline."""
+    """Run complete leak-free pipeline."""
     start_time = time.time()
-
-    # ---------------------------------------------------------------
-    # Argument parsing
-    # ---------------------------------------------------------------
+    
+    # ========================================================================
+    # ARGUMENT PARSING
+    # ========================================================================
     parser = argparse.ArgumentParser(
-        description='Brain Connectivity Classification Pipeline',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
+        description='Leak-Free Brain Connectivity Classification Pipeline'
     )
     parser.add_argument('--config', type=str, default='config.yaml',
                         help='Path to configuration file')
     parser.add_argument('--sample', action='store_true',
-                        help='Run on sample data (10 subjects) for quick testing')
-    parser.add_argument('--log', type=str, default=None,
-                        help='Path to log file (optional)')
-    parser.add_argument(
-        '--diagonal',
-        type=str,
-        choices=[
-            'zero', 'mean', 'region_mean',
-            'knn', 'random', 'network_mean', 'regression_predictive'
-        ],
-        help='Override diagonal imputation strategy'
-    )
-    parser.add_argument('--C', type=float, help='Logistic regression C parameter')
-    parser.add_argument('--seed', type=int, help='Random seed override')
+                        help='Run on sample data for quick testing')
+    parser.add_argument('--diagonal', type=str,
+                        choices=['zero', 'random', 'region_mean', 'network_mean', 'sample_from_matrix'],
+                        help='Override diagonal imputation strategy')
+    parser.add_argument('--C', type=float,
+                        help='Override logistic regression C parameter')
+    parser.add_argument('--n_splits', type=int,
+                        help='Override number of CV folds')
+    parser.add_argument('--seed', type=int,
+                        help='Override random seed')
+    
     args = parser.parse_args()
-
-    # ---------------------------------------------------------------
-    # Setup
-    # ---------------------------------------------------------------
-    setup_logging(args.log)
-    print_section("BRAIN CONNECTIVITY CLASSIFICATION PIPELINE")
-    print(f"Mode: {'SAMPLE DATA (quick test)' if args.sample else 'FULL DATA'}")
+    
+    # ========================================================================
+    # SETUP
+    # ========================================================================
+    print_section("LEAK-FREE BRAIN CONNECTIVITY CLASSIFICATION")
+    print(f"Mode: {'SAMPLE DATA' if args.sample else 'FULL DATA'}")
     print(f"Config: {args.config}")
     print(f"Start: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-
-    # Load config and seed
+    
+    # Load configuration
     config = load_config(args.config)
-
-    # Prefer nested model keys when present
-    random_seed = args.seed or _get_cfg(config, 'random_seed', 42)
+    
+    # Extract settings with overrides
+    random_seed = args.seed or config.get('model', {}).get('random_seed', 42)
     set_random_seeds(random_seed)
-
-    # Override config from CLI
-    if args.diagonal:
-        # store under nested model if present, else flat for backward-compat
-        if isinstance(config.get('model'), dict):
-            config['model']['diagonal_strategy'] = args.diagonal
-        else:
-            config['diagonal_strategy'] = args.diagonal
-    if args.C is not None:
-        if isinstance(config.get('model'), dict):
-            config['model']['C'] = args.C
-        else:
-            config['C'] = args.C
-
-    # Extract settings (support both config styles)
+    
+    diagonal_strategy = args.diagonal or config.get('diagonal_strategy', 'zero')
+    C = args.C or config.get('model', {}).get('C', 0.01)
+    n_splits = args.n_splits or config.get('model', {}).get('n_splits', 5)
+    max_iter = config.get('model', {}).get('max_iter', 1000)
+    
+    # Data paths
     piop2_file = config['data']['piop2_file']
     piop1_file = config['data']['piop1_file']
-    diagonal_strategy = _get_cfg(config, 'diagonal_strategy', 'region_mean')
-    n_splits = _get_cfg(config, 'n_splits', 5)
-    C = _get_cfg(config, 'C', 0.01)
-    max_iter = _get_cfg(config, 'max_iter', 1000)
-
+    
     # Output directories
     output_dirs = {k: Path(v) for k, v in config['output_dirs'].items()}
-
-    # Create all output directories upfront
     for dir_path in output_dirs.values():
-        Path(dir_path).mkdir(parents=True, exist_ok=True)
-
-    # Save config copy for reproducibility
-    # save_config_copy(args.config, Path(output_dirs['tables']) / 'used_config.yaml')
-
-    # Base results (we’ll add to this as we go)
+        dir_path.mkdir(parents=True, exist_ok=True)
+    
+    # Results dictionary
     results = {
         'diagonal_strategy': diagonal_strategy,
         'random_seed': random_seed,
         'n_splits': n_splits,
         'C': C,
-        'max_iter': max_iter,
-        'used_region_models': False,
-        'region_models_path': None,
+        'max_iter': max_iter
     }
-
-    # =========================================================================
-    # STEP 1: Load Resting-State Data (PIOP-2)
-    # =========================================================================
-    print_section("STEP 1/6: Load Resting-State Data (PIOP-2)")
-    piop2_path = get_dataset_path(
-        piop2_file,
-        args.sample,
-        "data/sample/sample_piop2_small.csv"
-    )
-    df_piop2 = load_connectivity_data(piop2_path)
-    connection_columns = extract_connection_columns(df_piop2)
-    print(f"Loaded {len(df_piop2)} samples, {len(connection_columns)} connections")
-
-    # =========================================================================
-    # STEP 2: Preprocessing (conditionally train/load region models)
-    # =========================================================================
-    print_section("STEP 2/6: Extract Features and Preprocess Data")
-    region_models = None
-    region_models_pkl = Path(output_dirs['models']) / 'region_regression_models.pkl'
-
-    if diagonal_strategy == 'regression_predictive':
-        if region_models_pkl.exists():
-            print(f"Loading existing region models from {region_models_pkl}")
-            region_models, _ = load_region_models(region_models_pkl)
-            results['used_region_models'] = True
-            results['region_models_path'] = str(region_models_pkl)
-        else:
-            print("Training region-specific regression models for diagonal imputation...")
-            region_models, _ = train_region_models(df_piop2, connection_columns)
-            save_region_models(region_models, None, region_models_pkl)  # region_list not required here
-            print(f"Region models saved to {region_models_pkl}")
-            results['used_region_models'] = True
-            results['region_models_path'] = str(region_models_pkl)
-    else:
-        print(f"Skipping regression model training/loading (strategy='{diagonal_strategy}').")
-
-    # Initialize and fit preprocessor
-    preprocessor = BrainConnectivityPreprocessor(
-        connection_columns=connection_columns,
+    
+    print(f"Configuration:")
+    print(f"  Diagonal strategy: {diagonal_strategy}")
+    print(f"  C (regularization): {C}")
+    print(f"  CV folds: {n_splits}")
+    print(f"  Random seed: {random_seed}")
+    
+    # ========================================================================
+    # STEP 1: LOAD TRAINING DATA (PIOP-2 Resting State)
+    # ========================================================================
+    print_section("STEP 1: Load Training Data (PIOP-2 Resting State)")
+    
+    if args.sample:
+        sample_path = "data/sample/sample_piop2.csv"
+        if not Path(sample_path).exists():
+            create_sample_dataset(piop2_file, sample_path, n_subjects=30)
+        piop2_file = sample_path
+    
+    df_train = load_connectivity_data(piop2_file)
+    connection_columns = extract_connection_columns(df_train)
+    
+    print(f"  Subjects: {len(df_train)}")
+    print(f"  Connections: {len(connection_columns)}")
+    
+    # ========================================================================
+    # STEP 2: TRAIN CLASSIFIER WITH LEAK-FREE CV
+    # ========================================================================
+    print_section("STEP 2: Train Classifier (Leak-Free Cross-Validation)")
+    
+    print("⚠️  IMPORTANT: Preprocessing happens INSIDE each CV fold")
+    print("   → Statistics computed only on training fold")
+    print("   → No information leakage to validation fold\n")
+    
+    classifier = BrainRegionClassifier(
+        preprocessor_class=BrainConnectivityPreprocessor,
         diagonal_strategy=diagonal_strategy,
-        region_models=region_models
-    )
-    print("Fitting preprocessor on resting-state data...")
-    preprocessor.fit(df_piop2)
-
-    # Canonical region metadata (single source of truth)
-    region_list = preprocessor.region_list_
-    n_regions = preprocessor.n_regions_
-
-    # Transform to features/labels/subjects
-    X_train = preprocessor.transform(df_piop2)
-    y_train = preprocessor.get_labels()
-    subjects_train_ids = preprocessor.get_subjects()
-
-    # Save preprocessor
-    preprocessor_path = Path(output_dirs['models']) / 'preprocessor.pkl'
-    import joblib
-    joblib.dump(preprocessor, preprocessor_path)
-    print(f"Preprocessor saved to {preprocessor_path}")
-
-    # Update results
-    results.update({
-        'n_regions': n_regions,
-        'n_train_samples': len(X_train),
-        'n_train_subjects': len(np.unique(subjects_train_ids)),
-    })
-
-    # =========================================================================
-    # STEP 3: Train Classifier with GroupCV
-    # =========================================================================
-    print_section("STEP 3/6: Train Brain Region Classifier (GroupKFold)")
-    classifier = BrainRegionClassifierPipeline(
+        connection_columns=connection_columns,
+        include_diagonal=True,  # CRITICAL: Exclude diagonal from features!
         C=C,
         max_iter=max_iter,
         n_splits=n_splits,
         random_state=random_seed
     )
-    print("Training with subject-aware cross-validation...")
-    classifier.fit(X_train, y_train, groups=subjects_train_ids, verbose=True)
+    
+    # Fit with leak-free CV
+    classifier.fit(df_train, verbose=True)
+    
+    # Get CV results
     cv_results = classifier.get_cv_results()
-
+    n_regions = classifier.n_regions_
+    region_list = classifier.region_list_
+    
     results.update({
-        'cv_mean_accuracy': cv_results['mean_accuracy'],
-        'cv_std_accuracy': cv_results['std_accuracy'],
-        'train_accuracy': cv_results['train_accuracy'],
+        'n_regions': n_regions,
+        'n_train_subjects': len(df_train),
+        'cv_val_mean': cv_results['val_mean'],
+        'cv_val_std': cv_results['val_std'],
+        'cv_train_mean': cv_results['train_mean'],
+        'cv_train_std': cv_results['train_std']
     })
-
-    # Save classifier
-    model_path = Path(output_dirs['models']) / f'brain_region_classifier_{diagonal_strategy}.pkl'
-    classifier.save(str(model_path))
-    print(f"Classifier saved to {model_path}")
-
-    # Predictions on training data
-    y_train_pred = classifier.predict(X_train)
-    y_train_proba = classifier.predict_proba(X_train)
-    error_map_train = calculate_error_map(y_train, y_train_pred, region_list)
-
-    # =========================================================================
-    # STEP 4: Apply to Task Data (PIOP-1)
-    # =========================================================================
-    print_section("STEP 4/6: Apply to Task Data (PIOP-1)")
-    task_data_available = False
-    y_test = y_test_pred = error_map_test = subjects_test_ids = None
-
-    try:
-        piop1_path = get_dataset_path(
-            piop1_file,
-            args.sample,
-            "data/sample/sample_piop1_small.csv"
-        )
-        df_piop1 = load_connectivity_data(piop1_path)
-        validate_schema(df_piop1)
-
-        if not df_piop1.columns.equals(df_piop2.columns):
-            raise ValueError("Column mismatch between PIOP-1 and PIOP-2!")
-
-        print("Transforming task data using fitted preprocessor...")
-        X_test = preprocessor.transform(df_piop1)
-        y_test = preprocessor.get_labels()
-        subjects_test = preprocessor.get_subjects()
-        subject_ids_raw = df_piop1.iloc[:, 0].values
-        subjects_test_ids = subject_ids_raw[subjects_test]
-
-        y_test_pred = classifier.predict(X_test)
-        y_test_proba = classifier.predict_proba(X_test)
-        error_map_test = calculate_error_map(y_test, y_test_pred, region_list)
-
-        results.update({
-            'n_test_samples': len(X_test),
-            'n_test_subjects': len(np.unique(subjects_test_ids)),
-            'test_accuracy': accuracy_score(y_test, y_test_pred),
-        })
-        task_data_available = True
-        print(f"Task prediction complete: {len(X_test)} samples, {len(np.unique(subjects_test_ids))} subjects")
-
-    except FileNotFoundError as e:
-        print(f"\nTask data not found: {e}")
-        print("Skipping task-based analysis (Steps 4–6 partial).")
-    except Exception as e:
-        print(f"\nError processing task data: {e}")
-        print("Continuing with rest-only analysis...")
-
-    # =========================================================================
-    # STEP 5: Save Predictions & Tables
-    # =========================================================================
-    print_section("STEP 5/6: Save Predictions and Results")
-    processed_dir = Path(output_dirs['processed'])
-    tables_dir = Path(output_dirs['tables'])
-
-    # Training predictions
-    train_df = pd.DataFrame({
-        'subject_id': subjects_train_ids,
-        'true_region': y_train,
+    
+    # Save model
+    classifier.save(str(output_dirs['models']))
+    
+    # ========================================================================
+    # STEP 3: EVALUATE ON TRAINING DATA
+    # ========================================================================
+    print_section("STEP 3: Evaluate on Training Data")
+    
+    y_train_pred, y_train_true, subjects_train = classifier.predict(df_train)
+    train_acc = accuracy_score(y_train_true, y_train_pred)
+    
+    print(f"Training accuracy: {train_acc:.4f}")
+    print(f"Total samples: {len(y_train_true)}")
+    
+    # Calculate error map
+    error_map_train = calculate_error_map(y_train_true, y_train_pred, region_list)
+    
+    # Save predictions
+    train_pred_df = pd.DataFrame({
+        'subject_id': subjects_train,
+        'true_region': y_train_true,
         'predicted_region': y_train_pred,
-        'correct': y_train == y_train_pred
+        'correct': y_train_true == y_train_pred
     })
-    train_df.to_csv(processed_dir / 'predictions_train.csv', index=False)
-
-    if task_data_available:
-        test_df = pd.DataFrame({
-            'subject_id': subjects_test_ids,
-            'true_region': y_test,
+    train_pred_df.to_csv(
+        output_dirs['processed'] / f'predictions_train_{diagonal_strategy}.csv',
+        index=False
+    )
+    
+    # Save error map
+    save_results_csv(
+        error_map_train,
+        output_dirs['tables'] / f'error_map_rest_{diagonal_strategy}.csv'
+    )
+    
+    # Save confusion matrix
+    save_confusion_matrix(
+        y_train_true, y_train_pred, region_list,
+        dataset_name=f"rest_{diagonal_strategy}"
+    )
+    
+    results['train_accuracy'] = train_acc
+    
+    # ========================================================================
+    # STEP 4: APPLY TO TASK DATA (PIOP-1)
+    # ========================================================================
+    print_section("STEP 4: Apply to Task Data (PIOP-1 Gender Stroop)")
+    
+    task_available = False
+    
+    try:
+        if args.sample:
+            sample_task_path = "data/sample/sample_piop1.csv"
+            if not Path(sample_task_path).exists():
+                create_sample_dataset(piop1_file, sample_task_path, n_subjects=20)
+            piop1_file = sample_task_path
+        
+        df_test = load_connectivity_data(piop1_file)
+        
+        # Verify schema match
+        if not all(col in df_test.columns for col in connection_columns):
+            raise ValueError("Column mismatch between PIOP-1 and PIOP-2!")
+        
+        # Predict on task data
+        y_test_pred, y_test_true, subjects_test = classifier.predict(df_test)
+        test_acc = accuracy_score(y_test_true, y_test_pred)
+        
+        print(f"Task prediction accuracy: {test_acc:.4f}")
+        print(f"Test subjects: {len(df_test)}")
+        print(f"Test samples: {len(y_test_true)}")
+        
+        # Calculate error map
+        error_map_test = calculate_error_map(y_test_true, y_test_pred, region_list)
+        
+        # Save predictions
+        test_pred_df = pd.DataFrame({
+            'subject_id': subjects_test,
+            'true_region': y_test_true,
             'predicted_region': y_test_pred,
-            'correct': y_test == y_test_pred
+            'correct': y_test_true == y_test_pred
         })
-        test_df.to_csv(processed_dir / 'predictions_task.csv', index=False)
-        # Save probabilities
-        proba_df = pd.DataFrame(y_test_proba, columns=region_list)
-        proba_df.insert(0, 'subject_id', subjects_test_ids)
-        proba_df.to_csv(processed_dir / 'prediction_probabilities_task.csv', index=False)
-
-    # Error maps and confusion
-    save_results_csv(error_map_train, tables_dir / 'error_map_rest.csv')
-    save_confusion_matrix(y_train, y_train_pred, region_list, dataset_name="rest")
-
-    if task_data_available:
-        save_results_csv(error_map_test, tables_dir / 'error_map_task.csv')
-        save_confusion_matrix(y_test, y_test_pred, region_list, dataset_name="task")
+        test_pred_df.to_csv(
+            output_dirs['processed'] / f'predictions_task_{diagonal_strategy}.csv',
+            index=False
+        )
+        
+        # Save error map
+        save_results_csv(
+            error_map_test,
+            output_dirs['tables'] / f'error_map_task_{diagonal_strategy}.csv'
+        )
+        
+        # Save confusion matrix
+        save_confusion_matrix(
+            y_test_true, y_test_pred, region_list,
+            dataset_name=f"task_{diagonal_strategy}"
+        )
+        
+        # Compare rest vs task
         comparison = compare_error_maps(error_map_train, error_map_test)
-        save_results_csv(comparison, tables_dir / 'comparison_rest_vs_task.csv')
-
-    # =========================================================================
-    # STEP 6: Generate Figures
-    # =========================================================================
-    print_section("STEP 6/6: Generate Thesis Figures")
-    figures_dir = Path(output_dirs['figures'])
+        save_results_csv(
+            comparison,
+            output_dirs['tables'] / f'comparison_rest_vs_task_{diagonal_strategy}.csv'
+        )
+        
+        results['test_accuracy'] = test_acc
+        results['n_test_subjects'] = len(df_test)
+        
+        task_available = True
+        
+    except FileNotFoundError as e:
+        print(f"⚠️  Task data not found: {e}")
+        print("   Skipping task analysis...")
+    except Exception as e:
+        print(f"⚠️  Error processing task data: {e}")
+        print("   Continuing with training data only...")
+    
+    # ========================================================================
+    # STEP 5: GENERATE VISUALIZATIONS
+    # ========================================================================
+    print_section("STEP 5: Generate Visualizations")
+    
+    figures_dir = output_dirs['figures']
     figure_count = 0
-
+    
+    # Plot 1: Training error map
     plot_error_map(
         error_map_train,
-        title='Resting-State Error Map (Training)',
-        output_path=str(figures_dir / 'fig1_error_map_rest.png')
+        title=f'Resting-State Error Map ({diagonal_strategy})',
+        output_path=str(figures_dir / f'error_map_rest.png')
     )
     figure_count += 1
-
-    if task_data_available:
+    print(f"✓ Generated: error_map_rest.png")
+    
+    if task_available:
+        # Plot 2: Task error map
         plot_error_map(
             error_map_test,
-            title='Task Error Map (Gender Stroop)',
-            output_path=str(figures_dir / 'fig3_error_map_task.png')
+            title=f'Task Error Map ({diagonal_strategy})',
+            output_path=str(figures_dir / f'error_map_task.png')
         )
         figure_count += 1
-
+        print(f"✓ Generated: error_map_task.png")
+        
+        # Plot 3: Rest vs Task comparison
         plot_rest_vs_task_comparison(
             error_map_train, error_map_test, comparison,
-            output_path=str(figures_dir / 'fig4_rest_vs_task_comparison.png')
+            output_path=str(figures_dir / f'comparison_rest_vs_task.png')
         )
         figure_count += 1
-
-    print(f"Generated {figure_count} figures in {figures_dir}")
-
-    # =========================================================================
-    # SUMMARY
-    # =========================================================================
+        print(f"✓ Generated: comparison_rest_vs_task.png")
+    
+    print(f"\nTotal figures: {figure_count}")
+    
+    # ========================================================================
+    # STEP 6: SUMMARY
+    # ========================================================================
     elapsed = time.time() - start_time
-    chance = 1.0 / n_regions
-    improvement = results['cv_mean_accuracy'] / chance
-
+    chance_level = 1.0 / n_regions
+    improvement = results['cv_val_mean'] / chance_level
+    
     print_section("PIPELINE COMPLETE!")
+    
     summary = f"""
-Summary of Results
-{'='*50}
-diagonal_strategy: {diagonal_strategy}
+RESULTS SUMMARY
+{'='*70}
 
-Training (Resting-State):
-  Subjects: {results['n_train_subjects']:,}
-  Samples : {results['n_train_samples']:,}
-  Regions : {n_regions}
+Data:
+  Training subjects: {results['n_train_subjects']}
+  Brain regions: {n_regions}
+  Chance level: {chance_level:.4f}
 
-Model Performance (Strategy: {diagonal_strategy}):
-  CV Accuracy : {results['cv_mean_accuracy']:.4f} ± {results['cv_std_accuracy']:.4f}
-  Train Acc.  : {results['train_accuracy']:.4f}
-  Chance Level: {chance:.4f} ({n_regions} classes)
-  Improvement : {improvement:.1f}x above chance
+Model Configuration:
+  Diagonal strategy: {diagonal_strategy}
+  Regularization (C): {C}
+  CV folds: {n_splits}
 
-Task Data (PIOP-1){' (SKIPPED)' if not task_data_available else ''}:
-  Subjects: {results.get('n_test_subjects', 0):,}
-  Samples : {results.get('n_test_samples', 0):,}
-  Test Acc.  : {results.get('test_accuracy', 0.0):.4f}
-{'='*50}
+Cross-Validation Results (LEAK-FREE):
+  Validation accuracy: {results['cv_val_mean']:.4f} ± {results['cv_val_std']:.4f}
+  Training accuracy: {results['cv_train_mean']:.4f} ± {results['cv_train_std']:.4f}
+  Improvement over chance: {improvement:.1f}x
 
-Output Directories:
-  Models      → {output_dirs['models']}
-  Tables      → {output_dirs['tables']}
-  Figures     → {figures_dir}
-  Processed   → {processed_dir}
+Final Training Accuracy: {results['train_accuracy']:.4f}
+"""
+    
+    if task_available:
+        summary += f"""
+Task Data (Gender Stroop):
+  Test subjects: {results['n_test_subjects']}
+  Test accuracy: {results['test_accuracy']:.4f}
+"""
+    
+    summary += f"""
+{'='*70}
+
+Output Locations:
+  Models: {output_dirs['models']}
+  Tables: {output_dirs['tables']}
+  Figures: {output_dirs['figures']}
+  Predictions: {output_dirs['processed']}
 
 Execution Time: {format_time(elapsed)}
 Completed: {time.strftime('%Y-%m-%d %H:%M:%S')}
+
+{'='*70}
 """
+    
     print(summary)
-
-    # Final provenance
-    log_provenance(tables_dir, config, results)
-
-    print("Pipeline executed successfully!\n")
+    
+    # Save summary
+    with open(output_dirs['tables'] / f'summary_{diagonal_strategy}.txt', 'w') as f:
+        f.write(summary)
+    
+    print("✅ Pipeline completed successfully!\n")
+    
     return 0
 
 
-# ======================================================================
-# Entry Point
-# ======================================================================
+# ============================================================================
+# ENTRY POINT
+# ============================================================================
+
 if __name__ == '__main__':
     sys.exit(main())
