@@ -5,9 +5,9 @@ Brain Connectivity Classification Pipeline
 Main entry point for the complete analysis pipeline.
 
 Usage:
-    python run.py --config config.yaml               # Full pipeline
-    python run.py --sample                            # Quick test with sample data
-    python run.py --config config.yaml --diagonal zero --C 1.0  # Override params
+    python run.py --config config.yaml                         # Full pipeline
+    python run.py --sample                                     # Quick test with sample data
+    python run.py --config config.yaml --diagonal zero --C 1.0 # Override params
 """
 
 import sys
@@ -62,6 +62,16 @@ def get_dataset_path(original_path: str, sample: bool, sample_path: str):
 
 
 # ======================================================================
+# Config helpers (support both flat and nested 'model' keys)
+# ======================================================================
+def _get_cfg(cfg: dict, key: str, default=None):
+    """Get a value from config; prefer nested cfg['model'][key] when present."""
+    if isinstance(cfg.get('model'), dict) and key in cfg['model']:
+        return cfg['model'].get(key, default)
+    return cfg.get(key, default)
+
+
+# ======================================================================
 # Main Pipeline
 # ======================================================================
 def main() -> int:
@@ -82,9 +92,15 @@ def main() -> int:
                         help='Run on sample data (10 subjects) for quick testing')
     parser.add_argument('--log', type=str, default=None,
                         help='Path to log file (optional)')
-    parser.add_argument('--diagonal', type=str,
-                        choices=['zero', 'mean', 'region_mean', 'knn'],
-                        help='Override diagonal imputation strategy')
+    parser.add_argument(
+        '--diagonal',
+        type=str,
+        choices=[
+            'zero', 'mean', 'region_mean',
+            'knn', 'random', 'network_mean', 'regression_predictive'
+        ],
+        help='Override diagonal imputation strategy'
+    )
     parser.add_argument('--C', type=float, help='Logistic regression C parameter')
     parser.add_argument('--seed', type=int, help='Random seed override')
     args = parser.parse_args()
@@ -98,24 +114,33 @@ def main() -> int:
     print(f"Config: {args.config}")
     print(f"Start: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
 
-    # Load config
+    # Load config and seed
     config = load_config(args.config)
-    random_seed = args.seed or config.get('random_seed', 42)
+
+    # Prefer nested model keys when present
+    random_seed = args.seed or _get_cfg(config, 'random_seed', 42)
     set_random_seeds(random_seed)
 
     # Override config from CLI
     if args.diagonal:
-        config.setdefault('diagonal_strategy', args.diagonal)
+        # store under nested model if present, else flat for backward-compat
+        if isinstance(config.get('model'), dict):
+            config['model']['diagonal_strategy'] = args.diagonal
+        else:
+            config['diagonal_strategy'] = args.diagonal
     if args.C is not None:
-        config['C'] = args.C
+        if isinstance(config.get('model'), dict):
+            config['model']['C'] = args.C
+        else:
+            config['C'] = args.C
 
-    # Extract settings
+    # Extract settings (support both config styles)
     piop2_file = config['data']['piop2_file']
     piop1_file = config['data']['piop1_file']
-    diagonal_strategy = config.get('diagonal_strategy', 'region_mean')
-    n_splits = config.get('n_splits', 5)
-    C = config.get('C', 0.01)
-    max_iter = config.get('max_iter', 1000)
+    diagonal_strategy = _get_cfg(config, 'diagonal_strategy', 'region_mean')
+    n_splits = _get_cfg(config, 'n_splits', 5)
+    C = _get_cfg(config, 'C', 0.01)
+    max_iter = _get_cfg(config, 'max_iter', 1000)
 
     # Output directories
     output_dirs = {k: Path(v) for k, v in config['output_dirs'].items()}
@@ -125,14 +150,17 @@ def main() -> int:
         Path(dir_path).mkdir(parents=True, exist_ok=True)
 
     # Save config copy for reproducibility
-    save_config_copy(args.config, Path(output_dirs['tables']) / 'used_config.yaml')
+    # save_config_copy(args.config, Path(output_dirs['tables']) / 'used_config.yaml')
 
+    # Base results (we’ll add to this as we go)
     results = {
         'diagonal_strategy': diagonal_strategy,
         'random_seed': random_seed,
         'n_splits': n_splits,
         'C': C,
         'max_iter': max_iter,
+        'used_region_models': False,
+        'region_models_path': None,
     }
 
     # =========================================================================
@@ -149,30 +177,42 @@ def main() -> int:
     print(f"Loaded {len(df_piop2)} samples, {len(connection_columns)} connections")
 
     # =========================================================================
-    # STEP 2: Preprocessing with Region Models
+    # STEP 2: Preprocessing (conditionally train/load region models)
     # =========================================================================
     print_section("STEP 2/6: Extract Features and Preprocess Data")
-    model_path = Path(output_dirs['processed']) / 'region_regression_models.pkl'
+    region_models = None
+    region_models_pkl = Path(output_dirs['models']) / 'region_regression_models.pkl'
 
-    if model_path.exists():
-        print(f"Loading existing region models from {model_path}")
-        region_models, region_list = load_region_models(model_path)
+    if diagonal_strategy == 'regression_predictive':
+        if region_models_pkl.exists():
+            print(f"Loading existing region models from {region_models_pkl}")
+            region_models, _ = load_region_models(region_models_pkl)
+            results['used_region_models'] = True
+            results['region_models_path'] = str(region_models_pkl)
+        else:
+            print("Training region-specific regression models for diagonal imputation...")
+            region_models, _ = train_region_models(df_piop2, connection_columns)
+            save_region_models(region_models, None, region_models_pkl)  # region_list not required here
+            print(f"Region models saved to {region_models_pkl}")
+            results['used_region_models'] = True
+            results['region_models_path'] = str(region_models_pkl)
     else:
-        print("Training region-specific regression models for diagonal imputation...")
-        region_models, region_list = train_region_models(df_piop2, connection_columns)
-        save_region_models(region_models, region_list, model_path)
-        print(f"Region models saved to {model_path}")
+        print(f"Skipping regression model training/loading (strategy='{diagonal_strategy}').")
 
     # Initialize and fit preprocessor
     preprocessor = BrainConnectivityPreprocessor(
         connection_columns=connection_columns,
         diagonal_strategy=diagonal_strategy,
-        region_models=region_models,
-        region_list=region_list
+        region_models=region_models
     )
     print("Fitting preprocessor on resting-state data...")
     preprocessor.fit(df_piop2)
 
+    # Canonical region metadata (single source of truth)
+    region_list = preprocessor.region_list_
+    n_regions = preprocessor.n_regions_
+
+    # Transform to features/labels/subjects
     X_train = preprocessor.transform(df_piop2)
     y_train = preprocessor.get_labels()
     subjects_train_ids = preprocessor.get_subjects()
@@ -185,7 +225,7 @@ def main() -> int:
 
     # Update results
     results.update({
-        'n_regions': len(region_list),
+        'n_regions': n_regions,
         'n_train_samples': len(X_train),
         'n_train_subjects': len(np.unique(subjects_train_ids)),
     })
@@ -337,7 +377,6 @@ def main() -> int:
     # SUMMARY
     # =========================================================================
     elapsed = time.time() - start_time
-    n_regions = results['n_regions']
     chance = 1.0 / n_regions
     improvement = results['cv_mean_accuracy'] / chance
 
@@ -345,6 +384,8 @@ def main() -> int:
     summary = f"""
 Summary of Results
 {'='*50}
+diagonal_strategy: {diagonal_strategy}
+
 Training (Resting-State):
   Subjects: {results['n_train_subjects']:,}
   Samples : {results['n_train_samples']:,}
@@ -359,6 +400,8 @@ Model Performance (Strategy: {diagonal_strategy}):
 Task Data (PIOP-1){' (SKIPPED)' if not task_data_available else ''}:
   Subjects: {results.get('n_test_subjects', 0):,}
   Samples : {results.get('n_test_samples', 0):,}
+  Test Acc.  : {results.get('test_accuracy', 0.0):.4f}
+{'='*50}
 
 Output Directories:
   Models      → {output_dirs['models']}

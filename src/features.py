@@ -887,7 +887,7 @@ if __name__ == "__main__":
     # Test complete preprocessor
     preprocessor = BrainConnectivityPreprocessor(
         connection_columns=connection_cols,
-        diagonal_strategy="region_mean"
+        diagonal_strategy="random"
     )
     
     preprocessor.fit(df)
