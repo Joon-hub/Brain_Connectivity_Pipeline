@@ -1,0 +1,37 @@
+
+RESULTS SUMMARY
+======================================================================
+
+Data:
+  Training subjects: 224
+  Brain regions: 232
+  Chance level: 0.0043
+
+Model Configuration:
+  Diagonal strategy: sample_from_matrix
+  Regularization (C): 0.01
+  CV folds: 3
+
+Cross-Validation Results (LEAK-FREE):
+  Validation accuracy: 0.8426 ± 0.0057
+  Training accuracy: 0.9111 ± 0.0012
+  Improvement over chance: 195.5x
+
+Final Training Accuracy: 0.9137
+
+Task Data (Gender Stroop):
+  Test subjects: 200
+  Test accuracy: 0.8237
+
+======================================================================
+
+Output Locations:
+  Models: models
+  Tables: reports/tables/basic_analysis
+  Figures: reports/figures/basic_analysis
+  Predictions: data/processed
+
+Execution Time: 2.9m
+Completed: 2025-11-13 10:31:58
+
+======================================================================

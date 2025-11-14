@@ -250,14 +250,14 @@ def main() -> int:
         'correct': y_train_true == y_train_pred
     })
     train_pred_df.to_csv(
-        output_dirs['processed'] / f'predictions_train_{diagonal_strategy}.csv',
+        output_dirs['processed'] / f'predictions_train.csv',
         index=False
     )
     
     # Save error map
     save_results_csv(
         error_map_train,
-        output_dirs['tables'] / f'error_map_rest_{diagonal_strategy}.csv'
+        output_dirs['tables'] / f'error_map_rest.csv'
     )
     
     # Save confusion matrix
@@ -307,14 +307,14 @@ def main() -> int:
             'correct': y_test_true == y_test_pred
         })
         test_pred_df.to_csv(
-            output_dirs['processed'] / f'predictions_task_{diagonal_strategy}.csv',
+            output_dirs['processed'] / f'predictions_task.csv',
             index=False
         )
         
         # Save error map
         save_results_csv(
             error_map_test,
-            output_dirs['tables'] / f'error_map_task_{diagonal_strategy}.csv'
+            output_dirs['tables'] / f'error_map_task.csv'
         )
         
         # Save confusion matrix
@@ -327,7 +327,7 @@ def main() -> int:
         comparison = compare_error_maps(error_map_train, error_map_test)
         save_results_csv(
             comparison,
-            output_dirs['tables'] / f'comparison_rest_vs_task_{diagonal_strategy}.csv'
+            output_dirs['tables'] / f'comparison_rest_vs_task.csv'
         )
         
         results['test_accuracy'] = test_acc
@@ -401,6 +401,8 @@ Model Configuration:
   Diagonal strategy: {diagonal_strategy}
   Regularization (C): {C}
   CV folds: {n_splits}
+  max_iter: {max_iter}
+  
 
 Cross-Validation Results (LEAK-FREE):
   Validation accuracy: {results['cv_val_mean']:.4f} ± {results['cv_val_std']:.4f}

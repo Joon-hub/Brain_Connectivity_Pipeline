@@ -763,8 +763,8 @@ def main():
     resolution_stats = plot_resolution_effects(error_data,
                                                output_figures / 'fig1_resolution_effects.png')
     if resolution_stats is not None and len(resolution_stats) > 0:
-        resolution_stats.to_csv(output_tables / 'resolution_statistics.csv', index=False)
-        print(f"\n✓ Saved statistics table: resolution_statistics.csv")
+        resolution_stats.to_csv(output_tables / 'resolution_comparison.csv', index=False)
+        print(f"\n✓ Saved statistics table: resolution_comparison.csv")
     
     print("\n" + "▶"*40)
     print("  FIGURE 2: CORTICAL VS SUBCORTICAL")
@@ -772,8 +772,8 @@ def main():
     system_stats = plot_cortical_vs_subcortical(error_data,
                                                 output_figures / 'fig2_cortical_vs_subcortical.png')
     if system_stats is not None and len(system_stats) > 0:
-        system_stats.to_csv(output_tables / 'system_statistics.csv', index=False)
-        print(f"\n✓ Saved statistics table: system_statistics.csv")
+        system_stats.to_csv(output_tables / 'cortical_vs_subcortical.csv', index=False)
+        print(f"\n✓ Saved statistics table: cortical_vs_subcortical.csv")
     
     print("\n" + "▶"*40)
     print("  FIGURE 3: TASK EFFECTS")
@@ -781,8 +781,8 @@ def main():
     task_stats = plot_task_effects(error_data,
                                    output_figures / 'fig3_task_effects.png')
     if task_stats is not None and len(task_stats) > 0:
-        task_stats.to_csv(output_tables / 'task_statistics.csv', index=False)
-        print(f"\n✓ Saved statistics table: task_statistics.csv")
+        task_stats.to_csv(output_tables / 'rest_vs_task_comparison.csv', index=False)
+        print(f"\n✓ Saved statistics table: rest_vs_task_comparison.csv")
     
     print("\n" + "▶"*40)
     print("  FIGURE 4: DISTRIBUTIONS")

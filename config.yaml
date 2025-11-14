@@ -1,7 +1,7 @@
 # Brain Connectivity Classification - Configuration
 
 # Updated: November 2025
-# Compatible with Pipeline-based model.py (Fisher Z + StandardScaler support)
+# Compatible with Pipeline-based model.py (StandardScaler support)
 
  
 # Data files (CSV format)
@@ -23,8 +23,8 @@ diagonal_strategy: "sample_from_matrix"                    # Options: "zero", "r
                                                              
 # Model training
 model:
-  scaler_type: "fisher_z"                            # CRITICAL: "fisher_z" (recommended) or "standard"
-  C: 0.001                                            # L2 regularization strength (smaller = stronger)
+  scaler_type: "StandardScaler"                            # CRITICAL: "fisher_z" (recommended) or "standard"
+  C: 0.01                                            # L2 regularization strength (smaller = stronger)
   max_iter: 1000
   n_splits: 3                                        # GroupKFold cross-validation
   random_seed: 123
