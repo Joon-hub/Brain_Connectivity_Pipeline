@@ -94,21 +94,8 @@ brain_connectivity_classifier/
 └── README.md
 ```
 
-## 🚀 Quick Start
-### Prerequisites
-
-```bash
-Python 3.11
-scikit-learn
-pandas
-numpy
-nilearn
-matplotlib
-seaborn
-pyyaml
-```
-
-### Installation
+## Quick Start
+#### Installation
 
 ```bash
 # Clone repository
@@ -121,9 +108,7 @@ source masterthesis_venv2/bin/activate
 pip install -r requirements.txt 
 ```
 
-### Running the Pipeline
-
-#### Local Execution
+#### Running the Pipeline
 
 ```bash
 # Full pipeline with default config
@@ -205,56 +190,6 @@ Creates publication-quality figures:
 - Confusion matrices at multiple hierarchical levels
 - Network-level connectivity analysis
 
-## Output Files
-All tables are saved in `reports/tables/` and ready for direct thesis integration:
-
-```
-basic_analysis/
-├── error_map_rest.csv              # Per-region error rates (rest)
-├── error_map_task.csv              # Per-region error rates (task)
-└── comparison_rest_vs_task.csv     # Comparative analysis
-
-confusion_matrix/
-├── rest_<strategy>_raw.csv         # Raw confusion matrix (rest)
-├── rest_<strategy>_normalized.csv  # Normalized confusion matrix (rest)
-├── task_<strategy>_raw.csv
-└── task_<strategy>_normalized.csv
-
-atlas_analysis/
-├── N7_cortical_rest_errors.csv
-├── N7_cortical_task_errors.csv
-├── N17_cortical_rest_errors.csv
-├── TianI_subcortical_rest_errors.csv
-└── ... (multiple atlas resolutions)
-
-connectivity_analysis/
-├── n7_rest.csv                     # Network-level connectivity (rest)
-├── n7_task.csv                     # Network-level connectivity (task)
-├── n7_change.csv                   # Task-induced changes
-└── combined_all_changes.csv        # All significant changes
-```
-
-### Figures
-All figures are saved at 300 DPI in `reports/figures/`:
-
-```
-basic_analysis/
-├── error_map_rest.png
-├── error_map_task.png
-└── comparison_rest_vs_task.png
-
-atlas_analysis/
-├── N7_cortical_2x2.png            # 2x2 confusion matrices
-├── N17_cortical_2x2.png
-├── TianI_subcortical_2x2.png
-└── combined_comparison.png
-
-connectivity_analysis/
-├── connectivity_analysis_n7_cortical.png
-├── connectivity_analysis_tian_subcortical.png
-└── connectivity_analysis_combined.png
-```
-
 ## Configuration
 
 ### Main Configuration File: `config.yaml`
@@ -292,9 +227,6 @@ output_dirs:
 # Reproducibility
 random_seed: 123
 ```
-
----
-
 ## Advanced Analysis Scripts
 ### 1. Atlas Performance Analysis
 
@@ -356,4 +288,3 @@ python AdvanceAnalysis/03_connectivity_analysis.py --config config.yaml
 2. **Phase 2 - Disease Datasets:** Apply to Alzheimer's, stroke, psychosis cohorts
 3. **Phase 3 - Biomarker Development:** Identify disease-specific connectivity signatures
 4. **Phase 4 - Clinical Tool:** Deploy as diagnostic/prognostic tool
-
