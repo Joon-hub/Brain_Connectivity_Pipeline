@@ -61,10 +61,13 @@ def map_to_tian_scale_i_only(region_list):
         'hip': 'Hippocampus',
         'amy': 'Amygdala',
         'tha-dp': 'Thal_post', 
+        'tha_dp': 'Thal_post',  # FIXED: Added underscore version
         'tha-vp': 'Thal_post', 
+        'tha_vp': 'Thal_post',  # FIXED: Added underscore version
         'tha-da': 'Thal_ant', 
+        'tha_da': 'Thal_ant',   # Already present
         'tha-va': 'Thal_ant', 
-        'tha_da': 'Thal_ant', 
+        'tha_va': 'Thal_ant',   # FIXED: Added underscore version
         'nac': 'Accumbens',
         'put': 'Putamen',
         'gp': 'Pallidum',

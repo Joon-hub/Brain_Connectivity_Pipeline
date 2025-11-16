@@ -1,11 +1,11 @@
-category,metric,value,formatted
-Performance,N7 rest - Accuracy,0.9501924569565884,0.950 ± 0.025
-Performance,N7 task - Accuracy,0.8985308021647636,0.899 ± 0.035
-Performance,N17 rest - Accuracy,0.9430718723893067,0.943 ± 0.030
-Performance,N17 task - Accuracy,0.8811455755913477,0.881 ± 0.041
-Performance,TianI rest - Accuracy,0.8903459821428572,0.890 ± 0.082
-Performance,TianI task - Accuracy,0.75875,0.759 ± 0.120
-Performance,TianII rest - Accuracy,0.8556082589285714,0.856 ± 0.113
-Performance,TianII task - Accuracy,0.70859375,0.709 ± 0.151
-Performance,Combined rest - Accuracy,0.9202692195497227,0.920 ± 0.066
-Performance,Combined task - Accuracy,0.8286404010823818,0.829 ± 0.112
+Category,Metric,Value
+Performance,N7_rest_accuracy,0.9195517627580883
+Performance,N7_task_accuracy,0.868049045972989
+Performance,N17_rest_accuracy,0.9017588609822584
+Performance,N17_task_accuracy,0.835707345620997
+Performance,TianI_rest_accuracy,0.8830915178571428
+Performance,TianI_task_accuracy,0.7775000000000001
+Performance,TianII_rest_accuracy,0.7993861607142857
+Performance,TianII_task_accuracy,0.6742187500000001
+Performance,Combined_rest_accuracy,0.9013216403076155
+Performance,Combined_task_accuracy,0.8227745229864946

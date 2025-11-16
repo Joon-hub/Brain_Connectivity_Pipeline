@@ -806,9 +806,9 @@ Figures ({output_figures}):
   • fig4_distributions.png
 
 Statistical Tables ({output_tables}):
-  • resolution_statistics.csv
-  • system_statistics.csv
-  • task_statistics.csv
+  • resolution_comparison.csv
+  • cortical_vs_subcortical.csv
+  • rest_vs_task_comparison.csv
 {"="*80}
 Perfect: graphs + Complete statistics documented!
 {"="*80}

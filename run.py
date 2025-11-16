@@ -215,6 +215,11 @@ def main() -> int:
     cv_results = classifier.get_cv_results()
     n_regions = classifier.n_regions_
     region_list = classifier.region_list_
+
+    # save region list as csv file by converting it df first into data/processed directory
+    region_list_df = pd.DataFrame(region_list)
+    region_list_df.to_csv(output_dirs['processed'] / 'region_list.csv', index=False)
+    print(f"Region list saved to {output_dirs['processed'] / 'region_list.csv'}")
     
     results.update({
         'n_regions': n_regions,

@@ -8,22 +8,22 @@ Data:
   Chance level: 0.0043
 
 Model Configuration:
-  Diagonal strategy: sample_from_matrix
+  Diagonal strategy: random
   Regularization (C): 0.01
   CV folds: 3
   max_iter: 1000
   
 
 Cross-Validation Results (LEAK-FREE):
-  Validation accuracy: 0.8426 ± 0.0057
-  Training accuracy: 0.9111 ± 0.0012
-  Improvement over chance: 195.5x
+  Validation accuracy: 0.7275 ± 0.0064
+  Training accuracy: 0.8160 ± 0.0009
+  Improvement over chance: 168.8x
 
-Final Training Accuracy: 0.9137
+Final Training Accuracy: 0.8121
 
 Task Data (Gender Stroop):
   Test subjects: 200
-  Test accuracy: 0.8237
+  Test accuracy: 0.7048
 
 ======================================================================
 
@@ -34,6 +34,6 @@ Output Locations:
   Predictions: data/processed
 
 Execution Time: 1.7m
-Completed: 2025-11-15 11:43:23
+Completed: 2025-11-16 09:29:07
 
 ======================================================================

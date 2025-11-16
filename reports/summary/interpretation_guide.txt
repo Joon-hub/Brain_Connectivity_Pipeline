@@ -1,0 +1,30 @@
+
+INTERPRETATION GUIDE
+====================
+
+Panel D - Top Cortical Region Confusions (FULL NAMES):
+  NOW SHOWS COMPLETE region anatomical labels (e.g., "SomMotA_1", "DefaultB_PFCd_2")
+  instead of just network abbreviations.
+  
+  Format: "True Region → Predicted Region"
+  - Hemisphere prefix (LH_/RH_) removed for cleaner display
+  - Full anatomical labels preserved for accurate interpretation
+  
+  Key insights from FULL region names:
+  - Specific subregions within networks that confuse
+  - Numbered parcels (e.g., _1, _2) show fine-grained patterns
+  - Motor subnetworks (SomMotA vs SomMotB) may confuse
+  - Default Mode subsystems show distinct confusion patterns
+  - Visual areas typically have lower confusion (distinct processing)
+  
+  Clinical relevance with full names: 
+  - Identify SPECIFIC regions affected in disease
+  - Track connectivity changes in particular subregions
+  - Better anatomical localization for targeted interventions
+  - More precise biomarker identification
+  
+  Thesis significance:
+  - Granular view of classification errors
+  - Validates region-level connectivity patterns
+  - Supports hierarchical and subsystem-specific analysis
+  - Enhanced clinical translation with anatomical specificity
