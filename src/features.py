@@ -1,6 +1,6 @@
 """
-Feature Engineering: Connectivity Matrix Preprocessing (LEAK-FREE VERSION)
-===========================================================================
+Feature Engineering: Connectivity Matrix Preprocessing 
+======================================================
 All preprocessing is now fold-aware and compatible with sklearn Pipeline.
 No statistics are computed globally - everything happens within fit/transform.
 """
@@ -15,9 +15,9 @@ import pickle
 from pathlib import Path
 
 
-# ============================================================================
-# UTILITY FUNCTIONS (Pure functions, no state)
-# ============================================================================
+# ======================
+# UTILITY FUNCTIONS 
+# ======================
 
 def extract_regions(connection_columns: List[str]) -> Tuple[List[str], Dict[str, int], int]:
     """
@@ -34,27 +34,25 @@ def extract_regions(connection_columns: List[str]) -> Tuple[List[str], Dict[str,
     unique_regions = []
     seen = set()
     
+    # Extract unique regions
     for col in connection_columns:
-        if '~' not in col:
-            continue
+        region_a, region_b = col.split('~') 
         
-        region_a, region_b = col.split('~')
-        
-        for region in [region_a, region_b]:
+        for region in [region_a, region_b]: # Add both regions
             if region not in seen:
                 seen.add(region)
                 unique_regions.append(region)
     
-    region_to_idx = {region: idx for idx, region in enumerate(unique_regions)}
+    region_to_idx = {region: idx for idx, region in enumerate(unique_regions)} # Create mapping from name to index
     
     return unique_regions, region_to_idx, len(unique_regions)
 
 
 def reconstruct_connectivity_matrix(
-    subject_values: np.ndarray,
-    connection_columns: List[str],
-    region_to_idx: Dict[str, int],
-    n_regions: int
+    subject_values: np.ndarray,       # [0.4, 0.3, 0.2]
+    connection_columns: List[str],    # ['A~B', 'B~C', 'C~D']
+    region_to_idx: Dict[str, int],    # {'A': 0, 'B': 1, 'C': 2, 'D': 3}
+    n_regions: int                    # 232
 ) -> np.ndarray:
     """
     Reconstruct symmetric connectivity matrix from flattened data.
@@ -68,21 +66,20 @@ def reconstruct_connectivity_matrix(
     Returns:
         Symmetric connectivity matrix (n_regions × n_regions)
     """
+    # Initialize connectivity matrix with zeros (n_regions x n_regions) 
     matrix = np.zeros((n_regions, n_regions), dtype=float)
     
     # Fill off-diagonal elements
-    for col, value in zip(connection_columns, subject_values):
-        if '~' not in col:
-            continue
+    for col, value in zip(connection_columns, subject_values): # col = 'A~B', value = 0.4
         region_a, region_b = col.split('~')
-        idx_a = region_to_idx[region_a]
-        idx_b = region_to_idx[region_b]
+        idx_a = region_to_idx[region_a]             # idx_a = 0
+        idx_b = region_to_idx[region_b]             # idx_b = 1
         
-        matrix[idx_a, idx_b] = value
-        matrix[idx_b, idx_a] = value  # Symmetric
+        matrix[idx_a, idx_b] = value                # matrix[0, 1] = 0.4
+        matrix[idx_b, idx_a] = value                # matrix[1, 0] = 0.4    
     
     # Set diagonal to 1.0 (perfect self-correlation)
-    np.fill_diagonal(matrix, 1.0)
+    np.fill_diagonal(matrix, 1.0)                   
     
     return matrix
 
@@ -101,7 +98,7 @@ def parse_networks(region_list: List[str]) -> Dict[str, str]:
     
     for region in region_list:
         name = region.lower()
-        network = 'Unknown'
+        network = 'Unknown'             # Default to 'Unknown'
         
         # --- Cortical (Schaefer 17 networks) ---
         if region.startswith(('LH_', 'RH_')):
@@ -179,47 +176,52 @@ def parse_networks(region_list: List[str]) -> Dict[str, str]:
             else:
                 network = 'SubcorticalOther'
         
-        network_map[region] = network
+        network_map[region] = network   # {region: network}
     
-    return network_map
+    return network_map    #  e.g. {'LH_VisCent': 'VisCent'}
 
 
 # ============================================================================
-# SKLEARN-COMPATIBLE TRANSFORMERS (All Fold-Aware)
+# SKLEARN-COMPATIBLE TRANSFORMERS 
 # ============================================================================
 
 class ConnectivityMatrixReconstructor(BaseEstimator, TransformerMixin):
     """
     Reconstruct connectivity matrices from flattened DataFrame.
-    This transformer has no learnable parameters - no leakage possible.
     """
     
     def __init__(self, connection_columns: Optional[List[str]] = None):
         self.connection_columns = connection_columns
     
-    def fit(self, X, y=None):
+    def fit(self, X, y=None):                  # metadata extraction
         """Extract region information from columns."""
         if self.connection_columns is None:
             if isinstance(X, pd.DataFrame):
-                self.connection_columns = [col for col in X.columns if '~' in str(col)]
+                self.connection_columns = [col for col in X.columns if '~' in str(col)] # e.g. ['LH_VisCent~RH_VisCent']
             else:
                 raise ValueError("connection_columns must be provided for non-DataFrame input")
         
         # Extract regions
-        self.region_list_, self.region_to_idx_, self.n_regions_ = extract_regions(
-            self.connection_columns
-        )
-        
+        self.region_list_, self.region_to_idx_, self.n_regions_ = extract_regions(self.connection_columns)           
+        # e.g. ['LH_VisCent', 'RH_VisCent'], {'LH_VisCent': 0, 'RH_VisCent': 1}, 2 
         return self
     
-    def transform(self, X):
+    def transform(self, X):                       # reconstruction of matrix for every subject
         """Reconstruct connectivity matrices."""
         if isinstance(X, pd.DataFrame):
             X_values = X[self.connection_columns].values
+
+            # e.g.
+            # X_values = X['A~B','B~C','C~D'].values
+            # X_values = [
+            # [0.40, 0.70, 0.55],  # subject S001
+            # [0.10, 0.20, 0.30]   # subject S002
+            # ]
+        
         else:
             X_values = X
         
-        n_subjects = X_values.shape[0]
+        n_subjects = X_values.shape[0]                         # e.g. 2
         matrices = np.zeros((n_subjects, self.n_regions_, self.n_regions_))
         
         for i in range(n_subjects):
@@ -229,13 +231,19 @@ class ConnectivityMatrixReconstructor(BaseEstimator, TransformerMixin):
                 self.region_to_idx_,
                 self.n_regions_
             )
+            
+            # e.g.
+            # matrices[subject] = [
+            # [0.40, 0.70, 0.55],  # subject S001
+            # [0.10, 0.20, 0.30]   # subject S002
+            # ]
         
         return matrices
 
 
 class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
     """
-    Impute the diagonal of connectivity matrices in a fold-aware, leak-free way.
+    Impute the diagonal of connectivity matrices in a fold-aware.
 
     Strategies:
       - "zero":                fill 0 on the diagonal (deterministic)
@@ -401,7 +409,6 @@ class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
 class RegionConnectivityExtractor(BaseEstimator, TransformerMixin):
     """
     Extract per-region connectivity patterns for classification.
-    No learnable parameters - no leakage possible.
     """
     
     def __init__(self, include_diagonal: bool = False):
@@ -467,7 +474,7 @@ class RegionConnectivityExtractor(BaseEstimator, TransformerMixin):
 
 class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
     """
-    Complete LEAK-FREE preprocessing pipeline.
+    Complete preprocessing pipeline.
     
     All statistics are computed during fit() using only training data,
     then applied during transform() to any dataset.
@@ -546,95 +553,3 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
     def get_subjects(self):
         """Get subject indices for samples (after transform)."""
         return self.extractor_.get_subjects()
-
-
-# ============================================================================
-# DEPRECATED: Old Functions (Kept for backward compatibility)
-# ============================================================================
-
-def create_classification_dataset(
-    df: pd.DataFrame,
-    connection_columns: List[str],
-    diagonal_strategy: str = "zero",
-    region_models: Optional[Dict[str, Any]] = None
-):
-    """
-    DEPRECATED: This function is not leak-free.
-    Use BrainConnectivityPreprocessor inside a Pipeline instead.
-    """
-    warnings.warn(
-        "create_classification_dataset is deprecated and not leak-free. "
-        "Use BrainConnectivityPreprocessor in a sklearn Pipeline instead.",
-        DeprecationWarning
-    )
-    raise NotImplementedError("Use BrainConnectivityPreprocessor instead")
-
-
-if __name__ == "__main__":
-    print("Testing leak-free transformers...\n")
-    
-    # Create dummy data
-    np.random.seed(42)
-    n_subjects = 10
-    n_regions = 5
-    regions = [f'Region_{i}' for i in range(n_regions)]
-    
-    # Create connection columns
-    connection_cols = []
-    for i in range(n_regions):
-        for j in range(i+1, n_regions):
-            connection_cols.append(f"{regions[i]}~{regions[j]}")
-    
-    # Create dummy data
-    data = {'subject_id': [f'S{i:03d}' for i in range(n_subjects)]}
-    for col in connection_cols:
-        data[col] = np.random.randn(n_subjects)
-    
-    df = pd.DataFrame(data)
-    
-    print(f"Input shape: {df.shape}")
-    print(f"Regions: {n_regions}")
-    print(f"Connections: {len(connection_cols)}\n")
-    
-    # Test preprocessor
-    preprocessor = BrainConnectivityPreprocessor(
-        connection_columns=connection_cols,
-        diagonal_strategy="region_mean",
-        include_diagonal=False
-    )
-    
-    # Simulate train/val split
-    train_df = df.iloc[:7]
-    val_df = df.iloc[7:]
-    
-    print("=" * 60)
-    print("TESTING LEAK-FREE PREPROCESSING")
-    print("=" * 60)
-    
-    # Fit on train
-    preprocessor.fit(train_df)
-    X_train = preprocessor.transform(train_df)
-    y_train = preprocessor.get_labels()
-    
-    print(f"\nTrain: {X_train.shape[0]} samples = {len(train_df)} subjects × {n_regions} regions")
-    print(f"Features per sample: {X_train.shape[1]} (should be {n_regions - 1})")
-    
-    # Transform validation
-    X_val = preprocessor.transform(val_df)
-    y_val = preprocessor.get_labels()
-    
-    print(f"\nValidation: {X_val.shape[0]} samples = {len(val_df)} subjects × {n_regions} regions")
-    
-    # Check for leakage
-    print("\n" + "=" * 60)
-    print("LEAKAGE CHECK")
-    print("=" * 60)
-    
-    train_mean = np.mean(X_train, axis=0)
-    val_mean = np.mean(X_val, axis=0)
-    mean_diff = np.abs(train_mean - val_mean).mean()
-    
-    print(f"Mean difference between train and val features: {mean_diff:.6f}")
-    print("(Non-zero is expected - means stats computed on train only)")
-    
-    print("\n✓ All tests passed! Preprocessor is leak-free.")

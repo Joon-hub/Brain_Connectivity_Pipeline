@@ -3,7 +3,6 @@
 A machine learning framework for identifying brain regions from functional connectivity patterns and detecting functional reorganization during cognitive tasks.
 
 ## Project Overview
-
 This project develops a novel machine learning approach to study brain organization by:
 
 1. **Training classifiers on resting-state fMRI data** to learn normal connectivity patterns for each of 232 brain regions
