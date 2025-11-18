@@ -15,15 +15,15 @@ Model Configuration:
   
 
 Cross-Validation Results (LEAK-FREE):
-  Validation accuracy: 0.8409 ± 0.0042
-  Training accuracy: 0.9117 ± 0.0017
-  Improvement over chance: 195.1x
+  Validation accuracy: 0.7071 ± 0.0055
+  Training accuracy: 0.7371 ± 0.0051
+  Improvement over chance: 164.0x
 
-Final Training Accuracy: 0.9143
+Final Training Accuracy: 0.7790
 
 Task Data (Gender Stroop):
   Test subjects: 200
-  Test accuracy: 0.8221
+  Test accuracy: 0.7225
 
 ======================================================================
 
@@ -33,7 +33,7 @@ Output Locations:
   Figures: reports/figures/basic_analysis
   Predictions: data/processed
 
-Execution Time: 1.8m
-Completed: 2025-11-17 18:34:12
+Execution Time: 60.0s
+Completed: 2025-11-18 10:26:28
 
 ======================================================================

@@ -23,7 +23,7 @@ diagonal_strategy: "sample_from_matrix"                    # Options: "zero", "r
                                                              
 # Model training
 model:
-  scaler_type: "StandardScaler"                      # CRITICAL: "fisher_z" (recommended) or "standard"
+  scaler_type: "fisher_z"                      # CRITICAL: "fisher_z" (recommended) or "standard"
   C: 0.01                                            # L2 regularization strength (smaller = stronger)
   max_iter: 1000
   n_splits: 3                                        # GroupKFold cross-validation

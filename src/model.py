@@ -17,9 +17,42 @@ import pickle
 from pathlib import Path
 from typing import Tuple, Dict, Optional, List
 
+# ============================================================================
+# fisher Z transform
+# ============================================================================
+
+from sklearn.base import BaseEstimator, TransformerMixin
+
+class FisherZTransformer(BaseEstimator, TransformerMixin):
+    """
+    z = 0.5 * ln((1 + x) / (1 - x)) == np.arctanh(x)
+    clips input to [-1+eps, 1+eps]
+    """
+    def __init__(self, eps: float = 1e-6):
+        self.eps = eps
+
+    def fit(self, X, y=None):
+        # Stateless transformer: nothing to fit
+        return self
+
+    def transform(self, X):
+        # Accept DataFrame or ndarray
+        if hasattr(X, "values"):
+            arr = X.values
+        else:
+            arr = np.asarray(X)
+
+        # Clip to avoid ±1
+        arr_clipped = np.clip(arr, -1.0 + self.eps, 1.0 - self.eps)
+
+        # Use arctanh which is numerically stable here
+        z = np.arctanh(arr_clipped)
+
+        return z
+    
 
 # ============================================================================
-# LEAK-FREE CROSS-VALIDATION
+# CROSS-VALIDATION
 # ============================================================================
 
 def cross_validate_no_leakage(
@@ -93,7 +126,7 @@ def cross_validate_no_leakage(
         
         # === CREATE AND FIT CLASSIFIER ===
         pipeline = Pipeline([
-            ('scaler', StandardScaler()),
+            ('fisher_z', FisherZTransformer()),
             ('classifier', LogisticRegression(**classifier_params))
         ])
         
@@ -177,7 +210,7 @@ def train_final_model(
     
     # Train classifier
     pipeline = Pipeline([
-        ('scaler', StandardScaler()),
+        ('fisher_z', FisherZTransformer()),
         ('classifier', LogisticRegression(**classifier_params))
     ])
     

@@ -32,7 +32,7 @@ source /home/sjoon/projects/brain_connectivity_classifier/masterthesis_venv2/bin
 mkdir -p logs
 
 # echo "Running: python run.py --config config.yaml --help"
-python3 run.py --config config.yaml 
+python3 run.py --config config.yaml --diagonal sample_from_matrix
 
 EXIT_CODE=$?
 
