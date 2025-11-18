@@ -3,7 +3,7 @@ Starting Brain Connectivity Classification
 ===========================================
 Current directory: /home/sjoon/projects/brain_connectivity_classifier
 Running on host: cpu43
-Start time: Mon Nov 17 05:50:44 PM CET 2025
+Start time: Mon Nov 17 06:32:24 PM CET 2025
 ===========================================
 
 ======================================================================
@@ -12,7 +12,7 @@ Start time: Mon Nov 17 05:50:44 PM CET 2025
 
 Mode: FULL DATA
 Config: config.yaml
-Start: 2025-11-17 17:50:45
+Start: 2025-11-17 18:32:25
 
 Configuration:
   Diagonal strategy: sample_from_matrix
@@ -152,7 +152,7 @@ Output Locations:
   Predictions: data/processed
 
 Execution Time: 1.8m
-Completed: 2025-11-17 17:52:31
+Completed: 2025-11-17 18:34:12
 
 ======================================================================
 
@@ -161,6 +161,6 @@ Completed: 2025-11-17 17:52:31
 
 ===========================================
 Pipeline finished!
-End time: Mon Nov 17 05:52:31 PM CET 2025
+End time: Mon Nov 17 06:34:12 PM CET 2025
 Exit code: 0
 ===========================================
