@@ -127,6 +127,7 @@ def cross_validate_no_leakage(
         # === CREATE AND FIT CLASSIFIER ===
         pipeline = Pipeline([
             ('fisher_z', FisherZTransformer()),
+            ('scaler', StandardScaler()),
             ('classifier', LogisticRegression(**classifier_params))
         ])
         
@@ -211,6 +212,7 @@ def train_final_model(
     # Train classifier
     pipeline = Pipeline([
         ('fisher_z', FisherZTransformer()),
+        ('scaler', StandardScaler()),
         ('classifier', LogisticRegression(**classifier_params))
     ])
     
