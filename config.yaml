@@ -20,7 +20,7 @@ preprocessing:
 
 # Model training
 model:
-  C: 0.003                                   # L2 regularization strength (smaller = stronger regularization)
+  C: 0.003                                           # L2 regularization strength (smaller = stronger regularization)
   max_iter: 1000                                     # Maximum iterations for solver
   n_splits: 3                                        # Number of GroupKFold cross-validation folds
   random_seed: 42                                    # Random seed for reproducibility

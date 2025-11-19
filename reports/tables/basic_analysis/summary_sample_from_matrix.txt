@@ -16,11 +16,11 @@ Model Configuration:
   
 
 Cross-Validation Results (LEAK-FREE):
-  Validation accuracy: 0.6951 ± 0.0069  ← TRUE GENERALIZATION
-  Training accuracy: 0.7537 ± 0.0031  (overfitted)
+  Validation accuracy: 0.6951 ± 0.0069  
+  Training accuracy: 0.7537 ± 0.0031  
   Improvement over chance: 161.3x
 
-Final Training Accuracy: 0.7677  (expected to be higher due to overfitting)
+Final Training Accuracy: 0.7677  
 
 Task Data (Gender Stroop):
   Test subjects: 200
@@ -34,14 +34,13 @@ Output Locations:
   Figures: reports/figures/basic_analysis
   Predictions: data/processed
 
-Execution Time: 2.1m
-Completed: 2025-11-19 15:50:42
+Execution Time: 2.4m
+Completed: 2025-11-19 16:49:18
 
 ======================================================================
 
 ✅ Pipeline completed successfully!
 
 IMPORTANT NOTES:
-• Use CV validation accuracy (0.6951) for true generalization performance
 • Training accuracy is higher due to overfitting - this is expected
 • Fisher Z transformation was applied to correlation values

@@ -60,7 +60,7 @@ def set_random_seeds(seed: int):
 
 
 def load_connectivity_data(filepath: str) -> pd.DataFrame:
-    """Load connectivity CSV file."""s
+    """Load connectivity CSV file."""
     filepath = Path(filepath)
     if not filepath.exists():
         raise FileNotFoundError(f"Data file not found: {filepath}")
@@ -233,6 +233,51 @@ def main() -> int:
     
     # Fit with leak-free CV
     classifier.fit(df_train, verbose=True)
+
+    # ------------------------------------------------------------------------
+    # STEP 2.5: Save CV Validation Predictions
+    # ------------------------------------------------------------------------
+    print_section("STEP 2.5: Save CV Validation Predictions")
+
+    # ✅ NEW: Get and save CV validation predictions
+    # These are UNBIASED estimates from held-out subjects
+    # Use these (not training predictions) for rest vs task comparison!
+    cv_val_pred, cv_val_true, cv_val_subjects = classifier.get_cv_validation_predictions()
+
+    # Verify accuracy matches CV results
+    cv_val_acc_check = accuracy_score(cv_val_true, cv_val_pred)
+    print(f"CV validation accuracy (check): {cv_val_acc_check:.4f}")
+    print(f"Expected from CV results: {classifier.get_cv_results()['val_mean']:.4f}")
+    print(f"Match: {abs(cv_val_acc_check - classifier.get_cv_results()['val_mean']) < 0.001}")
+
+    # Save CV validation predictions
+    cv_val_pred_df = pd.DataFrame({
+        'subject_id': cv_val_subjects,
+        'true_region': cv_val_true,
+        'predicted_region': cv_val_pred,
+        'correct': cv_val_true == cv_val_pred
+    })
+
+    cv_val_pred_df.to_csv(
+        output_dirs['processed'] / 'predictions_cv_validation.csv',
+        index=False
+    )
+
+    print(f"✓ Saved CV validation predictions: {len(cv_val_pred)} samples")
+    print(f"   File: {output_dirs['processed'] / 'predictions_cv_validation.csv'}")
+    print(f"\n⚠️  IMPORTANT: Use these predictions (not training predictions)")
+    print(f"   as your resting-state baseline for rest vs task comparison!")
+
+    # Calculate and save CV validation error map
+    error_map_cv_val = calculate_error_map(cv_val_true, cv_val_pred, classifier.region_list_)
+    save_results_csv(
+        error_map_cv_val,
+        output_dirs['tables'] / 'error_map_cv_validation.csv'
+    )
+
+    print(f"✓ Saved CV validation error map")
+    print(f"   File: {output_dirs['tables'] / 'error_map_cv_validation.csv'}")
+    # ------------------------------------------------------------------------
     
     # Get CV results
     cv_results = classifier.get_cv_results()
@@ -356,11 +401,12 @@ def main() -> int:
             dataset_name=f"task_{diagonal_strategy}"
         )
         
-        # Compare rest vs task
-        comparison = compare_error_maps(error_map_train, error_map_test)
+        # Compare rest (CV validation) vs task — use CV validation to avoid overfitting baseline
+        print("\n⚠️  Using CV validation (not training) as rest baseline")
+        comparison = compare_error_maps(error_map_cv_val, error_map_test)
         save_results_csv(
             comparison,
-            output_dirs['tables'] / 'comparison_rest_vs_task.csv'
+            output_dirs['tables'] / 'comparison_cv_validation_vs_task.csv'
         )
         
         results['test_accuracy'] = test_acc
@@ -402,13 +448,15 @@ def main() -> int:
         figure_count += 1
         print(f"✓ Generated: error_map_task.png")
         
-        # Plot 3: Rest vs Task comparison
+        # Plot 3: Rest (CV validation) vs Task comparison
         plot_rest_vs_task_comparison(
-            error_map_train, error_map_test, comparison,
-            output_path=str(figures_dir / 'comparison_rest_vs_task.png')
+            error_map_cv_val,  # ✅ Use CV validation (not training!)
+            error_map_test, 
+            comparison,
+            output_path=str(figures_dir / 'comparison_cv_validation_vs_task.png')
         )
         figure_count += 1
-        print(f"✓ Generated: comparison_rest_vs_task.png")
+        print(f"✓ Generated: comparison_cv_validation_vs_task.png")
     
     print(f"\nTotal figures: {figure_count}")
     

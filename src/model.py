@@ -4,11 +4,12 @@ Brain Region Classifier with Leak-Free Cross-Validation
 Implements subject-wise GroupKFold CV with proper preprocessing isolation.
 All preprocessing happens INSIDE the CV loop to prevent leakage.
 
-CORRECTED VERSION:
+CORRECTED VERSION v2:
 - Fisher Z transformation removed from pipeline (now in preprocessing)
 - StandardScaler only in pipeline
 - Better validation of subject_id column
 - Clearer warnings about training vs validation accuracy
+- ✅ NEW: Saves CV validation predictions for proper rest vs task comparison
 """
 
 import numpy as np
@@ -40,6 +41,9 @@ def cross_validate_no_leakage(
     """
     Perform leak-free cross-validation by fitting preprocessor inside each fold.
     
+    ✅ NEW: Now collects and returns all validation predictions across folds
+    for proper rest vs task error comparison.
+    
     Args:
         df_raw: Raw connectivity DataFrame
         preprocessor_class: BrainConnectivityPreprocessor class (not instance!)
@@ -50,7 +54,7 @@ def cross_validate_no_leakage(
         verbose: Print progress
     
     Returns:
-        Dictionary with CV results
+        Dictionary with CV results including validation predictions
     """
     # Validate first column is subject_id
     first_col_name = df_raw.columns[0]
@@ -73,6 +77,11 @@ def cross_validate_no_leakage(
     gkf = GroupKFold(n_splits=n_splits)
     
     fold_results = []
+    
+    # ✅ NEW: Collect all validation predictions across folds
+    all_val_predictions = []
+    all_val_true = []
+    all_val_subjects = []
     
     if verbose:
         print(f"\n{'='*60}")
@@ -110,6 +119,7 @@ def cross_validate_no_leakage(
         
         X_val = preprocessor.transform(df_val)
         y_val = preprocessor.get_labels()
+        subjects_val = preprocessor.get_subjects()
         
         # === CREATE AND FIT CLASSIFIER ===
         # CORRECTED: Only StandardScaler in pipeline now
@@ -127,6 +137,15 @@ def cross_validate_no_leakage(
         
         train_acc = accuracy_score(y_train, y_train_pred)
         val_acc = accuracy_score(y_val, y_val_pred)
+        
+        # ✅ NEW: Store validation predictions for this fold
+        # Get actual subject IDs (not indices)
+        val_subject_ids = df_val.iloc[:, 0].values
+        val_subject_ids_mapped = val_subject_ids[subjects_val]
+        
+        all_val_predictions.extend(y_val_pred)
+        all_val_true.extend(y_val)
+        all_val_subjects.extend(val_subject_ids_mapped)
         
         fold_results.append({
             'fold': fold,
@@ -153,7 +172,11 @@ def cross_validate_no_leakage(
         'val_std': np.std(val_accs),
         'train_mean': np.mean(train_accs),
         'train_std': np.std(train_accs),
-        'n_splits': n_splits
+        'n_splits': n_splits,
+        # ✅ NEW: Include validation predictions
+        'val_predictions': np.array(all_val_predictions),
+        'val_true': np.array(all_val_true),
+        'val_subjects': np.array(all_val_subjects)
     }
     
     if verbose:
@@ -161,7 +184,10 @@ def cross_validate_no_leakage(
         print(f"CV RESULTS:")
         print(f"  Train: {cv_results['train_mean']:.4f} ± {cv_results['train_std']:.4f}")
         print(f"  Val:   {cv_results['val_mean']:.4f} ± {cv_results['val_std']:.4f}")
-        print(f"{'='*60}\n")
+        print(f"{'='*60}")
+        print(f"✅ Collected {len(all_val_predictions)} validation predictions")
+        print(f"   (Use these for unbiased rest vs task comparison)")
+        print()
     
     return cv_results
 
@@ -235,10 +261,11 @@ class BrainRegionClassifier:
     This class properly handles preprocessing and classification with
     subject-wise cross-validation to prevent data leakage.
     
-    CORRECTED VERSION:
+    CORRECTED VERSION v2:
     - Fisher Z transformation now in preprocessing (not in pipeline)
     - Better validation and error messages
     - Clearer documentation of overfitting in final model
+    - ✅ NEW: Provides CV validation predictions for proper analysis
     """
     
     def __init__(
@@ -373,10 +400,29 @@ class BrainRegionClassifier:
         return self.pipeline_.predict_proba(X_test)
     
     def get_cv_results(self) -> Dict:
-        """Get cross-validation results."""
+        """Get cross-validation results including validation predictions."""
         if self.cv_results_ is None:
             raise RuntimeError("Must call fit() first")
         return self.cv_results_
+    
+    def get_cv_validation_predictions(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Get CV validation predictions for proper rest vs task comparison.
+        
+        ✅ NEW METHOD: Use these predictions (not training predictions) 
+        as your resting-state baseline when comparing to task data!
+        
+        Returns:
+            (y_pred, y_true, subjects): Validation predictions, true labels, subject IDs
+        """
+        if self.cv_results_ is None:
+            raise RuntimeError("Must call fit() first")
+        
+        return (
+            self.cv_results_['val_predictions'],
+            self.cv_results_['val_true'],
+            self.cv_results_['val_subjects']
+        )
     
     def save(self, output_dir: str):
         """Save model and preprocessor."""
@@ -428,7 +474,7 @@ class BrainRegionClassifier:
 # ============================================================================
 
 if __name__ == "__main__":
-    print("Testing leak-free classifier...\n")
+    print("Testing leak-free classifier with CV validation predictions...\n")
     
     # Create dummy data
     np.random.seed(42)
@@ -476,5 +522,11 @@ if __name__ == "__main__":
     print(f"\nFinal CV Validation Accuracy: {cv_results['val_mean']:.4f} ± {cv_results['val_std']:.4f}")
     print(f"Training Accuracy (overfitted): {cv_results['train_mean']:.4f} ± {cv_results['train_std']:.4f}")
     
+    # ✅ NEW: Get CV validation predictions
+    val_pred, val_true, val_subjects = classifier.get_cv_validation_predictions()
+    print(f"\n✅ CV Validation Predictions: {len(val_pred)} samples")
+    print(f"   Use these (not training predictions) for rest vs task comparison!")
+    
     print("\n✓ Classifier is leak-free!")
     print("✓ Fisher Z transformation correctly applied to correlation values")
+    print("✓ CV validation predictions available for proper analysis")

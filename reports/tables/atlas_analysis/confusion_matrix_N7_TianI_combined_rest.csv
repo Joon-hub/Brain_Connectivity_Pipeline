@@ -1,0 +1,17 @@
+,Accumbens,Amygdala,Caudate,DefaultMode,DorsalAttention,FrontoParietal,Hippocampus,Limbic,Pallidum,Putamen,Somatomotor,Subcortical,Thal_ant,Thal_post,VentralAttention,Visual
+Accumbens,787,5,12,0,0,0,13,0,20,14,0,0,12,9,0,0
+Amygdala,8,724,0,0,0,0,84,0,7,1,0,0,1,19,0,0
+Caudate,16,1,837,0,0,0,0,0,2,25,0,0,6,1,0,0
+DefaultMode,0,0,0,7868,8,189,0,62,0,0,11,45,0,0,41,8
+DorsalAttention,0,0,0,13,4540,56,0,24,0,0,113,10,0,0,120,42
+FrontoParietal,0,0,0,159,81,7864,0,53,0,0,5,16,0,0,94,7
+Hippocampus,8,56,0,0,0,0,766,0,3,0,0,0,4,17,0,0
+Limbic,0,0,0,56,28,70,0,2873,0,0,15,36,0,0,40,12
+Pallidum,33,18,25,0,0,0,16,0,509,41,0,0,75,68,0,0
+Putamen,5,2,24,0,0,0,0,0,5,841,0,0,3,5,0,0
+Somatomotor,0,0,0,18,138,18,0,21,0,0,7261,31,0,0,98,19
+Subcortical,0,0,0,89,10,58,0,31,0,0,21,6854,0,0,21,15
+Thal_ant,6,3,10,0,0,0,5,0,12,15,0,0,795,36,0,0
+Thal_post,9,20,3,0,0,0,27,0,15,11,0,0,42,717,0,0
+VentralAttention,0,0,0,33,100,83,0,45,0,0,64,31,0,0,5454,5
+Visual,0,0,0,12,43,5,0,10,0,0,34,10,0,0,4,5255

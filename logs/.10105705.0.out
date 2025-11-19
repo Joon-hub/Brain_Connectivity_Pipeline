@@ -3,7 +3,7 @@ Starting Brain Connectivity Classification
 ===========================================
 Current directory: /home/sjoon/projects/brain_connectivity_classifier
 Running on host: cpu43
-Start time: Wed Nov 19 03:48:35 PM CET 2025
+Start time: Wed Nov 19 04:17:54 PM CET 2025
 ===========================================
 
 ======================================================================
@@ -12,7 +12,7 @@ Start time: Wed Nov 19 03:48:35 PM CET 2025
 
 Mode: FULL DATA
 Config: config.yaml
-Start: 2025-11-19 15:48:36
+Start: 2025-11-19 16:17:55
 
 Configuration:
   Diagonal strategy: sample_from_matrix
@@ -84,7 +84,6 @@ Training accuracy: 0.7677
 Total samples: 51968
 
 ⚠️  NOTE: Training accuracy (0.7677) >> CV validation accuracy (0.6951)
-   This indicates overfitting. Use CV validation accuracy for generalization.
 ✓ Saved: reports/tables/basic_analysis/error_map_rest.csv
 ✓ Saved: reports/tables/confusion_matrix/rest_sample_from_matrix_raw.csv
 ✓ Saved: reports/tables/confusion_matrix/rest_sample_from_matrix_normalized.csv
@@ -139,11 +138,11 @@ Model Configuration:
   
 
 Cross-Validation Results (LEAK-FREE):
-  Validation accuracy: 0.6951 ± 0.0069  ← TRUE GENERALIZATION
-  Training accuracy: 0.7537 ± 0.0031  (overfitted)
+  Validation accuracy: 0.6951 ± 0.0069  
+  Training accuracy: 0.7537 ± 0.0031  
   Improvement over chance: 161.3x
 
-Final Training Accuracy: 0.7677  (expected to be higher due to overfitting)
+Final Training Accuracy: 0.7677  
 
 Task Data (Gender Stroop):
   Test subjects: 200
@@ -157,21 +156,20 @@ Output Locations:
   Figures: reports/figures/basic_analysis
   Predictions: data/processed
 
-Execution Time: 2.1m
-Completed: 2025-11-19 15:50:42
+Execution Time: 2.0m
+Completed: 2025-11-19 16:19:57
 
 ======================================================================
 
 ✅ Pipeline completed successfully!
 
 IMPORTANT NOTES:
-• Use CV validation accuracy (0.6951) for true generalization performance
 • Training accuracy is higher due to overfitting - this is expected
 • Fisher Z transformation was applied to correlation values
 
 
 ===========================================
 Pipeline finished!
-End time: Wed Nov 19 03:50:43 PM CET 2025
+End time: Wed Nov 19 04:19:58 PM CET 2025
 Exit code: 0
 ===========================================
