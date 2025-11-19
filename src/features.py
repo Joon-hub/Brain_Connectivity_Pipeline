@@ -3,6 +3,11 @@ Feature Engineering: Connectivity Matrix Preprocessing
 ======================================================
 All preprocessing is now fold-aware and compatible with sklearn Pipeline.
 No statistics are computed globally - everything happens within fit/transform.
+
+CORRECTED VERSION:
+- Fisher Z transformation moved to preprocessing (applied to correlation values)
+- Memory optimization (removed unnecessary copies)
+- Better validation and error messages
 """
 
 import numpy as np
@@ -36,23 +41,26 @@ def extract_regions(connection_columns: List[str]) -> Tuple[List[str], Dict[str,
     
     # Extract unique regions
     for col in connection_columns:
-        region_a, region_b = col.split('~') 
+        if '~' not in col:
+            raise ValueError(f"Invalid connection column format: {col}. Expected 'Region_A~Region_B'")
         
-        for region in [region_a, region_b]: # Add both regions
+        region_a, region_b = col.split('~', 1)  # Split only on first ~
+        
+        for region in [region_a, region_b]:
             if region not in seen:
                 seen.add(region)
                 unique_regions.append(region)
     
-    region_to_idx = {region: idx for idx, region in enumerate(unique_regions)} # Create mapping from name to index
+    region_to_idx = {region: idx for idx, region in enumerate(unique_regions)}
     
     return unique_regions, region_to_idx, len(unique_regions)
 
 
 def reconstruct_connectivity_matrix(
-    subject_values: np.ndarray,       # [0.4, 0.3, 0.2]
-    connection_columns: List[str],    # ['A~B', 'B~C', 'C~D']
-    region_to_idx: Dict[str, int],    # {'A': 0, 'B': 1, 'C': 2, 'D': 3}
-    n_regions: int                    # 232
+    subject_values: np.ndarray,
+    connection_columns: List[str],
+    region_to_idx: Dict[str, int],
+    n_regions: int
 ) -> np.ndarray:
     """
     Reconstruct symmetric connectivity matrix from flattened data.
@@ -66,20 +74,20 @@ def reconstruct_connectivity_matrix(
     Returns:
         Symmetric connectivity matrix (n_regions × n_regions)
     """
-    # Initialize connectivity matrix with zeros (n_regions x n_regions) 
+    # Initialize connectivity matrix with zeros
     matrix = np.zeros((n_regions, n_regions), dtype=float)
     
     # Fill off-diagonal elements
-    for col, value in zip(connection_columns, subject_values): # col = 'A~B', value = 0.4
-        region_a, region_b = col.split('~')
-        idx_a = region_to_idx[region_a]             # idx_a = 0
-        idx_b = region_to_idx[region_b]             # idx_b = 1
+    for col, value in zip(connection_columns, subject_values):
+        region_a, region_b = col.split('~', 1)
+        idx_a = region_to_idx[region_a]
+        idx_b = region_to_idx[region_b]
         
-        matrix[idx_a, idx_b] = value                # matrix[0, 1] = 0.4
-        matrix[idx_b, idx_a] = value                # matrix[1, 0] = 0.4    
+        matrix[idx_a, idx_b] = value
+        matrix[idx_b, idx_a] = value
     
     # Set diagonal to 1.0 (perfect self-correlation)
-    np.fill_diagonal(matrix, 1.0)                   
+    np.fill_diagonal(matrix, 1.0)
     
     return matrix
 
@@ -98,7 +106,7 @@ def parse_networks(region_list: List[str]) -> Dict[str, str]:
     
     for region in region_list:
         name = region.lower()
-        network = 'Unknown'             # Default to 'Unknown'
+        network = 'Unknown'
         
         # --- Cortical (Schaefer 17 networks) ---
         if region.startswith(('LH_', 'RH_')):
@@ -176,9 +184,9 @@ def parse_networks(region_list: List[str]) -> Dict[str, str]:
             else:
                 network = 'SubcorticalOther'
         
-        network_map[region] = network   # {region: network}
+        network_map[region] = network
     
-    return network_map    #  e.g. {'LH_VisCent': 'VisCent'}
+    return network_map
 
 
 # ============================================================================
@@ -193,35 +201,30 @@ class ConnectivityMatrixReconstructor(BaseEstimator, TransformerMixin):
     def __init__(self, connection_columns: Optional[List[str]] = None):
         self.connection_columns = connection_columns
     
-    def fit(self, X, y=None):                  # metadata extraction
+    def fit(self, X, y=None):
         """Extract region information from columns."""
         if self.connection_columns is None:
             if isinstance(X, pd.DataFrame):
-                self.connection_columns = [col for col in X.columns if '~' in str(col)] # e.g. ['LH_VisCent~RH_VisCent']
+                self.connection_columns = [col for col in X.columns if '~' in str(col)]
             else:
                 raise ValueError("connection_columns must be provided for non-DataFrame input")
         
+        if len(self.connection_columns) == 0:
+            raise ValueError("No connection columns found (expected 'Region_A~Region_B' format)")
+        
         # Extract regions
-        self.region_list_, self.region_to_idx_, self.n_regions_ = extract_regions(self.connection_columns)           
-        # e.g. ['LH_VisCent', 'RH_VisCent'], {'LH_VisCent': 0, 'RH_VisCent': 1}, 2 
+        self.region_list_, self.region_to_idx_, self.n_regions_ = extract_regions(self.connection_columns)
+        
         return self
     
-    def transform(self, X):                       # reconstruction of matrix for every subject
+    def transform(self, X):
         """Reconstruct connectivity matrices."""
         if isinstance(X, pd.DataFrame):
             X_values = X[self.connection_columns].values
-
-            # e.g.
-            # X_values = X['A~B','B~C','C~D'].values
-            # X_values = [
-            # [0.40, 0.70, 0.55],  # subject S001
-            # [0.10, 0.20, 0.30]   # subject S002
-            # ]
-        
         else:
             X_values = X
         
-        n_subjects = X_values.shape[0]                         # e.g. 2
+        n_subjects = X_values.shape[0]
         matrices = np.zeros((n_subjects, self.n_regions_, self.n_regions_))
         
         for i in range(n_subjects):
@@ -231,26 +234,22 @@ class ConnectivityMatrixReconstructor(BaseEstimator, TransformerMixin):
                 self.region_to_idx_,
                 self.n_regions_
             )
-            
-            # e.g.
-            # matrices[subject] = [
-            # [0.40, 0.70, 0.55],  # subject S001
-            # [0.10, 0.20, 0.30]   # subject S002
-            # ]
         
         return matrices
 
 
 class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
     """
-    Impute the diagonal of connectivity matrices in a fold-aware.
+    Impute the diagonal of connectivity matrices in a fold-aware manner.
 
     Strategies:
-      - "zero":                fill 0 on the diagonal (deterministic)
-      - "random":              fill U(-1,1) per subject/region (deterministic via random_state)
-      - "region_mean":         SUBJECT-SPECIFIC row mean (exclude diagonal)
-      - "network_mean":        SUBJECT-SPECIFIC mean over same-network targets; fallback to row mean
-      - "sample_from_matrix":  SUBJECT-SPECIFIC sample from that subject's off-diagonal entries
+      - "zero": fill 0 on the diagonal (deterministic)
+      - "random": fill U(-1,1) per subject/region (deterministic via random_state)
+      - "region_mean": SUBJECT-SPECIFIC row mean (exclude diagonal)
+      - "network_mean": SUBJECT-SPECIFIC mean over same-network targets; fallback to row mean
+      - "sample_from_matrix": SUBJECT-SPECIFIC sample from that subject's off-diagonal entries
+    
+    CORRECTED: Memory optimized - operates in-place where possible
     """
     
     def __init__(
@@ -265,7 +264,7 @@ class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
             strategy: 'zero', 'region_mean', 'network_mean', 'random', 'sample_from_matrix'
             region_list: Required for 'network_mean'
             k_neighbors: For future KNN strategy
-            random_state: For 'random' strategy
+            random_state: For 'random' and 'sample_from_matrix' strategies
         """
         self.strategy = strategy
         self.region_list = region_list
@@ -279,6 +278,7 @@ class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
         self.statistics_ = None
         self.network_map_ = None
         self.n_regions_ = None
+        
     def _build_same_net_indices(self):
         """Precompute index lists of same-network partners for each region (exclude self)."""
         assert self.region_list is not None and self.network_map_ is not None
@@ -293,6 +293,7 @@ class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
             ]
             same_net_idx.append(np.asarray(idx, dtype=int))
         self.same_net_idx_ = same_net_idx
+        
     def fit(self, X, y=None):
         """
         X: array of shape (n_subjects, n_regions, n_regions)
@@ -305,16 +306,21 @@ class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
             raise ValueError("Connectivity matrices must be square.")
         self.n_regions_ = R
 
-        # Prepare a mask that excludes the diagonal (useful for fast row means).
+        # Validate random_state for stochastic strategies
+        if self.strategy in ["random", "sample_from_matrix"]:
+            if self.random_state is None:
+                raise ValueError(f"random_state is required for '{self.strategy}' strategy")
+
+        # Prepare a mask that excludes the diagonal
         offdiag_mask = np.ones((R, R), dtype=bool)
         np.fill_diagonal(offdiag_mask, False)
         self.offdiag_mask_ = offdiag_mask
         self.offdiag_den_ = offdiag_mask.sum(axis=1).astype(float)  # == R-1
 
-        # For subject-specific region/network means we don't keep global stats.
+        # For subject-specific region/network means we don't keep global stats
         self.statistics_ = None
 
-        # For subject-specific network_mean we only need network membership & same-net indices.
+        # For network_mean we need network membership & same-net indices
         if self.strategy == "network_mean":
             if self.region_list is None:
                 raise ValueError("region_list is required for 'network_mean' strategy.")
@@ -327,6 +333,8 @@ class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
         """
         Apply the selected strategy per subject.
         Returns X_imputed with diagonals replaced.
+        
+        CORRECTED: Memory optimized - works in-place when safe
         """
         if X.ndim != 3:
             raise ValueError(f"Expected 3D array, got shape {X.shape}")
@@ -335,7 +343,9 @@ class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
 
         n_subjects = X.shape[0]
         R = self.n_regions_
-        X_imputed = X.copy()
+        
+        # Work in-place for memory efficiency (X is already a copy from previous transform)
+        X_imputed = X
 
         if self.strategy == "zero":
             for s in range(n_subjects):
@@ -350,7 +360,6 @@ class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
 
         if self.strategy == "sample_from_matrix":
             rng = np.random.RandomState(self.random_state)
-            # one global off-diagonal mask works for every subject
             mask = self.offdiag_mask_
             for s in range(n_subjects):
                 M = X_imputed[s]
@@ -365,10 +374,8 @@ class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
             den = self.offdiag_den_
             for s in range(n_subjects):
                 M = X_imputed[s]
-                # use nan-safe ops; if your data has no NaNs, np.sum/np.mean is fine too
                 row_sums = np.nansum(M * mask, axis=1)
                 row_means = row_sums / den
-                # Optional: guard against rows that are all-NaN
                 row_means = np.nan_to_num(row_means, nan=0.0)
                 np.fill_diagonal(M, row_means)
             return X_imputed
@@ -392,7 +399,6 @@ class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
                     idx = self.same_net_idx_[r]
                     if idx.size > 0:
                         v = np.nanmean(M[r, idx])
-                        # Fallback if same-network entries are all NaN
                         if np.isnan(v):
                             v = row_means[r]
                     else:
@@ -409,9 +415,16 @@ class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
 class RegionConnectivityExtractor(BaseEstimator, TransformerMixin):
     """
     Extract per-region connectivity patterns for classification.
+    
+    CORRECTED: Better documentation of include_diagonal parameter
     """
     
     def __init__(self, include_diagonal: bool = False):
+        """
+        Args:
+            include_diagonal: If True, include diagonal values in features.
+                             Should be False if diagonal was imputed (default).
+        """
         self.include_diagonal = include_diagonal
     
     def fit(self, X, y=None):
@@ -431,7 +444,6 @@ class RegionConnectivityExtractor(BaseEstimator, TransformerMixin):
         
         Returns:
             X_features: 2D array (n_subjects*n_regions × n_features)
-            Also stores labels and subjects as attributes
         """
         n_subjects, n_regions, _ = X.shape
         n_samples = n_subjects * n_regions
@@ -478,6 +490,11 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
     
     All statistics are computed during fit() using only training data,
     then applied during transform() to any dataset.
+    
+    CORRECTED VERSION:
+    - Fisher Z transformation now applied HERE (on correlation values)
+    - Better validation of parameters
+    - Memory optimized
     """
     
     def __init__(
@@ -486,12 +503,23 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
         diagonal_strategy: str = "zero",
         region_list: Optional[List[str]] = None,
         include_diagonal: bool = False,
+        apply_fisher_z: bool = True,
         random_state: int = 42
     ):
+        """
+        Args:
+            connection_columns: List of connection column names
+            diagonal_strategy: Imputation strategy
+            region_list: List of region names (required for network_mean)
+            include_diagonal: Include diagonal in features (should be False)
+            apply_fisher_z: Apply Fisher Z transformation (should be True)
+            random_state: Random seed for stochastic strategies
+        """
         self.connection_columns = connection_columns
         self.diagonal_strategy = diagonal_strategy
         self.region_list = region_list
         self.include_diagonal = include_diagonal
+        self.apply_fisher_z = apply_fisher_z
         self.random_state = random_state
         
         # Component transformers (will be created in fit)
@@ -534,15 +562,25 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
         """
         Apply preprocessing using statistics from training data.
         
+        CORRECTED: Fisher Z transformation now applied HERE (on correlation values)
+        
         Args:
             X: DataFrame with connectivity data (can be train or test)
         
         Returns:
-            X_features: 2D feature array
+            X_features: 2D feature array (Fisher Z transformed if enabled)
         """
         X_matrices = self.reconstructor_.transform(X)
         X_imputed = self.imputer_.transform(X_matrices)
         X_features = self.extractor_.transform(X_imputed)
+        
+        # Apply Fisher Z transformation to correlation values
+        # CRITICAL: Must be done BEFORE StandardScaler
+        if self.apply_fisher_z:
+            # Clip to avoid ±1 which would give ±inf
+            eps = 1e-6
+            X_clipped = np.clip(X_features, -1.0 + eps, 1.0 - eps)
+            X_features = np.arctanh(X_clipped)
         
         return X_features
     

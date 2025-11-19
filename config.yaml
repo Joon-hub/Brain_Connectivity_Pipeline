@@ -1,37 +1,33 @@
 # Brain Connectivity Classification - Configuration
 
-# Updated: November 2025
-# Compatible with Pipeline-based model.py (StandardScaler support)
-
- 
 # Data files (CSV format)
-
 data:
   piop2_file: "data/raw/PIOP2_restingstate.csv"      # Training: resting-state
   piop1_file: "data/raw/PIOP1_gstroop.csv"           # Testing: Gender Stroop task
 
 # Output directories
-
 output_dirs:
   processed: "data/processed"                        # Predictions, region lists, etc.
   models: "models"                                   # Saved .pkl pipelines
   tables: "reports/tables/basic_analysis"            # CSVs: error maps, confusion, comparisons
   figures: "reports/figures/basic_analysis"          # PNGs: error maps, comparisons
 
-# Feature extraction
-diagonal_strategy: "sample_from_matrix"                    # Options: "zero", "region_mean", "network_mean", "random", "regression_predictive", "knn_imputation", "sample_from_matrix"
-                                                             
+# Feature extraction & preprocessing
+preprocessing:
+  diagonal_strategy: "sample_from_matrix"            # Options: "zero", "random", "region_mean", "network_mean", "sample_from_matrix"
+  include_diagonal: false                            # Should be false if diagonal was imputed
+  apply_fisher_z: true                               # Apply Fisher Z transformation to correlation values (RECOMMENDED)
+
 # Model training
 model:
-  scaler_type: "fisher_z"                      # CRITICAL: "fisher_z" (recommended) or "standard"
-  C: 0.01                                            # L2 regularization strength (smaller = stronger)
-  max_iter: 1000
-  n_splits: 3                                        # GroupKFold cross-validation
-  random_seed: 54
+  C: 0.003                                   # L2 regularization strength (smaller = stronger regularization)
+  max_iter: 1000                                     # Maximum iterations for solver
+  n_splits: 3                                        # Number of GroupKFold cross-validation folds
+  random_seed: 42                                    # Random seed for reproducibility
 
 # Evaluation & Visualization
 visualization:
-  dpi: 300
+  dpi: 300                                           # Resolution for saved figures
   high_error_threshold: 0.30                         # Regions with error ≥ this = "hard to predict"
   low_error_threshold: 0.10                          # Regions with error ≤ this = "easy to predict"
   colormap_error: "RdBu_r"                           # Matplotlib colormap for error maps
@@ -42,5 +38,6 @@ logging:
   level: "INFO"                                      # DEBUG, INFO, WARNING, ERROR
   file: null                                         # Set path to enable file logging, e.g. "logs/pipeline.log"
 
+# Sample mode settings
 sample:
-  n_subjects: 10                                     # Used with --sample flag
+  n_subjects: 10                                     # Number of subjects used with --sample flag

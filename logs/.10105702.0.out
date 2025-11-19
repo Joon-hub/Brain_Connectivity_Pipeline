@@ -3,7 +3,7 @@ Starting Brain Connectivity Classification
 ===========================================
 Current directory: /home/sjoon/projects/brain_connectivity_classifier
 Running on host: cpu43
-Start time: Tue Nov 18 10:25:27 AM CET 2025
+Start time: Wed Nov 19 03:48:35 PM CET 2025
 ===========================================
 
 ======================================================================
@@ -12,13 +12,14 @@ Start time: Tue Nov 18 10:25:27 AM CET 2025
 
 Mode: FULL DATA
 Config: config.yaml
-Start: 2025-11-18 10:25:28
+Start: 2025-11-19 15:48:36
 
 Configuration:
   Diagonal strategy: sample_from_matrix
-  C (regularization): 0.01
+  C (regularization): 0.003
   CV folds: 3
-  Random seed: 54
+  Random seed: 42
+  Fisher Z transform: Enabled
 
 ======================================================================
   STEP 1: Load Training Data (PIOP-2 Resting State)
@@ -35,6 +36,7 @@ Configuration:
 ⚠️  IMPORTANT: Preprocessing happens INSIDE each CV fold
    → Statistics computed only on training fold
    → No information leakage to validation fold
+   → Fisher Z applied to correlation values (before scaling)
 
 
 ============================================================
@@ -46,30 +48,30 @@ Preprocessing: sample_from_matrix
 Fold 1/3:
   Train subjects: 149
   Val subjects: 75
-    Train acc: 0.7303
-    Val acc:   0.7121
+    Train acc: 0.7502
+    Val acc:   0.7036
 
 Fold 2/3:
   Train subjects: 149
   Val subjects: 75
-    Train acc: 0.7426
-    Val acc:   0.6994
+    Train acc: 0.7577
+    Val acc:   0.6866
 
 Fold 3/3:
   Train subjects: 150
   Val subjects: 74
-    Train acc: 0.7384
-    Val acc:   0.7097
+    Train acc: 0.7532
+    Val acc:   0.6951
 
 ============================================================
 CV RESULTS:
-  Train: 0.7371 ± 0.0051
-  Val:   0.7071 ± 0.0055
+  Train: 0.7537 ± 0.0031
+  Val:   0.6951 ± 0.0069
 ============================================================
 
 
 Training final model on all training data...
-Final training accuracy: 0.7790
+Final training accuracy: 0.7677
 Trained on 51968 samples
 Region list saved to data/processed/region_list.csv
 ✓ Model saved to models
@@ -78,8 +80,11 @@ Region list saved to data/processed/region_list.csv
   STEP 3: Evaluate on Training Data
 ======================================================================
 
-Training accuracy: 0.7790
+Training accuracy: 0.7677
 Total samples: 51968
+
+⚠️  NOTE: Training accuracy (0.7677) >> CV validation accuracy (0.6951)
+   This indicates overfitting. Use CV validation accuracy for generalization.
 ✓ Saved: reports/tables/basic_analysis/error_map_rest.csv
 ✓ Saved: reports/tables/confusion_matrix/rest_sample_from_matrix_raw.csv
 ✓ Saved: reports/tables/confusion_matrix/rest_sample_from_matrix_normalized.csv
@@ -90,7 +95,7 @@ Total samples: 51968
 ======================================================================
 
 ✓ Loaded 200 subjects from PIOP1_gstroop.csv
-Task prediction accuracy: 0.7225
+Task prediction accuracy: 0.6757
 Test subjects: 200
 Test samples: 46400
 ✓ Saved: reports/tables/basic_analysis/error_map_task.csv
@@ -127,21 +132,22 @@ Data:
 
 Model Configuration:
   Diagonal strategy: sample_from_matrix
-  Regularization (C): 0.01
+  Regularization (C): 0.003
   CV folds: 3
-  max_iter: 1000
+  Max iterations: 1000
+  Fisher Z transform: Enabled
   
 
 Cross-Validation Results (LEAK-FREE):
-  Validation accuracy: 0.7071 ± 0.0055
-  Training accuracy: 0.7371 ± 0.0051
-  Improvement over chance: 164.0x
+  Validation accuracy: 0.6951 ± 0.0069  ← TRUE GENERALIZATION
+  Training accuracy: 0.7537 ± 0.0031  (overfitted)
+  Improvement over chance: 161.3x
 
-Final Training Accuracy: 0.7790
+Final Training Accuracy: 0.7677  (expected to be higher due to overfitting)
 
 Task Data (Gender Stroop):
   Test subjects: 200
-  Test accuracy: 0.7225
+  Test accuracy: 0.6757
 
 ======================================================================
 
@@ -151,16 +157,21 @@ Output Locations:
   Figures: reports/figures/basic_analysis
   Predictions: data/processed
 
-Execution Time: 60.0s
-Completed: 2025-11-18 10:26:28
+Execution Time: 2.1m
+Completed: 2025-11-19 15:50:42
 
 ======================================================================
 
 ✅ Pipeline completed successfully!
 
+IMPORTANT NOTES:
+• Use CV validation accuracy (0.6951) for true generalization performance
+• Training accuracy is higher due to overfitting - this is expected
+• Fisher Z transformation was applied to correlation values
+
 
 ===========================================
 Pipeline finished!
-End time: Tue Nov 18 10:26:29 AM CET 2025
+End time: Wed Nov 19 03:50:43 PM CET 2025
 Exit code: 0
 ===========================================

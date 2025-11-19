@@ -3,6 +3,12 @@ Brain Region Classifier with Leak-Free Cross-Validation
 ========================================================
 Implements subject-wise GroupKFold CV with proper preprocessing isolation.
 All preprocessing happens INSIDE the CV loop to prevent leakage.
+
+CORRECTED VERSION:
+- Fisher Z transformation removed from pipeline (now in preprocessing)
+- StandardScaler only in pipeline
+- Better validation of subject_id column
+- Clearer warnings about training vs validation accuracy
 """
 
 import numpy as np
@@ -17,39 +23,6 @@ import pickle
 from pathlib import Path
 from typing import Tuple, Dict, Optional, List
 
-# ============================================================================
-# fisher Z transform
-# ============================================================================
-
-from sklearn.base import BaseEstimator, TransformerMixin
-
-class FisherZTransformer(BaseEstimator, TransformerMixin):
-    """
-    z = 0.5 * ln((1 + x) / (1 - x)) == np.arctanh(x)
-    clips input to [-1+eps, 1+eps]
-    """
-    def __init__(self, eps: float = 1e-6):
-        self.eps = eps
-
-    def fit(self, X, y=None):
-        # Stateless transformer: nothing to fit
-        return self
-
-    def transform(self, X):
-        # Accept DataFrame or ndarray
-        if hasattr(X, "values"):
-            arr = X.values
-        else:
-            arr = np.asarray(X)
-
-        # Clip to avoid ±1
-        arr_clipped = np.clip(arr, -1.0 + self.eps, 1.0 - self.eps)
-
-        # Use arctanh which is numerically stable here
-        z = np.arctanh(arr_clipped)
-
-        return z
-    
 
 # ============================================================================
 # CROSS-VALIDATION
@@ -79,9 +52,23 @@ def cross_validate_no_leakage(
     Returns:
         Dictionary with CV results
     """
+    # Validate first column is subject_id
+    first_col_name = df_raw.columns[0]
+    if 'subject' not in first_col_name.lower() and 'id' not in first_col_name.lower():
+        raise ValueError(
+            f"Expected first column to contain 'subject' or 'id', got '{first_col_name}'. "
+            f"Subject ID column must be first."
+        )
+    
     # Extract subject IDs for grouping
     subject_ids = df_raw.iloc[:, 0].values
     unique_subjects = np.unique(subject_ids)
+    
+    if len(unique_subjects) < n_splits:
+        raise ValueError(
+            f"Not enough subjects ({len(unique_subjects)}) for {n_splits}-fold CV. "
+            f"Need at least {n_splits} subjects."
+        )
     
     gkf = GroupKFold(n_splits=n_splits)
     
@@ -125,8 +112,9 @@ def cross_validate_no_leakage(
         y_val = preprocessor.get_labels()
         
         # === CREATE AND FIT CLASSIFIER ===
+        # CORRECTED: Only StandardScaler in pipeline now
+        # Fisher Z is applied in preprocessing (on correlation values)
         pipeline = Pipeline([
-            ('fisher_z', FisherZTransformer()),
             ('scaler', StandardScaler()),
             ('classifier', LogisticRegression(**classifier_params))
         ])
@@ -188,6 +176,8 @@ def train_final_model(
     """
     Train final model on all training data.
     
+    CORRECTED: Added warning about training accuracy overfitting
+    
     Args:
         df_train: Full training DataFrame
         preprocessor_class: Preprocessor class
@@ -210,8 +200,8 @@ def train_final_model(
     y_train = preprocessor.get_labels()
     
     # Train classifier
+    # CORRECTED: Only StandardScaler in pipeline
     pipeline = Pipeline([
-        ('fisher_z', FisherZTransformer()),
         ('scaler', StandardScaler()),
         ('classifier', LogisticRegression(**classifier_params))
     ])
@@ -225,6 +215,11 @@ def train_final_model(
     if verbose:
         print(f"Final training accuracy: {train_acc:.4f}")
         print(f"Trained on {len(X_train)} samples")
+        
+        # CORRECTED: Add warning about overfitting
+        if train_acc > 0.85:
+            print(f"\n⚠️  NOTE: Training accuracy is high - this represents overfitting.")
+            print(f"   Use CV validation accuracy for true generalization performance.")
     
     return pipeline, preprocessor
 
@@ -239,6 +234,11 @@ class BrainRegionClassifier:
     
     This class properly handles preprocessing and classification with
     subject-wise cross-validation to prevent data leakage.
+    
+    CORRECTED VERSION:
+    - Fisher Z transformation now in preprocessing (not in pipeline)
+    - Better validation and error messages
+    - Clearer documentation of overfitting in final model
     """
     
     def __init__(
@@ -247,6 +247,7 @@ class BrainRegionClassifier:
         diagonal_strategy: str = "zero",
         connection_columns: Optional[List[str]] = None,
         include_diagonal: bool = False,
+        apply_fisher_z: bool = True,
         C: float = 0.01,
         max_iter: int = 1000,
         n_splits: int = 5,
@@ -257,7 +258,8 @@ class BrainRegionClassifier:
             preprocessor_class: BrainConnectivityPreprocessor class
             diagonal_strategy: Imputation strategy
             connection_columns: List of connection column names
-            include_diagonal: Whether to include diagonal in features
+            include_diagonal: Include diagonal in features (should be False if diagonal imputed)
+            apply_fisher_z: Apply Fisher Z transformation in preprocessing
             C: Logistic regression regularization
             max_iter: Max iterations
             n_splits: CV folds
@@ -267,6 +269,7 @@ class BrainRegionClassifier:
         self.diagonal_strategy = diagonal_strategy
         self.connection_columns = connection_columns
         self.include_diagonal = include_diagonal
+        self.apply_fisher_z = apply_fisher_z
         self.C = C
         self.max_iter = max_iter
         self.n_splits = n_splits
@@ -293,6 +296,7 @@ class BrainRegionClassifier:
             'connection_columns': self.connection_columns,
             'diagonal_strategy': self.diagonal_strategy,
             'include_diagonal': self.include_diagonal,
+            'apply_fisher_z': self.apply_fisher_z,
             'random_state': self.random_state
         }
         
@@ -401,6 +405,11 @@ class BrainRegionClassifier:
         pipeline_path = output_dir / f'pipeline_{diagonal_strategy}.pkl'
         preprocessor_path = output_dir / f'preprocessor_{diagonal_strategy}.pkl'
         
+        if not pipeline_path.exists():
+            raise FileNotFoundError(f"Pipeline not found: {pipeline_path}")
+        if not preprocessor_path.exists():
+            raise FileNotFoundError(f"Preprocessor not found: {preprocessor_path}")
+        
         with open(pipeline_path, 'rb') as f:
             self.pipeline_ = pickle.load(f)
         
@@ -435,7 +444,7 @@ if __name__ == "__main__":
     # Create DataFrame
     data = {'subject_id': [f'S{i:03d}' for i in range(n_subjects)]}
     for col in connection_cols:
-        data[col] = np.random.randn(n_subjects)
+        data[col] = np.random.uniform(-1, 1, n_subjects)  # Correlation values
     
     df = pd.DataFrame(data)
     
@@ -453,6 +462,7 @@ if __name__ == "__main__":
         diagonal_strategy="region_mean",
         connection_columns=connection_cols,
         include_diagonal=False,
+        apply_fisher_z=True,
         C=0.01,
         n_splits=3,
         random_state=42
@@ -463,6 +473,8 @@ if __name__ == "__main__":
     
     # Get results
     cv_results = classifier.get_cv_results()
-    print(f"\nFinal CV Accuracy: {cv_results['val_mean']:.4f} ± {cv_results['val_std']:.4f}")
+    print(f"\nFinal CV Validation Accuracy: {cv_results['val_mean']:.4f} ± {cv_results['val_std']:.4f}")
+    print(f"Training Accuracy (overfitted): {cv_results['train_mean']:.4f} ± {cv_results['train_std']:.4f}")
     
     print("\n✓ Classifier is leak-free!")
+    print("✓ Fisher Z transformation correctly applied to correlation values")

@@ -1,4 +1,4 @@
-/data/
+/data/raw/
 /reports/__pycache__/
 *.pyc
 /masterthesis_venv2/

@@ -7,9 +7,15 @@ This version eliminates all data leakage by:
 2. Computing all statistics only on training data
 3. Proper subject-level splitting before any preprocessing
 
+CORRECTED VERSION:
+- Fisher Z transformation now in preprocessing (on correlation values)
+- include_diagonal parameter correctly set to False
+- Better validation and error messages
+- Clearer documentation of training vs validation accuracy
+
 Usage:
     python run.py --config config.yaml
-    python run.py --diagonal region_mean --C 0.01
+    python run.py --diagonal sample_from_matrix --C 0.01
     python run.py --sample  # Quick test
 """
 
@@ -54,7 +60,7 @@ def set_random_seeds(seed: int):
 
 
 def load_connectivity_data(filepath: str) -> pd.DataFrame:
-    """Load connectivity CSV file."""
+    """Load connectivity CSV file."""s
     filepath = Path(filepath)
     if not filepath.exists():
         raise FileNotFoundError(f"Data file not found: {filepath}")
@@ -67,6 +73,8 @@ def load_connectivity_data(filepath: str) -> pd.DataFrame:
 def extract_connection_columns(df: pd.DataFrame) -> list:
     """Extract connection column names (containing '~')."""
     connection_cols = [col for col in df.columns if '~' in str(col)]
+    if len(connection_cols) == 0:
+        raise ValueError("No connection columns found. Expected format: 'Region_A~Region_B'")
     return connection_cols
 
 
@@ -124,6 +132,8 @@ def main() -> int:
                         help='Override number of CV folds')
     parser.add_argument('--seed', type=int,
                         help='Override random seed')
+    parser.add_argument('--no_fisher_z', action='store_true',
+                        help='Disable Fisher Z transformation (not recommended)')
     
     args = parser.parse_args()
     
@@ -142,7 +152,13 @@ def main() -> int:
     random_seed = args.seed or config.get('model', {}).get('random_seed', 42)
     set_random_seeds(random_seed)
     
-    diagonal_strategy = args.diagonal or config.get('diagonal_strategy', 'zero')
+    # Preprocessing settings
+    diagonal_strategy = args.diagonal or config.get('preprocessing', {}).get('diagonal_strategy', 'zero')
+    apply_fisher_z = not args.no_fisher_z  # Command line override
+    if apply_fisher_z is True:  # If not overridden by command line, check config
+        apply_fisher_z = config.get('preprocessing', {}).get('apply_fisher_z', True)
+    
+    # Model settings
     C = args.C or config.get('model', {}).get('C', 0.01)
     n_splits = args.n_splits or config.get('model', {}).get('n_splits', 5)
     max_iter = config.get('model', {}).get('max_iter', 1000)
@@ -162,7 +178,8 @@ def main() -> int:
         'random_seed': random_seed,
         'n_splits': n_splits,
         'C': C,
-        'max_iter': max_iter
+        'max_iter': max_iter,
+        'fisher_z_enabled': apply_fisher_z
     }
     
     print(f"Configuration:")
@@ -170,6 +187,7 @@ def main() -> int:
     print(f"  C (regularization): {C}")
     print(f"  CV folds: {n_splits}")
     print(f"  Random seed: {random_seed}")
+    print(f"  Fisher Z transform: {'Enabled' if apply_fisher_z else 'Disabled'}")
     
     # ========================================================================
     # STEP 1: LOAD TRAINING DATA (PIOP-2 Resting State)
@@ -195,13 +213,18 @@ def main() -> int:
     
     print("⚠️  IMPORTANT: Preprocessing happens INSIDE each CV fold")
     print("   → Statistics computed only on training fold")
-    print("   → No information leakage to validation fold\n")
+    print("   → No information leakage to validation fold")
+    if apply_fisher_z:
+        print("   → Fisher Z applied to correlation values (before scaling)")
+    print()
     
+    # CORRECTED: include_diagonal=False (diagonal was imputed)
     classifier = BrainRegionClassifier(
         preprocessor_class=BrainConnectivityPreprocessor,
         diagonal_strategy=diagonal_strategy,
         connection_columns=connection_columns,
-        include_diagonal=True,  # CRITICAL: Exclude diagonal from features!
+        include_diagonal=False,  # CORRECTED: Exclude diagonal from features (already imputed)
+        apply_fisher_z=apply_fisher_z,  # CORRECTED: Now in preprocessing, not pipeline
         C=C,
         max_iter=max_iter,
         n_splits=n_splits,
@@ -216,8 +239,8 @@ def main() -> int:
     n_regions = classifier.n_regions_
     region_list = classifier.region_list_
 
-    # save region list as csv file by converting it df first into data/processed directory
-    region_list_df = pd.DataFrame(region_list)
+    # Save region list as CSV
+    region_list_df = pd.DataFrame({'region': region_list})
     region_list_df.to_csv(output_dirs['processed'] / 'region_list.csv', index=False)
     print(f"Region list saved to {output_dirs['processed'] / 'region_list.csv'}")
     
@@ -244,6 +267,10 @@ def main() -> int:
     print(f"Training accuracy: {train_acc:.4f}")
     print(f"Total samples: {len(y_train_true)}")
     
+    # CORRECTED: Add warning about overfitting
+    if train_acc > cv_results['val_mean'] + 0.05:
+        print(f"\n⚠️  NOTE: Training accuracy ({train_acc:.4f}) >> CV validation accuracy ({cv_results['val_mean']:.4f})")
+    
     # Calculate error map
     error_map_train = calculate_error_map(y_train_true, y_train_pred, region_list)
     
@@ -255,14 +282,14 @@ def main() -> int:
         'correct': y_train_true == y_train_pred
     })
     train_pred_df.to_csv(
-        output_dirs['processed'] / f'predictions_train.csv',
+        output_dirs['processed'] / 'predictions_train.csv',
         index=False
     )
     
     # Save error map
     save_results_csv(
         error_map_train,
-        output_dirs['tables'] / f'error_map_rest.csv'
+        output_dirs['tables'] / 'error_map_rest.csv'
     )
     
     # Save confusion matrix
@@ -290,7 +317,8 @@ def main() -> int:
         df_test = load_connectivity_data(piop1_file)
         
         # Verify schema match
-        if not all(col in df_test.columns for col in connection_columns):
+        test_connection_cols = extract_connection_columns(df_test)
+        if set(connection_columns) != set(test_connection_cols):
             raise ValueError("Column mismatch between PIOP-1 and PIOP-2!")
         
         # Predict on task data
@@ -312,14 +340,14 @@ def main() -> int:
             'correct': y_test_true == y_test_pred
         })
         test_pred_df.to_csv(
-            output_dirs['processed'] / f'predictions_task.csv',
+            output_dirs['processed'] / 'predictions_task.csv',
             index=False
         )
         
         # Save error map
         save_results_csv(
             error_map_test,
-            output_dirs['tables'] / f'error_map_task.csv'
+            output_dirs['tables'] / 'error_map_task.csv'
         )
         
         # Save confusion matrix
@@ -332,7 +360,7 @@ def main() -> int:
         comparison = compare_error_maps(error_map_train, error_map_test)
         save_results_csv(
             comparison,
-            output_dirs['tables'] / f'comparison_rest_vs_task.csv'
+            output_dirs['tables'] / 'comparison_rest_vs_task.csv'
         )
         
         results['test_accuracy'] = test_acc
@@ -359,7 +387,7 @@ def main() -> int:
     plot_error_map(
         error_map_train,
         title=f'Resting-State Error Map ({diagonal_strategy})',
-        output_path=str(figures_dir / f'error_map_rest.png')
+        output_path=str(figures_dir / 'error_map_rest.png')
     )
     figure_count += 1
     print(f"✓ Generated: error_map_rest.png")
@@ -369,7 +397,7 @@ def main() -> int:
         plot_error_map(
             error_map_test,
             title=f'Task Error Map ({diagonal_strategy})',
-            output_path=str(figures_dir / f'error_map_task.png')
+            output_path=str(figures_dir / 'error_map_task.png')
         )
         figure_count += 1
         print(f"✓ Generated: error_map_task.png")
@@ -377,7 +405,7 @@ def main() -> int:
         # Plot 3: Rest vs Task comparison
         plot_rest_vs_task_comparison(
             error_map_train, error_map_test, comparison,
-            output_path=str(figures_dir / f'comparison_rest_vs_task.png')
+            output_path=str(figures_dir / 'comparison_rest_vs_task.png')
         )
         figure_count += 1
         print(f"✓ Generated: comparison_rest_vs_task.png")
@@ -406,15 +434,16 @@ Model Configuration:
   Diagonal strategy: {diagonal_strategy}
   Regularization (C): {C}
   CV folds: {n_splits}
-  max_iter: {max_iter}
+  Max iterations: {max_iter}
+  Fisher Z transform: {'Enabled' if apply_fisher_z else 'Disabled'}
   
 
 Cross-Validation Results (LEAK-FREE):
-  Validation accuracy: {results['cv_val_mean']:.4f} ± {results['cv_val_std']:.4f}
-  Training accuracy: {results['cv_train_mean']:.4f} ± {results['cv_train_std']:.4f}
+  Validation accuracy: {results['cv_val_mean']:.4f} ± {results['cv_val_std']:.4f}  
+  Training accuracy: {results['cv_train_mean']:.4f} ± {results['cv_train_std']:.4f}  
   Improvement over chance: {improvement:.1f}x
 
-Final Training Accuracy: {results['train_accuracy']:.4f}
+Final Training Accuracy: {results['train_accuracy']:.4f}  
 """
     
     if task_available:
@@ -437,6 +466,12 @@ Execution Time: {format_time(elapsed)}
 Completed: {time.strftime('%Y-%m-%d %H:%M:%S')}
 
 {'='*70}
+
+✅ Pipeline completed successfully!
+
+IMPORTANT NOTES:
+• Training accuracy is higher due to overfitting - this is expected
+• Fisher Z transformation {'was' if apply_fisher_z else 'was NOT'} applied to correlation values
 """
     
     print(summary)
@@ -444,8 +479,6 @@ Completed: {time.strftime('%Y-%m-%d %H:%M:%S')}
     # Save summary
     with open(output_dirs['tables'] / f'summary_{diagonal_strategy}.txt', 'w') as f:
         f.write(summary)
-    
-    print("✅ Pipeline completed successfully!\n")
     
     return 0
 

@@ -9,21 +9,22 @@ Data:
 
 Model Configuration:
   Diagonal strategy: sample_from_matrix
-  Regularization (C): 0.01
+  Regularization (C): 0.003
   CV folds: 3
-  max_iter: 1000
+  Max iterations: 1000
+  Fisher Z transform: Enabled
   
 
 Cross-Validation Results (LEAK-FREE):
-  Validation accuracy: 0.8545 ± 0.0042
-  Training accuracy: 0.9182 ± 0.0021
-  Improvement over chance: 198.2x
+  Validation accuracy: 0.6951 ± 0.0069  ← TRUE GENERALIZATION
+  Training accuracy: 0.7537 ± 0.0031  (overfitted)
+  Improvement over chance: 161.3x
 
-Final Training Accuracy: 0.9195
+Final Training Accuracy: 0.7677  (expected to be higher due to overfitting)
 
 Task Data (Gender Stroop):
   Test subjects: 200
-  Test accuracy: 0.8340
+  Test accuracy: 0.6757
 
 ======================================================================
 
@@ -33,7 +34,14 @@ Output Locations:
   Figures: reports/figures/basic_analysis
   Predictions: data/processed
 
-Execution Time: 2.5m
-Completed: 2025-11-19 11:20:28
+Execution Time: 2.1m
+Completed: 2025-11-19 15:50:42
 
 ======================================================================
+
+✅ Pipeline completed successfully!
+
+IMPORTANT NOTES:
+• Use CV validation accuracy (0.6951) for true generalization performance
+• Training accuracy is higher due to overfitting - this is expected
+• Fisher Z transformation was applied to correlation values
