@@ -9,22 +9,22 @@ Data:
 
 Model Configuration:
   Diagonal strategy: sample_from_matrix
-  Regularization (C): 0.003
-  CV folds: 3
+  Regularization (C): 0.002
+  CV folds: 5
   Max iterations: 1000
   Fisher Z transform: Enabled
   
 
 Cross-Validation Results (LEAK-FREE):
-  Validation accuracy: 0.6951 ± 0.0069  
-  Training accuracy: 0.7537 ± 0.0031  
-  Improvement over chance: 161.3x
+  Validation accuracy: 0.6866 ± 0.0056  
+  Training accuracy: 0.7301 ± 0.0011  
+  Improvement over chance: 159.3x
 
-Final Training Accuracy: 0.7677  
+Final Training Accuracy: 0.7404  
 
 Task Data (Gender Stroop):
   Test subjects: 200
-  Test accuracy: 0.6757
+  Test accuracy: 0.6566
 
 ======================================================================
 
@@ -35,7 +35,7 @@ Output Locations:
   Predictions: data/processed
 
 Execution Time: 2.4m
-Completed: 2025-11-19 16:49:18
+Completed: 2025-11-20 14:36:03
 
 ======================================================================
 

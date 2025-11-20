@@ -1,9 +1,9 @@
 ,Accumbens,Amygdala,Caudate,Hippocampus,Pallidum,Putamen,Thal_ant,Thal_post
-Accumbens,642,14,16,14,12,17,14,18
-Amygdala,8,640,2,45,13,4,2,26
-Caudate,16,1,710,2,5,28,19,6
-Hippocampus,12,103,1,566,9,2,6,39
-Pallidum,57,29,20,20,319,32,43,90
-Putamen,21,6,18,5,30,633,14,37
-Thal_ant,26,2,11,7,20,3,628,49
-Thal_post,12,13,2,15,28,10,40,618
+Accumbens,639,13,17,16,8,21,12,18
+Amygdala,9,616,2,51,12,4,2,28
+Caudate,17,0,700,2,4,33,23,4
+Hippocampus,11,106,1,551,5,3,6,41
+Pallidum,57,28,20,20,277,39,50,90
+Putamen,19,7,20,4,21,637,17,37
+Thal_ant,25,3,12,6,18,4,621,53
+Thal_post,10,15,2,15,22,12,42,611

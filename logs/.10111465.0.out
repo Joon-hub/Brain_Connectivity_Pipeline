@@ -3,7 +3,7 @@ Starting Brain Connectivity Classification
 ===========================================
 Current directory: /home/sjoon/projects/brain_connectivity_classifier
 Running on host: cpu43
-Start time: Wed Nov 19 04:17:54 PM CET 2025
+Start time: Thu Nov 20 02:33:40 PM CET 2025
 ===========================================
 
 ======================================================================
@@ -12,12 +12,12 @@ Start time: Wed Nov 19 04:17:54 PM CET 2025
 
 Mode: FULL DATA
 Config: config.yaml
-Start: 2025-11-19 16:17:55
+Start: 2025-11-20 14:33:41
 
 Configuration:
   Diagonal strategy: sample_from_matrix
-  C (regularization): 0.003
-  CV folds: 3
+  C (regularization): 0.002
+  CV folds: 5
   Random seed: 42
   Fisher Z transform: Enabled
 
@@ -40,39 +40,69 @@ Configuration:
 
 
 ============================================================
-LEAK-FREE 3-FOLD CROSS-VALIDATION
+LEAK-FREE 5-FOLD CROSS-VALIDATION
 ============================================================
 Total subjects: 224
 Preprocessing: sample_from_matrix
 
-Fold 1/3:
-  Train subjects: 149
-  Val subjects: 75
-    Train acc: 0.7502
-    Val acc:   0.7036
+Fold 1/5:
+  Train subjects: 179
+  Val subjects: 45
+    Train acc: 0.7289
+    Val acc:   0.6883
 
-Fold 2/3:
-  Train subjects: 149
-  Val subjects: 75
-    Train acc: 0.7577
-    Val acc:   0.6866
+Fold 2/5:
+  Train subjects: 179
+  Val subjects: 45
+    Train acc: 0.7295
+    Val acc:   0.6937
 
-Fold 3/3:
-  Train subjects: 150
-  Val subjects: 74
-    Train acc: 0.7532
-    Val acc:   0.6951
+Fold 3/5:
+  Train subjects: 179
+  Val subjects: 45
+    Train acc: 0.7299
+    Val acc:   0.6845
+
+Fold 4/5:
+  Train subjects: 179
+  Val subjects: 45
+    Train acc: 0.7302
+    Val acc:   0.6897
+
+Fold 5/5:
+  Train subjects: 180
+  Val subjects: 44
+    Train acc: 0.7322
+    Val acc:   0.6770
 
 ============================================================
 CV RESULTS:
-  Train: 0.7537 ± 0.0031
-  Val:   0.6951 ± 0.0069
+  Train: 0.7301 ± 0.0011
+  Val:   0.6866 ± 0.0056
 ============================================================
+✅ Collected 51968 validation predictions
+   (Use these for unbiased rest vs task comparison)
 
 
 Training final model on all training data...
-Final training accuracy: 0.7677
+Final training accuracy: 0.7404
 Trained on 51968 samples
+
+======================================================================
+  STEP 2.5: Save CV Validation Predictions
+======================================================================
+
+CV validation accuracy (check): 0.6867
+Expected from CV results: 0.6866
+Match: True
+✓ Saved CV validation predictions: 51968 samples
+   File: data/processed/predictions_cv_validation.csv
+
+⚠️  IMPORTANT: Use these predictions (not training predictions)
+   as your resting-state baseline for rest vs task comparison!
+✓ Saved: reports/tables/basic_analysis/error_map_cv_validation.csv
+✓ Saved CV validation error map
+   File: reports/tables/basic_analysis/error_map_cv_validation.csv
 Region list saved to data/processed/region_list.csv
 ✓ Model saved to models
 
@@ -80,10 +110,10 @@ Region list saved to data/processed/region_list.csv
   STEP 3: Evaluate on Training Data
 ======================================================================
 
-Training accuracy: 0.7677
+Training accuracy: 0.7404
 Total samples: 51968
 
-⚠️  NOTE: Training accuracy (0.7677) >> CV validation accuracy (0.6951)
+⚠️  NOTE: Training accuracy (0.7404) >> CV validation accuracy (0.6866)
 ✓ Saved: reports/tables/basic_analysis/error_map_rest.csv
 ✓ Saved: reports/tables/confusion_matrix/rest_sample_from_matrix_raw.csv
 ✓ Saved: reports/tables/confusion_matrix/rest_sample_from_matrix_normalized.csv
@@ -94,14 +124,16 @@ Total samples: 51968
 ======================================================================
 
 ✓ Loaded 200 subjects from PIOP1_gstroop.csv
-Task prediction accuracy: 0.6757
+Task prediction accuracy: 0.6566
 Test subjects: 200
 Test samples: 46400
 ✓ Saved: reports/tables/basic_analysis/error_map_task.csv
 ✓ Saved: reports/tables/confusion_matrix/task_sample_from_matrix_raw.csv
 ✓ Saved: reports/tables/confusion_matrix/task_sample_from_matrix_normalized.csv
 ✓ Confusion matrices saved for task_sample_from_matrix set (raw & normalized)
-✓ Saved: reports/tables/basic_analysis/comparison_rest_vs_task.csv
+
+⚠️  Using CV validation (not training) as rest baseline
+✓ Saved: reports/tables/basic_analysis/comparison_cv_validation_vs_task.csv
 
 ======================================================================
   STEP 5: Generate Visualizations
@@ -111,8 +143,8 @@ Test samples: 46400
 ✓ Generated: error_map_rest.png
 ✓ Saved figure: reports/figures/basic_analysis/error_map_task.png
 ✓ Generated: error_map_task.png
-✓ Saved figure: reports/figures/basic_analysis/comparison_rest_vs_task.png
-✓ Generated: comparison_rest_vs_task.png
+✓ Saved figure: reports/figures/basic_analysis/comparison_cv_validation_vs_task.png
+✓ Generated: comparison_cv_validation_vs_task.png
 
 Total figures: 3
 
@@ -131,22 +163,22 @@ Data:
 
 Model Configuration:
   Diagonal strategy: sample_from_matrix
-  Regularization (C): 0.003
-  CV folds: 3
+  Regularization (C): 0.002
+  CV folds: 5
   Max iterations: 1000
   Fisher Z transform: Enabled
   
 
 Cross-Validation Results (LEAK-FREE):
-  Validation accuracy: 0.6951 ± 0.0069  
-  Training accuracy: 0.7537 ± 0.0031  
-  Improvement over chance: 161.3x
+  Validation accuracy: 0.6866 ± 0.0056  
+  Training accuracy: 0.7301 ± 0.0011  
+  Improvement over chance: 159.3x
 
-Final Training Accuracy: 0.7677  
+Final Training Accuracy: 0.7404  
 
 Task Data (Gender Stroop):
   Test subjects: 200
-  Test accuracy: 0.6757
+  Test accuracy: 0.6566
 
 ======================================================================
 
@@ -156,8 +188,8 @@ Output Locations:
   Figures: reports/figures/basic_analysis
   Predictions: data/processed
 
-Execution Time: 2.0m
-Completed: 2025-11-19 16:19:57
+Execution Time: 2.4m
+Completed: 2025-11-20 14:36:03
 
 ======================================================================
 
@@ -170,6 +202,6 @@ IMPORTANT NOTES:
 
 ===========================================
 Pipeline finished!
-End time: Wed Nov 19 04:19:58 PM CET 2025
+End time: Thu Nov 20 02:36:04 PM CET 2025
 Exit code: 0
 ===========================================
