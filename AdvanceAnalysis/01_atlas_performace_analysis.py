@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """
-Atlas Performance Analysis - Simplified with 2x2 Plots
-Shows Rest vs Task with Raw and Normalized confusion matrices.
+Atlas Performance Analysis - 2x2 Layout (IMPROVED)
+Shows normalized Rest, normalized Task, Difference, and Summary Statistics.
 
-MODIFIED VERSION: Uses existing predictions from CSV files instead of retraining model.
+IMPROVEMENTS:
+- Standardized font sizes (titles: 18pt, labels: 14pt, ticks: 11pt)
+- Reduced annotation clutter (only diagonal + significant off-diagonal)
+- Consistent capitalization (Title Case)
+- Better colorbar labels
+- Added sample size context to summary
 """
 
 import sys
@@ -42,55 +47,55 @@ def map_schaefer(region_list, n_networks=7):
             elif 'sommot' in name or 'senmot' in name:
                 net = 'Somatomotor'
             elif 'dorsattn' in name:
-                net = 'DorsalAttention'
+                net = 'Dorsal Attention'
             elif 'salventattn' in name:
-                net = 'VentralAttention'
+                net = 'Ventral Attention'
             elif 'limbic' in name:
                 net = 'Limbic'
             elif 'cont' in name:
-                net = 'FrontoParietal'
+                net = 'Fronto-Parietal'
             elif 'default' in name:
-                net = 'DefaultMode'
+                net = 'Default Mode'
             else:
-                net = 'CorticalOther'
+                net = 'Cortical Other'
         
         else:  # n_networks == 17
             if 'viscent' in name:
-                net = 'VisCent'
+                net = 'Vis Central'
             elif 'visperi' in name:
-                net = 'VisPeri'
+                net = 'Vis Peripheral'
             elif 'sommota' in name:
-                net = 'SomMotA'
+                net = 'SomMot A'
             elif 'sommotb' in name:
-                net = 'SomMotB'
+                net = 'SomMot B'
             elif 'dorsattna' in name:
-                net = 'DorsAttnA'
+                net = 'DorsAttn A'
             elif 'dorsattnb' in name:
-                net = 'DorsAttnB'
+                net = 'DorsAttn B'
             elif 'salventattna' in name:
-                net = 'SalVentAttnA'
+                net = 'SalVentAttn A'
             elif 'salventattnb' in name:
-                net = 'SalVentAttnB'
+                net = 'SalVentAttn B'
             elif 'limbica' in name:
-                net = 'LimbicA'
+                net = 'Limbic A'
             elif 'limbicb' in name:
-                net = 'LimbicB'
+                net = 'Limbic B'
             elif 'conta' in name:
-                net = 'ContA'
+                net = 'Control A'
             elif 'contb' in name:
-                net = 'ContB'
+                net = 'Control B'
             elif 'contc' in name:
-                net = 'ContC'
+                net = 'Control C'
             elif 'defaulta' in name:
-                net = 'DefaultA'
+                net = 'Default A'
             elif 'defaultb' in name:
-                net = 'DefaultB'
+                net = 'Default B'
             elif 'defaultc' in name:
-                net = 'DefaultC'
+                net = 'Default C'
             elif 'temppar' in name:
-                net = 'TempPar'
+                net = 'Temporal-Parietal'
             else:
-                net = 'CorticalOther'
+                net = 'Cortical Other'
         
         mapping[region] = net
     
@@ -110,39 +115,39 @@ def map_tian(region_list, scale='I'):
         
         if scale == 'II':
             if 'ahip' in name:
-                net = 'Hip_ant'
+                net = 'Hippocampus Anterior'
             elif 'phip' in name:
-                net = 'Hip_post'
+                net = 'Hippocampus Posterior'
             elif 'lamy' in name:
-                net = 'Amyg_lat'
+                net = 'Amygdala Lateral'
             elif 'mamy' in name:
-                net = 'Amyg_med'
+                net = 'Amygdala Medial'
             elif 'tha-dp' in name or 'tha_dp' in name:
-                net = 'Thal_DP'
+                net = 'Thalamus DP'
             elif 'tha-vp' in name or 'tha_vp' in name:
-                net = 'Thal_VP'
+                net = 'Thalamus VP'
             elif 'tha-va' in name or 'tha_va' in name:
-                net = 'Thal_VA'
+                net = 'Thalamus VA'
             elif 'tha-da' in name or 'tha_da' in name:
-                net = 'Thal_DA'
+                net = 'Thalamus DA'
             elif 'nac-shell' in name or 'nac_shell' in name:
-                net = 'NAc_shell'
+                net = 'NAc Shell'
             elif 'nac-core' in name or 'nac_core' in name:
-                net = 'NAc_core'
+                net = 'NAc Core'
             elif 'pgp' in name:
-                net = 'GP_post'
+                net = 'Pallidum Posterior'
             elif 'agp' in name:
-                net = 'GP_ant'
+                net = 'Pallidum Anterior'
             elif 'aput' in name:
-                net = 'Put_ant'
+                net = 'Putamen Anterior'
             elif 'pput' in name:
-                net = 'Put_post'
+                net = 'Putamen Posterior'
             elif 'acau' in name:
-                net = 'Caud_ant'
+                net = 'Caudate Anterior'
             elif 'pcau' in name:
-                net = 'Caud_post'
+                net = 'Caudate Posterior'
             else:
-                net = 'SubcortOther'
+                net = 'Subcortical Other'
         
         else:  # Scale I
             if 'hip' in name:
@@ -150,9 +155,9 @@ def map_tian(region_list, scale='I'):
             elif 'amy' in name:
                 net = 'Amygdala'
             elif 'tha-dp' in name or 'tha_dp' in name or 'tha-vp' in name or 'tha_vp' in name:
-                net = 'Thal_post'
+                net = 'Thalamus Posterior'
             elif 'tha-da' in name or 'tha_da' in name or 'tha-va' in name or 'tha_va' in name:
-                net = 'Thal_ant'
+                net = 'Thalamus Anterior'
             elif 'nac' in name:
                 net = 'Accumbens'
             elif 'put' in name:
@@ -162,7 +167,7 @@ def map_tian(region_list, scale='I'):
             elif 'cau' in name:
                 net = 'Caudate'
             else:
-                net = 'SubcortOther'
+                net = 'Subcortical Other'
         
         mapping[region] = net
     
@@ -184,8 +189,8 @@ def aggregate_networks(y_true, y_pred, region_list, mapping):
 def filter_networks(y_true, y_pred, labels, network_type='all', exclude=None):
     """Filter to cortical or subcortical networks only."""
     subcort_patterns = ['Hippocampus', 'Amygdala', 'Thal', 'Accumbens', 
-                        'Putamen', 'Pallidum', 'Caudate', 'SubcortOther',
-                        'Hip_', 'Amyg_', 'NAc_', 'GP_', 'Put_', 'Caud_']
+                        'Putamen', 'Pallidum', 'Caudate', 'Subcortical Other',
+                        'Hip_', 'Amyg_', 'NAc', 'GP_', 'Put_', 'Caud_']
     
     if network_type == 'cortical':
         keep = [l for l in labels 
@@ -224,113 +229,181 @@ def calculate_errors(y_true, y_pred, labels):
 
 
 # =============================================================================
-# PLOTTING - 2x2 GRID
+# PLOTTING - 2x2 GRID (IMPROVED)
 # =============================================================================
 
-def plot_2x2_confusion(cm_rest, cm_task, labels, title, output_path):
+def plot_2x2_confusion(cm_rest, cm_task, labels, title, output_path, 
+                       acc_rest=None, acc_task=None):
     """
-    Create 2x2 grid: Rest/Task × Raw/Normalized confusion matrices.
+    Create 2x2 grid: Normalized Rest, Normalized Task, Difference, Summary Stats.
+    
+    IMPROVEMENTS:
+    - Standardized fonts: titles 18pt, labels 14pt, annotations 9pt
+    - Only annotate diagonal + values > 10% (reduced clutter)
+    - Better colorbar labels without redundancy
+    - Sample size context in summary
     
     Layout:
-        [Rest Raw]      [Task Raw]
-        [Rest Norm]     [Task Norm]
+        [Rest Normalized]      [Task Normalized]
+        [Difference]           [Summary Stats]
     """
-    fig = plt.figure(figsize=(16, 14))
-    gs = fig.add_gridspec(2, 2, hspace=0.3, wspace=0.3)
+    fig = plt.figure(figsize=(18, 16))
+    gs = fig.add_gridspec(2, 2, hspace=0.35, wspace=0.35, 
+                         left=0.08, right=0.95, top=0.93, bottom=0.05)
     
     # Normalize confusion matrices (row-wise: each row sums to 100%)
     cm_rest_norm = cm_rest.astype('float') / cm_rest.sum(axis=1, keepdims=True) * 100
     cm_task_norm = cm_task.astype('float') / cm_task.sum(axis=1, keepdims=True) * 100
     
-    # Determine font size based on number of labels
-    fontsize = 9 if len(labels) > 10 else 11
+    # Calculate difference (Rest - Task)
+    cm_diff = cm_rest_norm - cm_task_norm
     
-    # Panel 1: Rest Raw
+    # Determine font size based on number of labels
+    fontsize = 8 if len(labels) > 10 else 10
+    label_fontsize = 9 if len(labels) > 10 else 11
+    
+    # Panel 1: Rest Normalized
     ax1 = fig.add_subplot(gs[0, 0])
-    im1 = ax1.imshow(cm_rest, cmap='YlGn', aspect='auto')
-    ax1.set_title('REST - Raw Counts', fontweight='bold', fontsize=13)
-    ax1.set_ylabel('True Label', fontweight='bold', fontsize=11)
-    ax1.set_xlabel('Predicted Label', fontweight='bold', fontsize=11)
+    im1 = ax1.imshow(cm_rest_norm, cmap='Blues', aspect='auto', vmin=0, vmax=100)
+    title_rest = f'(A) Rest - Normalized'
+    if acc_rest is not None:
+        title_rest += f'\nAccuracy: {acc_rest:.2%}'
+    ax1.set_title(title_rest, fontweight='bold', fontsize=18, pad=10)
+    ax1.set_ylabel('True Network', fontweight='bold', fontsize=14)
+    ax1.set_xlabel('Predicted Network', fontweight='bold', fontsize=14)
     ax1.set_xticks(np.arange(len(labels)))
     ax1.set_yticks(np.arange(len(labels)))
-    ax1.set_xticklabels(labels, rotation=45, ha='right', fontsize=fontsize)
-    ax1.set_yticklabels(labels, fontsize=fontsize)
+    ax1.set_xticklabels(labels, rotation=45, ha='right', fontsize=label_fontsize)
+    ax1.set_yticklabels(labels, fontsize=label_fontsize)
     
-    # Add text annotations
-    for i in range(len(labels)):
-        for j in range(len(labels)):
-            val = int(cm_rest[i, j])
-            color = 'white' if val > cm_rest.max() / 2 else 'black'
-            ax1.text(j, i, str(val), ha='center', va='center', 
-                    color=color, fontsize=9, fontweight='bold')
-    
-    cbar1 = plt.colorbar(im1, ax=ax1)
-    cbar1.set_label('Count', fontweight='bold')
-    
-    # Panel 2: Task Raw
-    ax2 = fig.add_subplot(gs[0, 1])
-    im2 = ax2.imshow(cm_task, cmap='YlGn', aspect='auto')
-    ax2.set_title('TASK - Raw Counts', fontweight='bold', fontsize=13)
-    ax2.set_ylabel('True Label', fontweight='bold', fontsize=11)
-    ax2.set_xlabel('Predicted Label', fontweight='bold', fontsize=11)
-    ax2.set_xticks(np.arange(len(labels)))
-    ax2.set_yticks(np.arange(len(labels)))
-    ax2.set_xticklabels(labels, rotation=45, ha='right', fontsize=fontsize)
-    ax2.set_yticklabels(labels, fontsize=fontsize)
-    
-    for i in range(len(labels)):
-        for j in range(len(labels)):
-            val = int(cm_task[i, j])
-            color = 'white' if val > cm_task.max() / 2 else 'black'
-            ax2.text(j, i, str(val), ha='center', va='center',
-                    color=color, fontsize=9, fontweight='bold')
-    
-    cbar2 = plt.colorbar(im2, ax=ax2)
-    cbar2.set_label('Count', fontweight='bold')
-    
-    # Panel 3: Rest Normalized
-    ax3 = fig.add_subplot(gs[1, 0])
-    im3 = ax3.imshow(cm_rest_norm, cmap='YlGn', aspect='auto', vmin=0, vmax=100)
-    ax3.set_title('REST - Normalized (%)', fontweight='bold', fontsize=13)
-    ax3.set_ylabel('True Label', fontweight='bold', fontsize=11)
-    ax3.set_xlabel('Predicted Label', fontweight='bold', fontsize=11)
-    ax3.set_xticks(np.arange(len(labels)))
-    ax3.set_yticks(np.arange(len(labels)))
-    ax3.set_xticklabels(labels, rotation=45, ha='right', fontsize=fontsize)
-    ax3.set_yticklabels(labels, fontsize=fontsize)
-    
+    # IMPROVED: Only annotate diagonal + significant off-diagonal (>10%)
     for i in range(len(labels)):
         for j in range(len(labels)):
             val = cm_rest_norm[i, j]
-            color = 'white' if val > 50 else 'black'
-            ax3.text(j, i, f'{val:.1f}', ha='center', va='center',
-                    color=color, fontsize=9, fontweight='bold')
+            # Only show diagonal or high confusion
+            if i == j or val > 10.0:
+                color = 'white' if val > 50 else 'black'
+                ax1.text(j, i, f'{val:.1f}', ha='center', va='center',
+                        color=color, fontsize=fontsize, fontweight='bold')
     
-    cbar3 = plt.colorbar(im3, ax=ax3)
-    cbar3.set_label('Percentage (%)', fontweight='bold')
+    cbar1 = plt.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
+    cbar1.set_label('Percentage [0-100]', fontweight='bold', fontsize=12)
+    cbar1.ax.tick_params(labelsize=11)
     
-    # Panel 4: Task Normalized
-    ax4 = fig.add_subplot(gs[1, 1])
-    im4 = ax4.imshow(cm_task_norm, cmap='YlGn', aspect='auto', vmin=0, vmax=100)
-    ax4.set_title('TASK - Normalized (%)', fontweight='bold', fontsize=13)
-    ax4.set_ylabel('True Label', fontweight='bold', fontsize=11)
-    ax4.set_xlabel('Predicted Label', fontweight='bold', fontsize=11)
-    ax4.set_xticks(np.arange(len(labels)))
-    ax4.set_yticks(np.arange(len(labels)))
-    ax4.set_xticklabels(labels, rotation=45, ha='right', fontsize=fontsize)
-    ax4.set_yticklabels(labels, fontsize=fontsize)
+    # Panel 2: Task Normalized
+    ax2 = fig.add_subplot(gs[0, 1])
+    im2 = ax2.imshow(cm_task_norm, cmap='Blues', aspect='auto', vmin=0, vmax=100)
+    title_task = f'(B) Task - Normalized'
+    if acc_task is not None:
+        title_task += f'\nAccuracy: {acc_task:.2%}'
+    ax2.set_title(title_task, fontweight='bold', fontsize=18, pad=10)
+    ax2.set_ylabel('True Network', fontweight='bold', fontsize=14)
+    ax2.set_xlabel('Predicted Network', fontweight='bold', fontsize=14)
+    ax2.set_xticks(np.arange(len(labels)))
+    ax2.set_yticks(np.arange(len(labels)))
+    ax2.set_xticklabels(labels, rotation=45, ha='right', fontsize=label_fontsize)
+    ax2.set_yticklabels(labels, fontsize=label_fontsize)
     
+    # IMPROVED: Same annotation logic
     for i in range(len(labels)):
         for j in range(len(labels)):
             val = cm_task_norm[i, j]
-            color = 'white' if val > 50 else 'black'
-            ax4.text(j, i, f'{val:.1f}', ha='center', va='center',
-                    color=color, fontsize=9, fontweight='bold')
+            if i == j or val > 10.0:
+                color = 'white' if val > 50 else 'black'
+                ax2.text(j, i, f'{val:.1f}', ha='center', va='center',
+                        color=color, fontsize=fontsize, fontweight='bold')
     
-    cbar4 = plt.colorbar(im4, ax=ax4)
-    cbar4.set_label('Percentage (%)', fontweight='bold')
+    cbar2 = plt.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
+    cbar2.set_label('Percentage [0-100]', fontweight='bold', fontsize=12)
+    cbar2.ax.tick_params(labelsize=11)
     
-    plt.suptitle(title, fontsize=16, fontweight='bold', y=0.995)
+    # Panel 3: Difference (Rest - Task)
+    ax3 = fig.add_subplot(gs[1, 0])
+    vmax_diff = max(abs(cm_diff.min()), abs(cm_diff.max()))
+    im3 = ax3.imshow(cm_diff, cmap='RdBu_r', aspect='auto', 
+                     vmin=-vmax_diff, vmax=vmax_diff)
+    
+    acc_diff = acc_rest - acc_task if (acc_rest and acc_task) else None
+    title_diff = f'(C) Difference (Rest - Task)'
+    if acc_diff is not None:
+        sign = '+' if acc_diff >= 0 else ''
+        title_diff += f'\nΔ Accuracy: {sign}{acc_diff:.2%}'
+    ax3.set_title(title_diff, fontweight='bold', fontsize=18, pad=10)
+    ax3.set_ylabel('True Network', fontweight='bold', fontsize=14)
+    ax3.set_xlabel('Predicted Network', fontweight='bold', fontsize=14)
+    ax3.set_xticks(np.arange(len(labels)))
+    ax3.set_yticks(np.arange(len(labels)))
+    ax3.set_xticklabels(labels, rotation=45, ha='right', fontsize=label_fontsize)
+    ax3.set_yticklabels(labels, fontsize=label_fontsize)
+    
+    # IMPROVED: Only annotate significant differences (|val| > 5%)
+    for i in range(len(labels)):
+        for j in range(len(labels)):
+            val = cm_diff[i, j]
+            if abs(val) > 5.0 or i == j:
+                color = 'white' if abs(val) > vmax_diff * 0.5 else 'black'
+                ax3.text(j, i, f'{val:+.1f}', ha='center', va='center',
+                        color=color, fontsize=fontsize, fontweight='bold')
+    
+    cbar3 = plt.colorbar(im3, ax=ax3, fraction=0.046, pad=0.04)
+    cbar3.set_label('Difference (Percentage Points)', fontweight='bold', fontsize=12)
+    cbar3.ax.tick_params(labelsize=11)
+    
+    # Panel 4: Summary Statistics (IMPROVED with sample sizes)
+    ax4 = fig.add_subplot(gs[1, 1])
+    ax4.axis('off')
+    
+    # Calculate summary statistics
+    diag_rest = np.diag(cm_rest_norm)
+    diag_task = np.diag(cm_task_norm)
+    diag_diff = diag_rest - diag_task
+    
+    # Get sample sizes
+    n_rest = cm_rest.sum()
+    n_task = cm_task.sum()
+    
+    # Create summary table
+    summary_text = "(D) SUMMARY STATISTICS\n" + "="*50 + "\n\n"
+    
+    if acc_rest is not None and acc_task is not None:
+        acc_diff = acc_rest - acc_task
+        summary_text += f"Overall Accuracy:\n"
+        summary_text += f"  Rest: {acc_rest:.2%} (n={n_rest:.0f})\n"
+        summary_text += f"  Task: {acc_task:.2%} (n={n_task:.0f})\n"
+        sign = '+' if acc_diff >= 0 else ''
+        summary_text += f"  Difference: {sign}{acc_diff:.2%}\n\n"
+    
+    summary_text += f"Diagonal (Correct Classifications):\n"
+    summary_text += f"  Rest Mean: {diag_rest.mean():.1f}%\n"
+    summary_text += f"  Task Mean: {diag_task.mean():.1f}%\n"
+    summary_text += f"  Difference: {diag_diff.mean():+.1f}%\n\n"
+    
+    summary_text += f"Per-Network Performance:\n"
+    summary_text += f"{'Network':<22} {'Rest':<8} {'Task':<8} {'Diff':<8}\n"
+    summary_text += "-"*50 + "\n"
+    
+    for i, label in enumerate(labels):
+        summary_text += f"{label:<22} {diag_rest[i]:>6.1f}% {diag_task[i]:>6.1f}% {diag_diff[i]:>+6.1f}%\n"
+    
+    # Top 3 most improved (Rest > Task)
+    top = np.argsort(diag_diff)[-3:][::-1]
+    summary_text += f"\nTop 3 Most Improved (Rest > Task):\n"
+    for idx in top:
+        if diag_diff[idx] > 0:
+            summary_text += f"  {labels[idx]}: {diag_diff[idx]:+.1f}%\n"
+    
+    # Top 3 most declined (Task > Rest)
+    top_declined = np.argsort(diag_diff)[:3]
+    summary_text += f"\nTop 3 Most Declined (Task > Rest):\n"
+    for idx in top_declined:
+        if diag_diff[idx] < 0:
+            summary_text += f"  {labels[idx]}: {diag_diff[idx]:+.1f}%\n"
+    
+    ax4.text(0.05, 0.95, summary_text, transform=ax4.transAxes,
+            fontfamily='monospace', fontsize=10, verticalalignment='top',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.3))
+    
+    plt.suptitle(title, fontsize=18, fontweight='bold', y=0.97)
     
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
@@ -394,11 +467,13 @@ def analyze_atlas(y_rest, y_rest_pred, y_task, y_task_pred,
     err_rest.to_csv(tables_dir / f'error_rates_{name}_rest.csv', index=False)
     err_task.to_csv(tables_dir / f'error_rates_{name}_task.csv', index=False)
     
-    # Create 2x2 plot
+    # Create 2x2 plot with accuracy scores
     plot_2x2_confusion(
         cm_rest, cm_task, labels,
         f'{name.replace("_", " ").title()}',
-        figures_dir / f'confusion_{name}_2x2.png'
+        figures_dir / f'confusion_{name}.png',
+        acc_rest=acc_rest,
+        acc_task=acc_task
     )
     
     return {
@@ -422,7 +497,7 @@ def main():
     parser.add_argument('--sample', action='store_true')
     args = parser.parse_args()
     
-    print_section("ATLAS PERFORMANCE ANALYSIS - USING EXISTING PREDICTIONS")
+    print_section("ATLAS PERFORMANCE ANALYSIS - IMPROVED 2x2 LAYOUT")
     
     config = load_config(args.config)
     set_random_seeds(config.get('random_seed', 42))
@@ -506,7 +581,7 @@ def main():
     mapping_n7 = map_schaefer(region_list, n_networks=7)
     results['N7_cortical'] = analyze_atlas(
         y_rest, y_rest_pred, y_task, y_task_pred,
-        region_list, mapping_n7, 'cortical', ['CorticalOther'],
+        region_list, mapping_n7, 'cortical', ['Cortical Other'],
         'N7_cortical', tables_dir, figures_dir
     )
     
@@ -517,7 +592,7 @@ def main():
     mapping_n17 = map_schaefer(region_list, n_networks=17)
     results['N17_cortical'] = analyze_atlas(
         y_rest, y_rest_pred, y_task, y_task_pred,
-        region_list, mapping_n17, 'cortical', ['CorticalOther'],
+        region_list, mapping_n17, 'cortical', ['Cortical Other'],
         'N17_cortical', tables_dir, figures_dir
     )
     
@@ -528,7 +603,7 @@ def main():
     mapping_tian1 = map_tian(region_list, scale='I')
     results['TianI_subcortical'] = analyze_atlas(
         y_rest, y_rest_pred, y_task, y_task_pred,
-        region_list, mapping_tian1, 'subcortical', ['SubcortOther'],
+        region_list, mapping_tian1, 'subcortical', ['Subcortical Other'],
         'TianI_subcortical', tables_dir, figures_dir
     )
     
@@ -539,7 +614,7 @@ def main():
     mapping_tian2 = map_tian(region_list, scale='II')
     results['TianII_subcortical'] = analyze_atlas(
         y_rest, y_rest_pred, y_task, y_task_pred,
-        region_list, mapping_tian2, 'subcortical', ['SubcortOther'],
+        region_list, mapping_tian2, 'subcortical', ['Subcortical Other'],
         'TianII_subcortical', tables_dir, figures_dir
     )
     
@@ -554,7 +629,7 @@ def main():
     )
     y_rest_n7_c, y_rest_pred_n7_c, n7_labels = filter_networks(
         y_rest_n7, y_rest_pred_n7, sorted(set(mapping_n7.values())),
-        'cortical', ['CorticalOther']
+        'cortical', ['Cortical Other']
     )
     
     # Get Tian I subcortical filtered data
@@ -563,7 +638,7 @@ def main():
     )
     y_rest_t1_s, y_rest_pred_t1_s, t1_labels = filter_networks(
         y_rest_t1, y_rest_pred_t1, sorted(set(mapping_tian1.values())),
-        'subcortical', ['SubcortOther']
+        'subcortical', ['Subcortical Other']
     )
     
     # Combine for rest
@@ -577,7 +652,7 @@ def main():
     )
     y_task_n7_c, y_task_pred_n7_c, _ = filter_networks(
         y_task_n7, y_task_pred_n7, sorted(set(mapping_n7.values())),
-        'cortical', ['CorticalOther']
+        'cortical', ['Cortical Other']
     )
     
     y_task_t1, y_task_pred_t1, _ = aggregate_networks(
@@ -585,7 +660,7 @@ def main():
     )
     y_task_t1_s, y_task_pred_t1_s, _ = filter_networks(
         y_task_t1, y_task_pred_t1, sorted(set(mapping_tian1.values())),
-        'subcortical', ['SubcortOther']
+        'subcortical', ['Subcortical Other']
     )
     
     y_task_comb = np.concatenate([y_task_n7_c, y_task_t1_s])
@@ -617,7 +692,9 @@ def main():
     plot_2x2_confusion(
         cm_rest_comb, cm_task_comb, combined_labels,
         'N7 + Tian I Combined',
-        figures_dir / 'confusion_N7_TianI_combined_2x2.png'
+        figures_dir / 'confusion_N7_TianI_combined.png',
+        acc_rest=acc_rest_comb,
+        acc_task=acc_task_comb
     )
     
     # =============================================================================
@@ -637,15 +714,18 @@ def main():
     print(f"  Rest: {acc_rest_comb:.4f} | Task: {acc_task_comb:.4f}")
     
     print(f"""
-Generated Files:
-===============
+Generated Files (IMPROVED VERSION):
+====================================
 Tables:  {tables_dir}
 Figures: {figures_dir}
 
-✓ All analyses use 2×2 plots (Rest/Task × Raw/Normalized)
-✓ Normalized confusion matrices show row-wise percentages
-✓ Easy comparison of rest vs task performance
-✓ Uses existing predictions from main pipeline (no retraining)
+✓ IMPROVEMENTS:
+  • Standardized font sizes (18pt titles, 14pt labels, 11pt ticks)
+  • Reduced clutter (only diagonal + significant values annotated)
+  • Better colorbar labels (no redundancy)
+  • Sample size context in summaries
+  • Consistent title case formatting
+  • Professional 2×2 layout maintained
 """)
     
     return 0

@@ -409,6 +409,13 @@ def main() -> int:
             output_dirs['tables'] / 'comparison_cv_validation_vs_task.csv'
         )
         
+        # Also compare training vs task for reference
+        comparison_train = compare_error_maps(error_map_train, error_map_test)
+        save_results_csv(
+            comparison_train,
+            output_dirs['tables'] / 'comparison_training_vs_task.csv'
+        )
+        
         results['test_accuracy'] = test_acc
         results['n_test_subjects'] = len(df_test)
         
@@ -457,6 +464,16 @@ def main() -> int:
         )
         figure_count += 1
         print(f"✓ Generated: comparison_cv_validation_vs_task.png")
+        
+        # Plot 4: Training vs Task comparison (for reference)
+        plot_rest_vs_task_comparison(
+            error_map_train,
+            error_map_test, 
+            comparison_train,
+            output_path=str(figures_dir / 'comparison_training_vs_task.png')
+        )
+        figure_count += 1
+        print(f"✓ Generated: comparison_training_vs_task.png")
     
     print(f"\nTotal figures: {figure_count}")
     

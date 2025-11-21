@@ -1,9 +1,9 @@
-,Accumbens,Amygdala,Caudate,Hippocampus,Pallidum,Putamen,Thal_ant,Thal_post
+,Accumbens,Amygdala,Caudate,Hippocampus,Pallidum,Putamen,Thalamus Anterior,Thalamus Posterior
 Accumbens,639,13,17,16,8,21,12,18
 Amygdala,9,616,2,51,12,4,2,28
 Caudate,17,0,700,2,4,33,23,4
 Hippocampus,11,106,1,551,5,3,6,41
 Pallidum,57,28,20,20,277,39,50,90
 Putamen,19,7,20,4,21,637,17,37
-Thal_ant,25,3,12,6,18,4,621,53
-Thal_post,10,15,2,15,22,12,42,611
+Thalamus Anterior,25,3,12,6,18,4,621,53
+Thalamus Posterior,10,15,2,15,22,12,42,611

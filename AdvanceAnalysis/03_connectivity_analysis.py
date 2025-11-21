@@ -7,7 +7,6 @@ Generates THREE separate analyses:
 2. Tian Scale I Subcortical
 3. Combined N7 + Tian I
 
-UPDATED: Uses existing functions from features.py instead of redefining them.
 """
 
 import sys

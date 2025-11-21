@@ -7,5 +7,6 @@ echo "=== Starting Visualization DAG ==="
 ./sh_files/02_atlas_comparison.sh
 ./sh_files/03_connectivity_analysis.sh
 ./sh_files/04_generate_summary_report.sh
+./sh_files/05_region_level_analysis.sh
 
 echo "=== DAG completed successfully ==="
