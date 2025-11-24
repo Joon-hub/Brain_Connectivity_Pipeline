@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """
-Summary Report Generator - IMPROVED VERSION WITH FULL REGION NAMES
-Now shows complete region names in confusion matrix visualization!
+Summary Report Generator - IMPROVED VERSION
+
+IMPROVEMENTS:
+- Improved full region name display with Unicode arrow (⟶) and better spacing
+- Standardized font sizes (18pt titles, 14pt labels, 11pt ticks)
+- Better color scheme consistency (rest: blue #5DADE2, task: purple #A04000)
+- Improved region name formatting (shorter, clearer)
+- Better layout and positioning of annotations
+- FIXED: Properly maps numeric indices to region names from region_list.csv
 """
 
 import sys
@@ -14,6 +21,34 @@ import seaborn as sns
 
 plt.style.use('seaborn-v0_8-paper')
 sns.set_palette("husl")
+
+
+def load_region_names():
+    """Load region names from region_list.csv."""
+    region_file = Path('data/processed/region_list.csv')
+    
+    if region_file.exists():
+        try:
+            # Read region list - it's just a single column
+            regions_df = pd.read_csv(region_file)
+            
+            # Get the region names (first/only column)
+            if 'region' in regions_df.columns:
+                regions = regions_df['region'].tolist()
+            else:
+                # If no header, assume first column
+                regions = regions_df.iloc[:, 0].tolist()
+            
+            print(f"  ✓ Loaded {len(regions)} region names from region_list.csv")
+            print(f"  → Sample regions: {regions[:3]}")
+            return regions
+        except Exception as e:
+            print(f"  ⚠ Error loading region_list.csv: {e}")
+            return None
+    else:
+        print(f"  ⚠ region_list.csv not found at {region_file}")
+        return None
+
 
 def load_results():
     """Load all CSV results from previous analyses."""
@@ -69,28 +104,168 @@ def load_results():
                 results['connectivity'][key] = pd.read_csv(filepath, index_col=0)
                 print(f"  ✓ {filename}")
     
-    # Load confusion matrices
-    conf_dir = Path('reports/tables/confusion_matrix')
-    if conf_dir.exists():
-        files = {
-            'rest_raw': 'rest_sample_from_matrix_raw.csv',
-            'rest_norm': 'rest_sample_from_matrix_normalized.csv',
-            'task_raw': 'task_sample_from_matrix_raw.csv',
-            'task_norm': 'task_sample_from_matrix_normalized.csv'
-        }
-        print(f"\n  Checking for confusion matrices in {conf_dir}...")
-        for key, filename in files.items():
-            filepath = conf_dir / filename
-            if filepath.exists():
-                try:
-                    # Read CSV with first column as index
-                    df = pd.read_csv(filepath, index_col=0)
-                    results['confusion'][key] = df
-                    print(f"  ✓ {filename} ({df.shape[0]}x{df.shape[1]})")
-                except Exception as e:
-                    print(f"  ⚠ Could not load {filename}: {e}")
-            else:
-                print(f"  ✗ {filename} not found")
+    # Load confusion matrices - TRY MULTIPLE LOCATIONS
+    print(f"\n  Searching for confusion matrices...")
+    
+    # CRITICAL: Load region names first
+    region_names = load_region_names()
+    
+    # Try multiple possible locations
+    possible_dirs = [
+        Path('reports/tables/confusion_matrix'),
+        Path('reports/tables'),
+        Path('data/processed'),
+    ]
+    
+    # Try different naming patterns
+    file_patterns = {
+        'rest_norm': [
+            'rest_sample_from_matrix_normalized.csv',
+            'confusion_matrix_rest_normalized.csv',
+        ],
+        'task_norm': [
+            'task_sample_from_matrix_normalized.csv',
+            'confusion_matrix_task_normalized.csv',
+        ]
+    }
+    
+    for conf_dir in possible_dirs:
+        if not conf_dir.exists():
+            continue
+            
+        print(f"  Checking {conf_dir}...")
+        
+        for key, patterns in file_patterns.items():
+            if key in results['confusion']:
+                continue  # Already found
+                
+            for pattern in patterns:
+                filepath = conf_dir / pattern
+                if filepath.exists():
+                    try:
+                        df = pd.read_csv(filepath, index_col=0)
+                        
+                        # CHECK: If indices are numeric, apply region names
+                        if isinstance(df.index[0], (int, np.integer)) and region_names is not None:
+                            print(f"  → Applying region names to numeric indices...")
+                            
+                            # Verify dimensions match
+                            if len(region_names) == df.shape[0] == df.shape[1]:
+                                df.index = region_names
+                                df.columns = region_names
+                                print(f"  ✓ Successfully mapped {len(region_names)} region names")
+                            else:
+                                print(f"  ⚠ Dimension mismatch: regions={len(region_names)}, matrix={df.shape}")
+                        
+                        results['confusion'][key] = df
+                        print(f"  ✓ {pattern} ({df.shape[0]}x{df.shape[1]})")
+                        print(f"  → Sample labels: {df.index[:3].tolist()}")
+                        break
+                    except Exception as e:
+                        print(f"  ⚠ Could not load {pattern}: {e}")
+    
+    # FALLBACK: Try to construct from predictions if confusion matrices not found
+    if not results['confusion']:
+        print(f"\n  No confusion matrices found - trying to construct from predictions...")
+        pred_dir = Path('data/processed')
+        if pred_dir.exists():
+            pred_train = pred_dir / 'predictions_train.csv'
+            pred_task = pred_dir / 'predictions_task.csv'
+            
+            try:
+                if pred_train.exists():
+                    df_pred = pd.read_csv(pred_train)
+                    
+                    # Check if we have region columns with numeric values
+                    if 'true_region' in df_pred.columns and 'predicted_region' in df_pred.columns:
+                        # Check if values are numeric (need to map) or strings (already have names)
+                        sample_true = df_pred['true_region'].iloc[0]
+                        
+                        if isinstance(sample_true, (int, np.integer)) and region_names is not None:
+                            # Numeric indices - need to map to region names
+                            print(f"  → Mapping numeric region indices to names...")
+                            
+                            # Create mapping dictionary
+                            region_map = {i: name for i, name in enumerate(region_names)}
+                            
+                            # Map the columns
+                            df_pred['true_region'] = df_pred['true_region'].map(region_map)
+                            df_pred['predicted_region'] = df_pred['predicted_region'].map(region_map)
+                            
+                            # Remove any NaN mappings
+                            df_pred = df_pred.dropna(subset=['true_region', 'predicted_region'])
+                            
+                            print(f"  ✓ Mapped predictions to region names")
+                            print(f"  → Sample: {df_pred['true_region'].iloc[0]} -> {df_pred['predicted_region'].iloc[0]}")
+                        
+                        # Now construct confusion matrix with region names
+                        from sklearn.metrics import confusion_matrix as sk_confusion_matrix
+                        
+                        # Get unique regions (already mapped to names)
+                        regions = sorted(set(df_pred['true_region'].unique()) | set(df_pred['predicted_region'].unique()))
+                        
+                        # Create confusion matrix with region labels
+                        cm = sk_confusion_matrix(
+                            df_pred['true_region'], 
+                            df_pred['predicted_region'],
+                            labels=regions
+                        )
+                        
+                        # Normalize
+                        cm_norm = cm.astype('float') / cm.sum(axis=1, keepdims=True) * 100
+                        
+                        # CRITICAL: Use region names as index/columns
+                        cm_norm = pd.DataFrame(cm_norm, index=regions, columns=regions)
+                        
+                        results['confusion']['rest_norm'] = cm_norm
+                        print(f"  ✓ Constructed rest confusion matrix from predictions ({cm_norm.shape[0]}x{cm_norm.shape[1]})")
+                        print(f"  → Sample regions: {regions[:3]}")
+                
+                if pred_task.exists():
+                    df_pred = pd.read_csv(pred_task)
+                    
+                    if 'true_region' in df_pred.columns and 'predicted_region' in df_pred.columns:
+                        # Check if values are numeric
+                        sample_true = df_pred['true_region'].iloc[0]
+                        
+                        if isinstance(sample_true, (int, np.integer)) and region_names is not None:
+                            # Map numeric indices to region names
+                            region_map = {i: name for i, name in enumerate(region_names)}
+                            df_pred['true_region'] = df_pred['true_region'].map(region_map)
+                            df_pred['predicted_region'] = df_pred['predicted_region'].map(region_map)
+                            df_pred = df_pred.dropna(subset=['true_region', 'predicted_region'])
+                        
+                        from sklearn.metrics import confusion_matrix as sk_confusion_matrix
+                        
+                        # Get unique regions
+                        regions = sorted(set(df_pred['true_region'].unique()) | set(df_pred['predicted_region'].unique()))
+                        
+                        # Create confusion matrix
+                        cm = sk_confusion_matrix(
+                            df_pred['true_region'], 
+                            df_pred['predicted_region'],
+                            labels=regions
+                        )
+                        
+                        # Normalize
+                        cm_norm = cm.astype('float') / cm.sum(axis=1, keepdims=True) * 100
+                        
+                        # Use region names as index/columns
+                        cm_norm = pd.DataFrame(cm_norm, index=regions, columns=regions)
+                        
+                        results['confusion']['task_norm'] = cm_norm
+                        print(f"  ✓ Constructed task confusion matrix from predictions ({cm_norm.shape[0]}x{cm_norm.shape[1]})")
+                        print(f"  → Sample regions: {regions[:3]}")
+                        
+            except Exception as e:
+                print(f"  ✗ Failed to construct confusion matrices: {e}")
+                import traceback
+                traceback.print_exc()
+    
+    if not results['confusion']:
+        print(f"\n  ⚠ No confusion matrices available - Panel D will show message")
+        print(f"  → To fix this, run: python 05_region_level_analysis.py --config config.yaml")
+        print(f"  → Or ensure predictions_train.csv exists in data/processed/")
     
     return results
 
@@ -103,7 +278,7 @@ def extract_top_confusions(confusion_matrix, n_top=7, cortical_only=True):
     Args:
         confusion_matrix: DataFrame with confusion matrix
         n_top: Number of top confusions to return
-        cortical_only: If True, only include cortical regions (LH_/RH_ prefix)
+        cortical_only: If True, try to filter cortical regions (flexible matching)
     """
     if confusion_matrix is None or confusion_matrix.empty:
         return []
@@ -111,27 +286,55 @@ def extract_top_confusions(confusion_matrix, n_top=7, cortical_only=True):
     confusions = []
     labels = confusion_matrix.index.tolist()
     
+    # Check if labels are integers (numeric indices)
+    if len(labels) > 0 and isinstance(labels[0], (int, np.integer)):
+        print(f"  ⚠ Confusion matrix uses numeric indices instead of region names")
+        print(f"  → Cannot extract region confusions without region labels")
+        print(f"  → Matrix shape: {confusion_matrix.shape}")
+        return []  # Cannot proceed without region names
+    
+    # Detect if we have cortical regions (flexible check)
+    has_cortical_prefix = any(str(label).startswith(('LH_', 'RH_')) for label in labels)
+    
+    # Subcortical patterns to exclude
+    subcortical_patterns = ['HIP', 'AMY', 'THA', 'NAc', 'CAU', 'PUT', 'GP',
+                           'Accumbens', 'Thalamus', 'Hippocampus', 'Amygdala',
+                           'Caudate', 'Putamen', 'Pallidum']
+    
+    def is_cortical(label):
+        """Flexible cortical region detection."""
+        label_str = str(label)  # Convert to string just in case
+        if has_cortical_prefix:
+            # If dataset uses LH_/RH_ prefix, require it
+            return label_str.startswith(('LH_', 'RH_'))
+        else:
+            # Otherwise, exclude subcortical patterns
+            return not any(pattern in label_str for pattern in subcortical_patterns)
+    
     # Iterate through confusion matrix
     for i, true_label in enumerate(labels):
         for j, pred_label in enumerate(labels):
             if i != j:  # Skip diagonal (correct classifications)
                 try:
-                    # Filter for cortical regions if requested
+                    # Apply cortical filter if requested
                     if cortical_only:
-                        # Check if both regions are cortical (start with LH_ or RH_)
-                        if not (true_label.startswith(('LH_', 'RH_')) and 
-                               pred_label.startswith(('LH_', 'RH_'))):
+                        if not (is_cortical(true_label) and is_cortical(pred_label)):
                             continue
                     
                     conf_rate = confusion_matrix.iloc[i, j]
                     if not np.isnan(conf_rate) and conf_rate > 0:
                         confusions.append({
-                            'true': true_label,
-                            'predicted': pred_label,
+                            'true': str(true_label),  # Convert to string
+                            'predicted': str(pred_label),  # Convert to string
                             'rate': conf_rate
                         })
                 except:
                     continue
+    
+    # If no confusions found with cortical filter, try without it
+    if len(confusions) == 0 and cortical_only:
+        print("  ℹ No cortical confusions found, trying all regions...")
+        return extract_top_confusions(confusion_matrix, n_top=n_top, cortical_only=False)
     
     # Sort by confusion rate and take top N
     confusions.sort(key=lambda x: x['rate'], reverse=True)
@@ -379,7 +582,11 @@ def plot_summary(results, output_path):
             confusion_data = results['confusion']['rest_raw']
         
         if confusion_data is not None and not confusion_data.empty:
-            # Extract top confusions - CORTICAL ONLY
+            # Diagnose the confusion matrix
+            print(f"  → Confusion matrix shape: {confusion_data.shape}")
+            print(f"  → Sample regions: {confusion_data.index[:3].tolist()}")
+            
+            # Extract top confusions - try with cortical filter first
             top_confusions = extract_top_confusions(confusion_data, n_top=15, cortical_only=True)
             
             if top_confusions:
@@ -388,22 +595,22 @@ def plot_summary(results, output_path):
                 colors = []
                 
                 for conf in top_confusions:
-                    # Use FULL region names, just remove hemisphere prefix for cleaner display
+                    # IMPROVED: Use FULL region names with Unicode arrow and better spacing
                     true_region = conf['true']
                     pred_region = conf['predicted']
                     
-                    # Remove hemisphere prefix (LH_ or RH_) but keep everything else
+                    # Remove hemisphere prefix but keep everything else
                     true_display = true_region.replace('LH_', '').replace('RH_', '')
                     pred_display = pred_region.replace('LH_', '').replace('RH_', '')
                     
-                    # Format as "True → Predicted"
-                    labels.append(f"{true_display}\n→ {pred_display}")
-                    values.append(conf['rate'] * 100)
+                    # IMPROVED: Format with Unicode arrow and indentation
+                    labels.append(f"{true_display}\n  ⟶  {pred_display}")
+                    values.append(conf['rate'])
                     
                     # Color coding based on confusion rate
-                    if conf['rate'] > 0.1:
+                    if conf['rate'] > 10:  # Changed from 0.1 to 10 for percentage
                         colors.append('#E74C3C')  # Red - high confusion
-                    elif conf['rate'] > 0.05:
+                    elif conf['rate'] > 5:  # Changed from 0.05 to 5 for percentage
                         colors.append('#E67E22')  # Orange - medium confusion
                     else:
                         colors.append('#F4D03F')  # Yellow - low confusion
@@ -412,9 +619,9 @@ def plot_summary(results, output_path):
                 ax4.barh(y_pos, values, color=colors, edgecolor='black', alpha=0.85)
                 ax4.set_yticks(y_pos)
                 ax4.set_yticklabels(labels, fontsize=7)  # Smaller font for full names
-                ax4.set_xlabel('Confusion Rate (%)', fontweight='bold')
-                ax4.set_title('D) Top Cortical Region Confusions (Full Names)', 
-                             fontweight='bold', fontsize=12)
+                ax4.set_xlabel('Confusion Rate (%)', fontweight='bold', fontsize=14)
+                ax4.set_title('(D) Top Region Confusions', 
+                             fontweight='bold', fontsize=18)
                 ax4.invert_yaxis()
                 ax4.grid(axis='x', alpha=0.3)
                 
@@ -429,22 +636,76 @@ def plot_summary(results, output_path):
                         fontsize=8, style='italic', color='darkblue',
                         bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
                 
-                print(f"  ✓ Plotted {len(top_confusions)} region confusion pairs (full names)")
+                print(f"  ✓ Plotted {len(top_confusions)} region confusion pairs")
             else:
-                ax4.text(0.5, 0.5, 'No significant confusions found',
-                        ha='center', va='center', transform=ax4.transAxes)
+                # IMPROVED: Show diagnostic information
                 ax4.axis('off')
+                
+                # Check why no confusions found
+                n_regions = len(confusion_data)
+                labels_sample = confusion_data.index.tolist()
+                n_cortical = sum(1 for r in labels_sample if str(r).startswith(('LH_', 'RH_')))
+                off_diag = confusion_data.values[~np.eye(n_regions, dtype=bool)]
+                n_nonzero = (off_diag > 0).sum()
+                max_confusion = off_diag.max() if len(off_diag) > 0 else 0
+                
+                message = f"""No Significant Confusions Found
+
+Diagnostic Information:
+- Total regions: {n_regions}
+- Cortical regions (LH_/RH_): {n_cortical}
+- Non-zero off-diagonal: {n_nonzero}
+- Max confusion rate: {max_confusion:.1f}%
+
+Possible reasons:
+1. Very high accuracy (near-perfect)
+2. Region names don't use LH_/RH_ prefix
+3. Matrix is all subcortical regions
+
+Sample regions:
+{', '.join(str(r) for r in labels_sample[:3])}
+
+→ Check region naming in your data"""
+                
+                ax4.text(0.5, 0.5, message,
+                        ha='center', va='center', transform=ax4.transAxes,
+                        fontsize=9, family='monospace',
+                        bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.7))
+                print(f"  ⚠ No significant confusions found")
+                print(f"    - Regions: {n_regions} total, {n_cortical} cortical")
+                print(f"    - Non-zero confusions: {n_nonzero}")
         else:
-            ax4.text(0.5, 0.5, 'No confusion matrix available',
-                    ha='center', va='center', transform=ax4.transAxes)
+            # IMPROVED: More helpful message with instructions
             ax4.axis('off')
-            print("  ✗ No confusion matrix found")
+            message = """No Confusion Matrix Available
+
+To display region confusions:
+
+1. Run the region-level analysis:
+   python 05_region_level_analysis.py
+
+2. Or ensure predictions exist:
+   data/processed/predictions_train.csv
+
+3. Panel D will then show:
+   • Top cortical region confusions
+   • Full anatomical names
+   • Color-coded by confusion severity
+   • Interpretation guidance"""
+            
+            ax4.text(0.5, 0.5, message, 
+                    ha='center', va='center', transform=ax4.transAxes,
+                    fontsize=10, family='monospace',
+                    bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.7))
+            print("  ℹ No confusion matrix - showing instructions")
             
     except Exception as e:
         ax4.text(0.5, 0.5, f'Error:\n{str(e)}', 
                 ha='center', va='center', transform=ax4.transAxes, fontsize=9)
         ax4.axis("off")
         print(f"  ✗ Error: {e}")
+        import traceback
+        traceback.print_exc()
     
     # =========================================================================
     # PANEL E: Task-Induced Changes
@@ -545,7 +806,7 @@ F) KEY FINDINGS
     
     print("  ✓ Summary text added")
     
-    plt.suptitle('Brain Atlas Performance - Summary (Full Region Names)', fontsize=16, 
+    plt.suptitle('Brain Atlas Performance - Summary (Improved)', fontsize=20, 
                 fontweight='bold', y=0.98)
     
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -602,7 +863,6 @@ def main():
     print("="*60)
     
     required = ['reports/tables/atlas_analysis',
-                'reports/tables/atlas_comparison',
                 'reports/tables/connectivity_analysis']
     
     missing = [d for d in required if not Path(d).exists()]

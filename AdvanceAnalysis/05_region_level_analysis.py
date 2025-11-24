@@ -1,819 +1,1164 @@
 #!/usr/bin/env python3
 """
-Summary Report Generator - IMPROVED VERSION
+232×232 Region Confusion Matrices - Research-Focused Design
+========================================================================
 
-IMPROVEMENTS:
-- Improved full region name display with Unicode arrow (⟶) and better spacing
-- Standardized font sizes (18pt titles, 14pt labels, 11pt ticks)
-- Better color scheme consistency (rest: blue #5DADE2, task: purple #A04000)
-- Improved region name formatting (shorter, clearer)
-- Better layout and positioning of annotations
+Key Features:
+1. Main confusion matrix with optimal size
+2. Meaningful accuracy visualization
+3. Readable summary statistics panel
+4. Informative network visualization
+5. Research-focused metrics
+6. Complete network coverage (all 232 regions, 24 networks)
+
 """
 
 import sys
+import argparse
 from pathlib import Path
 import numpy as np
 import pandas as pd
+from sklearn.metrics import accuracy_score, confusion_matrix
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
+from matplotlib.patches import Rectangle, FancyBboxPatch
 import seaborn as sns
+from matplotlib.gridspec import GridSpec
+from matplotlib.colors import to_rgb
+
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+
+from data import load_connectivity_data, extract_connection_columns
+from features import extract_regions
+from utils import load_config, set_random_seeds, print_section
 
 plt.style.use('seaborn-v0_8-paper')
-sns.set_palette("husl")
 
-def load_results():
-    """Load all CSV results from previous analyses."""
-    results = {'error_rates': {}, 'comparisons': {}, 'connectivity': {}, 'confusion': {}}
+
+# =============================================================================
+# NETWORK COLORS 
+# =============================================================================
+
+NETWORK_COLORS = {
+    'Visual_Central': '#8B0000',
+    'Visual_Peripheral': '#DC143C',
+    'Visual': '#FF6347',
+    'Somatomotor_A': '#4169E1',
+    'Somatomotor_B': '#1E90FF',
+    'Somatomotor': '#87CEEB',
+    'DorsalAttn_A': '#228B22',
+    'DorsalAttn_B': '#32CD32',
+    'DorsalAttn': '#90EE90',
+    'VentralAttn_A': '#9370DB',
+    'VentralAttn_B': '#BA55D3',
+    'VentralAttn': '#DDA0DD',
+    'Limbic_A': '#FFD700',
+    'Limbic_B': '#FFA500',
+    'Limbic': '#FF8C00',
+    'Control_A': '#00CED1',
+    'Control_B': '#20B2AA',
+    'Control_C': '#48D1CC',
+    'Control': '#40E0D0',
+    'DefaultMode_A': '#FF1493',
+    'DefaultMode_B': '#FF69B4',
+    'DefaultMode_C': '#FFB6C1',
+    'DefaultMode': '#FFC0CB',
+    'TemporalParietal': '#CD853F',
+    'Hippocampus': '#8B4513',
+    'Amygdala': '#A0522D',
+    'Thalamus': '#D2691E',
+    'Accumbens': '#B8860B',
+    'Putamen': '#DAA520',
+    'Pallidum': '#F0E68C',
+    'Caudate': '#BDB76B',
+    'Other': '#808080'
+}
+
+
+# =============================================================================
+# REGION SORTING & STRUCTURE
+# =============================================================================
+
+def sort_regions_by_hierarchy(region_list):
+    """
+    Sort regions by: Hemisphere → Network → Region name.
+    COMPLETE COVERAGE: All 232 regions properly assigned.
+    """
+    region_info = []
     
-    # Load atlas performance results
-    atlas_dir = Path('reports/tables/atlas_analysis')
-    if atlas_dir.exists():
-        files = {
-            'N7_rest': 'error_rates_N7_cortical_rest.csv',
-            'N7_task': 'error_rates_N7_cortical_task.csv',
-            'N17_rest': 'error_rates_N17_cortical_rest.csv',
-            'N17_task': 'error_rates_N17_cortical_task.csv',
-            'TianI_rest': 'error_rates_TianI_subcortical_rest.csv',
-            'TianI_task': 'error_rates_TianI_subcortical_task.csv',
-            'TianII_rest': 'error_rates_TianII_subcortical_rest.csv',
-            'TianII_task': 'error_rates_TianII_subcortical_task.csv',
-            'Combined_rest': 'error_rates_N7_TianI_combined_rest.csv',
-            'Combined_task': 'error_rates_N7_TianI_combined_task.csv'
-        }
-        for key, filename in files.items():
-            filepath = atlas_dir / filename
-            if filepath.exists():
-                results['error_rates'][key] = pd.read_csv(filepath)
-                print(f"  ✓ {filename}")
-    
-    # Load comparison results
-    comp_dir = Path('reports/tables/atlas_comparison')
-    if comp_dir.exists():
-        files = {
-            'resolution': 'resolution_comparison.csv',
-            'cortical_subcortical': 'cortical_vs_subcortical.csv',
-            'rest_task': 'rest_vs_task_comparison.csv'
-        }
-        for key, filename in files.items():
-            filepath = comp_dir / filename
-            if filepath.exists():
-                results['comparisons'][key] = pd.read_csv(filepath)
-                print(f"  ✓ {filename}")
-    
-    # Load connectivity results
-    conn_dir = Path('reports/tables/connectivity_analysis')
-    if conn_dir.exists():
-        files = {
-            'rest': 'n7_rest.csv',
-            'task': 'n7_task.csv',
-            'change': 'n7_change.csv',
-            'top_changes': 'n7_all_changes.csv'
-        }
-        for key, filename in files.items():
-            filepath = conn_dir / filename
-            if filepath.exists():
-                results['connectivity'][key] = pd.read_csv(filepath, index_col=0)
-                print(f"  ✓ {filename}")
-    
-    # Load confusion matrices - TRY MULTIPLE LOCATIONS
-    print(f"\n  Searching for confusion matrices...")
-    
-    # Try multiple possible locations
-    possible_dirs = [
-        Path('reports/tables/confusion_matrix'),
-        Path('reports/tables'),
-        Path('data/processed'),
-    ]
-    
-    # Try different naming patterns
-    file_patterns = {
-        'rest_norm': [
-            'rest_sample_from_matrix_normalized.csv',
-            'confusion_matrix_rest_normalized.csv',
-        ],
-        'task_norm': [
-            'task_sample_from_matrix_normalized.csv',
-            'confusion_matrix_task_normalized.csv',
-        ]
-    }
-    
-    for conf_dir in possible_dirs:
-        if not conf_dir.exists():
-            continue
-            
-        print(f"  Checking {conf_dir}...")
+    for idx, region in enumerate(region_list):
+        name = region.lower()
         
-        for key, patterns in file_patterns.items():
-            if key in results['confusion']:
-                continue  # Already found
-                
-            for pattern in patterns:
-                filepath = conf_dir / pattern
-                if filepath.exists():
-                    try:
-                        df = pd.read_csv(filepath, index_col=0)
-                        results['confusion'][key] = df
-                        print(f"  ✓ {pattern} ({df.shape[0]}x{df.shape[1]})")
-                        break
-                    except Exception as e:
-                        print(f"  ⚠ Could not load {pattern}: {e}")
-    
-    # FALLBACK: Try to construct from predictions if confusion matrices not found
-    if not results['confusion']:
-        print(f"\n  No confusion matrices found - trying to construct from predictions...")
-        pred_dir = Path('data/processed')
-        if pred_dir.exists():
-            pred_train = pred_dir / 'predictions_train.csv'
-            pred_task = pred_dir / 'predictions_task.csv'
-            
-            try:
-                if pred_train.exists():
-                    df_pred = pd.read_csv(pred_train)
-                    if 'true_region' in df_pred.columns and 'predicted_region' in df_pred.columns:
-                        # Construct confusion matrix
-                        from sklearn.metrics import confusion_matrix as sk_confusion_matrix
-                        
-                        regions = sorted(set(df_pred['true_region'].unique()) | set(df_pred['predicted_region'].unique()))
-                        cm = sk_confusion_matrix(
-                            df_pred['true_region'], 
-                            df_pred['predicted_region'],
-                            labels=regions
-                        )
-                        
-                        # Normalize
-                        cm_norm = cm.astype('float') / cm.sum(axis=1, keepdims=True) * 100
-                        cm_norm = pd.DataFrame(cm_norm, index=regions, columns=regions)
-                        
-                        results['confusion']['rest_norm'] = cm_norm
-                        print(f"  ✓ Constructed rest confusion matrix from predictions ({cm_norm.shape[0]}x{cm_norm.shape[1]})")
-                
-                if pred_task.exists():
-                    df_pred = pd.read_csv(pred_task)
-                    if 'true_region' in df_pred.columns and 'predicted_region' in df_pred.columns:
-                        from sklearn.metrics import confusion_matrix as sk_confusion_matrix
-                        
-                        regions = sorted(set(df_pred['true_region'].unique()) | set(df_pred['predicted_region'].unique()))
-                        cm = sk_confusion_matrix(
-                            df_pred['true_region'], 
-                            df_pred['predicted_region'],
-                            labels=regions
-                        )
-                        
-                        # Normalize
-                        cm_norm = cm.astype('float') / cm.sum(axis=1, keepdims=True) * 100
-                        cm_norm = pd.DataFrame(cm_norm, index=regions, columns=regions)
-                        
-                        results['confusion']['task_norm'] = cm_norm
-                        print(f"  ✓ Constructed task confusion matrix from predictions ({cm_norm.shape[0]}x{cm_norm.shape[1]})")
-                        
-            except Exception as e:
-                print(f"  ✗ Failed to construct confusion matrices: {e}")
-    
-    if not results['confusion']:
-        print(f"\n  ⚠ No confusion matrices available - Panel D will show message")
-        print(f"  → To fix this, run: python 05_region_level_analysis.py --config config.yaml")
-        print(f"  → Or ensure predictions_train.csv exists in data/processed/")
-    
-    return results
-
-
-def extract_top_confusions(confusion_matrix, n_top=7, cortical_only=True):
-    """
-    Extract top confusion pairs from normalized confusion matrix.
-    Returns pairs of (true_label, predicted_label, confusion_rate).
-    
-    Args:
-        confusion_matrix: DataFrame with confusion matrix
-        n_top: Number of top confusions to return
-        cortical_only: If True, try to filter cortical regions (flexible matching)
-    """
-    if confusion_matrix is None or confusion_matrix.empty:
-        return []
-    
-    confusions = []
-    labels = confusion_matrix.index.tolist()
-    
-    # Detect if we have cortical regions (flexible check)
-    has_cortical_prefix = any(label.startswith(('LH_', 'RH_')) for label in labels)
-    
-    # Subcortical patterns to exclude
-    subcortical_patterns = ['Hip', 'Amyg', 'Thal', 'NAc', 'Caud', 'Put', 'Pall', 
-                           'Accumbens', 'Thalamus', 'Hippocampus']
-    
-    def is_cortical(label):
-        """Flexible cortical region detection."""
-        if has_cortical_prefix:
-            # If dataset uses LH_/RH_ prefix, require it
-            return label.startswith(('LH_', 'RH_'))
+        # ==========================================
+        # HEMISPHERE DETECTION
+        # ==========================================
+        if region.startswith('LH_') or region.endswith('-lh'):
+            hemisphere = 'LH'
+            hem_order = 0
+        elif region.startswith('RH_') or region.endswith('-rh'):
+            hemisphere = 'RH'
+            hem_order = 1
         else:
-            # Otherwise, exclude subcortical patterns
-            return not any(pattern in label for pattern in subcortical_patterns)
+            hemisphere = 'Subcortical'
+            hem_order = 2
+        
+        # ==========================================
+        # NETWORK ASSIGNMENT - MOST SPECIFIC FIRST
+        # ==========================================
+        
+        # Visual Networks
+        if 'viscent' in name:
+            network = 'Visual_Central'
+            net_order = 0
+        elif 'visperi' in name:
+            network = 'Visual_Peripheral'
+            net_order = 1
+        
+        # Somatomotor Networks (check full string first)
+        elif 'sommota' in name:
+            network = 'Somatomotor_A'
+            net_order = 2
+        elif 'sommotb' in name:
+            network = 'Somatomotor_B'
+            net_order = 3
+        
+        # Dorsal Attention Networks
+        elif 'dorsattna' in name:
+            network = 'DorsalAttn_A'
+            net_order = 4
+        elif 'dorsattnb' in name:
+            network = 'DorsalAttn_B'
+            net_order = 5
+        
+        # Salience/Ventral Attention Networks
+        elif 'salventattna' in name:
+            network = 'VentralAttn_A'
+            net_order = 6
+        elif 'salventattnb' in name:
+            network = 'VentralAttn_B'
+            net_order = 7
+        
+        # Limbic Networks
+        elif 'limbica' in name:
+            network = 'Limbic_A'
+            net_order = 8
+        elif 'limbicb' in name:
+            network = 'Limbic_B'
+            net_order = 9
+        
+        # Control Networks
+        elif 'conta' in name and not 'contb' in name and not 'contc' in name:
+            network = 'Control_A'
+            net_order = 10
+        elif 'contb' in name:
+            network = 'Control_B'
+            net_order = 11
+        elif 'contc' in name:
+            network = 'Control_C'
+            net_order = 12
+        
+        # Default Mode Networks
+        elif 'defaulta' in name:
+            network = 'DefaultMode_A'
+            net_order = 13
+        elif 'defaultb' in name:
+            network = 'DefaultMode_B'
+            net_order = 14
+        elif 'defaultc' in name:
+            network = 'DefaultMode_C'
+            net_order = 15
+        
+        # Temporal Parietal
+        elif 'temppar' in name:
+            network = 'TemporalParietal'
+            net_order = 16
+        
+        # Subcortical Structures (specific matching)
+        elif 'ahip' in name or 'phip' in name:
+            network = 'Hippocampus'
+            net_order = 17
+        elif 'lamy' in name or 'mamy' in name:
+            network = 'Amygdala'
+            net_order = 18
+        elif 'tha-' in name:  # THA-DP, THA-VP, etc.
+            network = 'Thalamus'
+            net_order = 19
+        elif 'nac-' in name:  # NAc-shell, NAc-core
+            network = 'Accumbens'
+            net_order = 20
+        elif 'aput' in name or 'pput' in name:
+            network = 'Putamen'
+            net_order = 21
+        elif 'agp' in name or 'pgp' in name:
+            network = 'Pallidum'
+            net_order = 22
+        elif 'acau' in name or 'pcau' in name:
+            network = 'Caudate'
+            net_order = 23
+        
+        # Fallback - should not happen
+        else:
+            network = 'Unassigned'
+            net_order = 99
+            print(f"  Warning: Unassigned region '{region}'")
+        
+        region_info.append((hem_order, net_order, network, region, idx))
     
-    # Iterate through confusion matrix
-    for i, true_label in enumerate(labels):
-        for j, pred_label in enumerate(labels):
-            if i != j:  # Skip diagonal (correct classifications)
-                try:
-                    # Apply cortical filter if requested
-                    if cortical_only:
-                        if not (is_cortical(true_label) and is_cortical(pred_label)):
-                            continue
-                    
-                    conf_rate = confusion_matrix.iloc[i, j]
-                    if not np.isnan(conf_rate) and conf_rate > 0:
-                        confusions.append({
-                            'true': true_label,
-                            'predicted': pred_label,
-                            'rate': conf_rate
-                        })
-                except:
-                    continue
+    # Sort by hemisphere → network → region name
+    region_info.sort(key=lambda x: (x[0], x[1], x[3]))
     
-    # If no confusions found with cortical filter, try without it
-    if len(confusions) == 0 and cortical_only:
-        print("  ℹ No cortical confusions found, trying all regions...")
-        return extract_top_confusions(confusion_matrix, n_top=n_top, cortical_only=False)
+    sorted_indices = [x[4] for x in region_info]
+    sorted_regions = [x[3] for x in region_info]
+    sorted_networks = [x[2] for x in region_info]
     
-    # Sort by confusion rate and take top N
-    confusions.sort(key=lambda x: x['rate'], reverse=True)
-    return confusions[:n_top]
+    # Coverage verification
+    unassigned = sorted_networks.count('Unassigned')
+    if unassigned == 0:
+        print(f" All {len(region_list)} regions successfully assigned")
+    else:
+        print(f"  {unassigned} regions remain unassigned")
+    
+    return sorted_indices, sorted_regions, sorted_networks
 
 
-def create_summary_stats(results):
-    """Generate summary statistics table."""
-    stats = []
+def find_hemisphere_boundaries(sorted_regions):
+    """Find hemisphere boundaries."""
+    boundaries = []
+    current_hem = None
     
-    if 'error_rates' in results:
-        for key, df in results['error_rates'].items():
-            if 'error_rate' in df.columns:
-                stats.append({
-                    'Category': 'Performance',
-                    'Metric': f'{key}_accuracy',
-                    'Value': 1 - df['error_rate'].mean()
-                })
+    for i, region in enumerate(sorted_regions):
+        if region.startswith('LH_'):
+            hem = 'LH'
+        elif region.startswith('RH_'):
+            hem = 'RH'
+        else:
+            hem = 'Subcortical'
+        
+        if current_hem is not None and hem != current_hem:
+            boundaries.append(i)
+        current_hem = hem
     
-    return pd.DataFrame(stats)
+    return boundaries
 
 
-def create_key_findings(results):
-    """Generate key findings table."""
-    findings = []
+def find_network_boundaries_hierarchical(sorted_networks):
+    """Find network boundaries and metadata."""
+    boundaries = []
+    network_labels = []
+    current_network = sorted_networks[0]
+    start_idx = 0
     
-    findings.append({
-        'Finding': 'High classification accuracy achieved',
-        'Evidence': 'Mean accuracy > 90%',
-        'Implication': 'Connectivity patterns are highly distinctive'
+    for i, network in enumerate(sorted_networks):
+        if network != current_network:
+            boundaries.append(i)
+            network_labels.append({
+                'name': current_network,
+                'start': start_idx,
+                'end': i - 1,
+                'center': (start_idx + i - 1) / 2,
+                'size': i - start_idx
+            })
+            current_network = network
+            start_idx = i
+    
+    network_labels.append({
+        'name': current_network,
+        'start': start_idx,
+        'end': len(sorted_networks) - 1,
+        'center': (start_idx + len(sorted_networks) - 1) / 2,
+        'size': len(sorted_networks) - start_idx
     })
     
-    return pd.DataFrame(findings)
+    return boundaries, network_labels
 
 
-def plot_summary(results, output_path):
+# =============================================================================
+# CONFUSION MATRIX - FLEXIBLE DESIGN
+# =============================================================================
+
+def plot_confusion_matrix(y_true, y_pred, region_list, dataset_name, 
+                                       output_path, show_annotations=True):
     """
-    Create comprehensive 6-panel summary figure
+    Confusion matrix with flexible, readable layout.
     
-    Panel D NOW SHOWS FULL REGION NAMES for better interpretability!
+    Design priorities:
+    1. Main confusion matrix is clearly visible
+    2. Summary statistics are actually readable
+    3. Network information is informative
+    4. Layout adapts to content needs
+    
+    NOTE: Uses ORIGINAL region order (no sorting)
     """
+    n_regions = len(region_list)
     
-    print("\n" + "="*60)
-    print("GENERATING IMPROVED SUMMARY PLOT")
-    print("="*60)
+    # DON'T sort - use original order
+    sorted_indices = list(range(n_regions))  # [0, 1, 2, ..., 231]
+    sorted_regions = region_list.copy()
     
-    # Create figure with GridSpec
-    fig = plt.figure(figsize=(18, 12))
-    gs = gridspec.GridSpec(2, 3, figure=fig, hspace=0.3, wspace=0.3)
-    
-    # =========================================================================
-    # PANEL A: Cortical vs Subcortical
-    # =========================================================================
-    ax1 = fig.add_subplot(gs[0, 0])
-    print("\nPanel A: Cortical vs Subcortical")
-    
-    try:
-        cortical_data = []
-        subcortical_data = []
+    # Assign networks for coloring only (don't reorder)
+    sorted_networks = []
+    for region in sorted_regions:
+        name = region.lower()
         
-        for atlas, condition in [('N7', 'rest'), ('N7', 'task'), 
-                                ('N17', 'rest'), ('N17', 'task')]:
-            key = f'{atlas}_{condition}'
-            if key in results['error_rates']:
-                cortical_data.append({
-                    'system': f'Cortical ({atlas})',
-                    'condition': condition.capitalize(),
-                    'accuracy': 1 - results['error_rates'][key]['error_rate'].mean()
-                })
+        # Network assignment (same logic, just for colors)
+        if 'viscent' in name:
+            network = 'Visual_Central'
+        elif 'visperi' in name:
+            network = 'Visual_Peripheral'
+        elif 'sommota' in name:
+            network = 'Somatomotor_A'
+        elif 'sommotb' in name:
+            network = 'Somatomotor_B'
+        elif 'dorsattna' in name:
+            network = 'DorsalAttn_A'
+        elif 'dorsattnb' in name:
+            network = 'DorsalAttn_B'
+        elif 'salventattna' in name:
+            network = 'VentralAttn_A'
+        elif 'salventattnb' in name:
+            network = 'VentralAttn_B'
+        elif 'limbica' in name:
+            network = 'Limbic_A'
+        elif 'limbicb' in name:
+            network = 'Limbic_B'
+        elif 'conta' in name and not 'contb' in name and not 'contc' in name:
+            network = 'Control_A'
+        elif 'contb' in name:
+            network = 'Control_B'
+        elif 'contc' in name:
+            network = 'Control_C'
+        elif 'defaulta' in name:
+            network = 'DefaultMode_A'
+        elif 'defaultb' in name:
+            network = 'DefaultMode_B'
+        elif 'defaultc' in name:
+            network = 'DefaultMode_C'
+        elif 'temppar' in name:
+            network = 'TemporalParietal'
+        elif 'ahip' in name or 'phip' in name:
+            network = 'Hippocampus'
+        elif 'lamy' in name or 'mamy' in name:
+            network = 'Amygdala'
+        elif 'tha-' in name:
+            network = 'Thalamus'
+        elif 'nac-' in name:
+            network = 'Accumbens'
+        elif 'aput' in name or 'pput' in name:
+            network = 'Putamen'
+        elif 'agp' in name or 'pgp' in name:
+            network = 'Pallidum'
+        elif 'acau' in name or 'pcau' in name:
+            network = 'Caudate'
+        else:
+            network = 'Unassigned'
         
-        for atlas, condition in [('TianI', 'rest'), ('TianI', 'task'),
-                                ('TianII', 'rest'), ('TianII', 'task')]:
-            key = f'{atlas}_{condition}'
-            if key in results['error_rates']:
-                subcortical_data.append({
-                    'system': f'Subcortical ({atlas})',
-                    'condition': condition.capitalize(),
-                    'accuracy': 1 - results['error_rates'][key]['error_rate'].mean()
-                })
+        sorted_networks.append(network)
+    
+    # NO reordering of predictions - use as-is
+    y_true_sorted = y_true
+    y_pred_sorted = y_pred
+    
+    # Create confusion matrix
+    labels = np.arange(n_regions)
+    cm = confusion_matrix(y_true_sorted, y_pred_sorted, labels=labels)
+    
+    # Normalize
+    with np.errstate(divide='ignore', invalid='ignore'):
+        cm_norm = cm.astype('float') / cm.sum(axis=1, keepdims=True) * 100
+        cm_norm = np.nan_to_num(cm_norm)
+    
+    # Calculate comprehensive metrics
+    region_accuracy = np.diag(cm_norm) / 100.0
+    overall_accuracy = accuracy_score(y_true_sorted, y_pred_sorted)
+    
+    # Structure
+    hem_boundaries = find_hemisphere_boundaries(sorted_regions)
+    net_boundaries, network_labels = find_network_boundaries_hierarchical(sorted_networks)
+    
+    # FIXED: Count actual regions per network (not just from boundaries)
+    # Since we're using original order, count how many times each network appears
+    network_region_counts = {}
+    for network in sorted_networks:
+        network_region_counts[network] = network_region_counts.get(network, 0) + 1
+    
+    # Colors
+    network_colors_hex = [NETWORK_COLORS.get(net, '#808080') for net in sorted_networks]
+    network_colors_rgb = [to_rgb(color) for color in network_colors_hex]
+    
+    # =========================
+    # CREATE FIGURE - FLEXIBLE LAYOUT
+    # =========================s
+    fig = plt.figure(figsize=(38, 20))
+    
+    # Flexible GridSpec - NO TOP NETWORK BAR
+    # Columns: [AccBar(1.2), NetBar(0.4), MainPlot(18), ColorBar(0.5), Summary(6), Legend(4)]
+    # Rows: [MainArea(16.5), Bottom(1)]  - Only 2 rows now (no top bar)
+    gs = GridSpec(2, 6, figure=fig,
+                  width_ratios=[1.2, 0.4, 18.0, 0.5, 6.0, 4.0],
+                  height_ratios=[16.5, 1.0],
+                  hspace=0.10, wspace=0.20,
+                  left=0.03, right=0.99, top=0.96, bottom=0.03)
+    
+    # Define axes - NO TOP BAR
+    ax_acc = fig.add_subplot(gs[0, 0])
+    ax_left_net = fig.add_subplot(gs[0, 1])
+    ax_main = fig.add_subplot(gs[0, 2])
+    ax_cbar = fig.add_subplot(gs[0, 3])
+    ax_stats = fig.add_subplot(gs[0, 4])
+    ax_legend = fig.add_subplot(gs[:, 5])  # Span both rows
+    
+    # ==================
+    # ACCURACY BAR (LEFT)
+    # ==================
+    ax_acc.barh(range(n_regions), region_accuracy, height=1.0,
+                color=plt.cm.RdYlGn(region_accuracy), edgecolor='none', alpha=0.88)
+    ax_acc.set_ylim([-0.5, n_regions-0.5])
+    ax_acc.invert_yaxis()
+    ax_acc.set_xlim([0, 1])
+    ax_acc.set_xlabel('Accuracy', fontsize=18, fontweight='bold')  # Increased from 14
+    ax_acc.set_yticks([])
+    ax_acc.grid(axis='x', alpha=0.35, linewidth=0.9)
+    ax_acc.tick_params(axis='x', labelsize=14)  # Increased from 11
+    
+    # Add overall accuracy reference line
+    ax_acc.axvline(x=overall_accuracy, color='#0066CC', linestyle='--',
+                   linewidth=3.0, alpha=0.85, label=f'Overall\n{overall_accuracy:.3f}')
+    ax_acc.legend(loc='upper right', fontsize=13, framealpha=0.95,  # Increased from 10
+                  edgecolor='#0066CC', fancybox=True)
+    
+    # Hemisphere boundaries
+    for boundary in hem_boundaries:
+        ax_acc.axhline(y=boundary-0.5, color='black', linewidth=3.0, alpha=0.75)
+    
+    # Highlight extremes
+    max_idx = np.argmax(region_accuracy)
+    min_idx = np.argmin(region_accuracy)
+    ax_acc.plot(region_accuracy[max_idx], max_idx, 'g*', markersize=16, 
+                markeredgecolor='darkgreen', markeredgewidth=2.0, zorder=5)
+    ax_acc.plot(region_accuracy[min_idx], min_idx, 'r*', markersize=16,
+                markeredgecolor='darkred', markeredgewidth=2.0, zorder=5)
+    
+    # ====================
+    # LEFT NETWORK BAR (Only bar now - no top bar)
+    # ====================
+    color_array_left = np.array([[c] for c in network_colors_rgb])
+    ax_left_net.imshow(color_array_left, aspect='auto', interpolation='nearest')
+    ax_left_net.set_ylim([-0.5, n_regions-0.5])
+    ax_left_net.invert_yaxis()
+    ax_left_net.set_xticks([])
+    ax_left_net.set_yticks([])
+    ax_left_net.set_xlabel('Network', fontsize=14, fontweight='bold')  # Increased from 11
+    
+    for boundary in hem_boundaries:
+        ax_left_net.axhline(y=boundary-0.5, color='white', linewidth=4.0, alpha=0.98)
+    
+    # ===================
+    # MAIN CONFUSION MATRIX
+    # ===================
+    im = ax_main.imshow(cm_norm, cmap='YlOrRd', aspect='auto', vmin=0, vmax=100,
+                        interpolation='nearest')
+    
+    # Perfect diagonal line
+    ax_main.plot([0, n_regions-1], [0, n_regions-1], color='#0066CC', 
+                 linewidth=3.0, alpha=0.7, linestyle='-', label='Perfect Classification')
+    
+    # Boundaries
+    if show_annotations:
+        # Only show HEMISPHERE boundaries (white, thick)
+        for boundary in hem_boundaries:
+            ax_main.axhline(y=boundary-0.5, color='white', linewidth=4.0, alpha=0.98)
+            ax_main.axvline(x=boundary-0.5, color='white', linewidth=4.0, alpha=0.98)
         
-        all_data = cortical_data + subcortical_data
-        
-        if len(all_data) > 0:
-            df_plot = pd.DataFrame(all_data)
-            systems = df_plot['system'].unique()
-            x = np.arange(len(systems))
-            width = 0.35
-            
-            rest_values = []
-            task_values = []
-            
-            for sys in systems:
-                sys_data = df_plot[df_plot['system'] == sys]
-                rest_val = sys_data[sys_data['condition'] == 'Rest']['accuracy'].values
-                task_val = sys_data[sys_data['condition'] == 'Task']['accuracy'].values
-                
-                rest_values.append(rest_val[0] if len(rest_val) > 0 else 0)
-                task_values.append(task_val[0] if len(task_val) > 0 else 0)
-            
-            bars1 = ax1.bar(x - width/2, rest_values, width, label='Rest',
-                           color='#5DADE2', edgecolor='black', alpha=0.85)
-            bars2 = ax1.bar(x + width/2, task_values, width, label='Task',
-                           color='#A04000', edgecolor='black', alpha=0.85)
-            
-            ax1.set_ylabel('Accuracy', fontweight='bold')
-            ax1.set_title('A) Cortical vs Subcortical Systems', fontweight='bold', fontsize=12)
-            ax1.set_xticks(x)
-            ax1.set_xticklabels([s.replace(' ', '\n') for s in systems], 
-                               fontsize=8, fontweight='bold')
-            ax1.legend(fontsize=9)
-            ax1.set_ylim([0, 1])
-            ax1.grid(axis='y', alpha=0.3)
-            
-            for bars in [bars1, bars2]:
-                for bar in bars:
-                    height = bar.get_height()
-                    if height > 0:
-                        ax1.text(bar.get_x() + bar.get_width()/2., height,
-                                f'{height:.3f}', ha='center', va='bottom',
-                                fontsize=7, fontweight='bold')
-            
-            print(f"  ✓ Plotted {len(systems)} systems")
-        else:
-            ax1.text(0.5, 0.5, 'No data', ha='center', va='center', transform=ax1.transAxes)
-            ax1.axis('off')
-            
-    except Exception as e:
-        ax1.text(0.5, 0.5, f'Error:\n{str(e)}', ha='center', va='center',
-               transform=ax1.transAxes, fontsize=9)
-        ax1.axis('off')
-        print(f"  ✗ Error: {e}")
+        # Network boundaries - much more subtle (optional)
+        # Comment out if you want completely clean look
+        for boundary in net_boundaries:
+            if boundary not in hem_boundaries:
+                ax_main.axhline(y=boundary-0.5, color='black', linewidth=0.3, alpha=0.15)
+                ax_main.axvline(x=boundary-0.5, color='black', linewidth=0.3, alpha=0.15)
     
-    # =========================================================================
-    # PANEL B: Rest vs Task Scatter
-    # =========================================================================
-    ax2 = fig.add_subplot(gs[0, 1])
-    print("\nPanel B: Rest vs Task Scatter")
+    # Ticks
+    tick_spacing = 20
+    tick_pos = np.arange(0, n_regions, tick_spacing)
+    ax_main.set_xticks(tick_pos)
+    ax_main.set_yticks(tick_pos)
+    tick_labels = [sorted_regions[i][:35] for i in tick_pos]
+    ax_main.set_xticklabels(tick_labels, rotation=90, ha='right', fontsize=11)  # Increased from 9
+    ax_main.set_yticklabels(tick_labels, fontsize=11)  # Increased from 9
     
-    try:
-        if 'error_rates' in results:
-            if 'N7_rest' in results['error_rates'] and 'N7_task' in results['error_rates']:
-                rest_data = results['error_rates']['N7_rest']
-                task_data = results['error_rates']['N7_task']
-                
-                if 'region' in rest_data.columns and 'region' in task_data.columns:
-                    merged = pd.merge(rest_data[['region', 'error_rate']],
-                                    task_data[['region', 'error_rate']],
-                                    on='region', suffixes=('_rest', '_task'))
-                    key_col = 'region'
-                elif 'network' in rest_data.columns and 'network' in task_data.columns:
-                    merged = pd.merge(rest_data[['network', 'error_rate']],
-                                    task_data[['network', 'error_rate']],
-                                    on='network', suffixes=('_rest', '_task'))
-                    key_col = 'network'
-                else:
-                    raise ValueError("No common key column")
-                
-                ax2.scatter(merged['error_rate_rest'], merged['error_rate_task'],
-                           alpha=0.6, s=50, edgecolors='black', linewidth=0.5)
-                
-                max_val = max(merged['error_rate_rest'].max(), merged['error_rate_task'].max())
-                ax2.plot([0, max_val], [0, max_val], 'r--', linewidth=2, label='Identity')
-                
-                ax2.set_xlabel('Rest Error Rate', fontweight='bold')
-                ax2.set_ylabel('Task Error Rate', fontweight='bold')
-                ax2.set_title('B) Rest vs Task Comparison', fontweight='bold', fontsize=12)
-                ax2.legend()
-                ax2.grid(alpha=0.3)
-                ax2.set_xlim([0, max_val * 1.1])
-                ax2.set_ylim([0, max_val * 1.1])
-                
-                print(f"  ✓ Plotted {len(merged)} {key_col}s")
-            else:
-                ax2.text(0.5, 0.5, 'Missing N7 data', ha='center', va='center', transform=ax2.transAxes)
-                ax2.axis('off')
-        else:
-            ax2.text(0.5, 0.5, 'No data', ha='center', va='center', transform=ax2.transAxes)
-            ax2.axis('off')
-    except Exception as e:
-        ax2.text(0.5, 0.5, f'Error:\n{str(e)}', ha='center', va='center',
-               transform=ax2.transAxes, fontsize=9)
-        ax2.axis('off')
-        print(f"  ✗ Error: {e}")
+    # Labels
+    ax_main.set_xlabel('Predicted Region', fontweight='bold', fontsize=20)  # Increased from 16
+    ax_main.set_ylabel('True Region', fontweight='bold', fontsize=20)  # Increased from 16
     
-    # =========================================================================
-    # PANEL C: Network Performance
-    # =========================================================================
-    ax3 = fig.add_subplot(gs[0, 2])
-    print("\nPanel C: Network Performance")
+    # Title
+    title = f'{dataset_name} Region Classification Performance\n'
+    title += f'Overall Accuracy: {overall_accuracy:.4f} ({overall_accuracy*100:.2f}%) | '
+    title += f'{n_regions} Regions | {len(y_true):,} Samples'
+    ax_main.set_title(title, fontweight='bold', fontsize=22, pad=30)  # Increased from 18, reduced pad
     
-    try:
-        if 'error_rates' in results and 'N7_rest' in results['error_rates']:
-            network_data = results['error_rates']['N7_rest']
-            
-            if 'network' in network_data.columns:
-                network_perf = network_data.groupby('network')['error_rate'].mean().reset_index()
-                network_perf = network_perf.sort_values('error_rate')
-                network_perf['accuracy'] = 1 - network_perf['error_rate']
-                
-                colors_map = []
-                for acc in network_perf['accuracy']:
-                    if acc > 0.95:
-                        colors_map.append('#2ECC71')
-                    elif acc > 0.90:
-                        colors_map.append('#F4D03F')
-                    elif acc > 0.85:
-                        colors_map.append('#E67E22')
-                    else:
-                        colors_map.append('#E74C3C')
-                
-                ax3.barh(range(len(network_perf)), network_perf['accuracy'],
-                        color=colors_map, edgecolor='black', alpha=0.85)
-                ax3.set_yticks(range(len(network_perf)))
-                ax3.set_yticklabels(network_perf['network'], fontsize=9)
-                ax3.set_xlabel('Accuracy', fontweight='bold')
-                ax3.set_title('C) Network Performance (N7)', fontweight='bold', fontsize=12)
-                ax3.set_xlim([0, 1])
-                ax3.invert_yaxis()
-                ax3.grid(axis='x', alpha=0.3)
-                
-                for i, acc in enumerate(network_perf['accuracy']):
-                    ax3.text(acc + 0.01, i, f'{acc:.3f}', 
-                           va='center', fontsize=9, fontweight='bold')
-                
-                print(f"  ✓ Plotted {len(network_perf)} networks")
-            else:
-                ax3.text(0.5, 0.5, 'No network column', ha='center', va='center', transform=ax3.transAxes)
-        else:
-            ax3.text(0.5, 0.5, 'No N7 data', ha='center', va='center', transform=ax3.transAxes)
-    except Exception as e:
-        ax3.text(0.5, 0.5, f'Error: {str(e)}', ha='center', va='center', transform=ax3.transAxes)
-        print(f"  ✗ Error: {e}")
+    ax_main.legend(loc='upper left', fontsize=14, framealpha=0.95, fancybox=True)  # Increased from 11
     
-    # =========================================================================
-    # PANEL D: TOP REGION CONFUSIONS - NOW WITH FULL NAMES!
-    # =========================================================================
-    ax4 = fig.add_subplot(gs[1, 0])
-    print("\nPanel D: Top Region Confusions (Full Names)")
+    # ===================
+    # COLORBAR
+    # ===================
+    cbar = plt.colorbar(im, cax=ax_cbar)
+    cbar.set_label('Prediction Probability (%)', fontweight='bold', fontsize=16,  # Increased from 13
+                   rotation=270, labelpad=30)  # Increased labelpad
+    cbar.ax.tick_params(labelsize=13)  # Increased from 11
     
-    try:
-        confusion_data = None
-        if 'confusion' in results and 'rest_norm' in results['confusion']:
-            confusion_data = results['confusion']['rest_norm']
-        elif 'confusion' in results and 'rest_raw' in results['confusion']:
-            confusion_data = results['confusion']['rest_raw']
-        
-        if confusion_data is not None and not confusion_data.empty:
-            # Diagnose the confusion matrix
-            print(f"  → Confusion matrix shape: {confusion_data.shape}")
-            print(f"  → Sample regions: {confusion_data.index[:3].tolist()}")
-            
-            # Extract top confusions - try with cortical filter first
-            top_confusions = extract_top_confusions(confusion_data, n_top=15, cortical_only=True)
-            
-            if top_confusions:
-                labels = []
-                values = []
-                colors = []
-                
-                for conf in top_confusions:
-                    # IMPROVED: Use FULL region names with Unicode arrow and better spacing
-                    true_region = conf['true']
-                    pred_region = conf['predicted']
-                    
-                    # Remove hemisphere prefix but keep everything else
-                    true_display = true_region.replace('LH_', '').replace('RH_', '')
-                    pred_display = pred_region.replace('LH_', '').replace('RH_', '')
-                    
-                    # IMPROVED: Format with Unicode arrow and indentation
-                    labels.append(f"{true_display}\n  ⟶  {pred_display}")
-                    values.append(conf['rate'] * 100)
-                    
-                    # Color coding based on confusion rate
-                    if conf['rate'] > 0.1:
-                        colors.append('#E74C3C')  # Red - high confusion
-                    elif conf['rate'] > 0.05:
-                        colors.append('#E67E22')  # Orange - medium confusion
-                    else:
-                        colors.append('#F4D03F')  # Yellow - low confusion
-                
-                y_pos = np.arange(len(labels))
-                ax4.barh(y_pos, values, color=colors, edgecolor='black', alpha=0.85)
-                ax4.set_yticks(y_pos)
-                ax4.set_yticklabels(labels, fontsize=7)  # Smaller font for full names
-                ax4.set_xlabel('Confusion Rate (%)', fontweight='bold', fontsize=14)
-                ax4.set_title('(D) Top Region Confusions', 
-                             fontweight='bold', fontsize=18)
-                ax4.invert_yaxis()
-                ax4.grid(axis='x', alpha=0.3)
-                
-                # Add value labels
-                for i, v in enumerate(values):
-                    ax4.text(v + 0.2, i, f'{v:.1f}%', 
-                           va='center', fontsize=8, fontweight='bold')
-                
-                # Add interpretation note
-                ax4.text(0.98, 0.02, 'Similar connectivity → Higher confusion', 
-                        transform=ax4.transAxes, ha='right', va='bottom',
-                        fontsize=8, style='italic', color='darkblue',
-                        bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
-                
-                print(f"  ✓ Plotted {len(top_confusions)} region confusion pairs")
-            else:
-                # IMPROVED: Show diagnostic information
-                ax4.axis('off')
-                
-                # Check why no confusions found
-                n_regions = len(confusion_data)
-                n_cortical = sum(1 for r in confusion_data.index if r.startswith(('LH_', 'RH_')))
-                off_diag = confusion_data.values[~np.eye(n_regions, dtype=bool)]
-                n_nonzero = (off_diag > 0).sum()
-                max_confusion = off_diag.max() if len(off_diag) > 0 else 0
-                
-                message = f"""No Significant Confusions Found
+    # ===================
+    # SUMMARY STATISTICS - READABLE SIZE
+    # ===================
+    ax_stats.axis('off')
+    
+    n_samples = len(y_true)
+    error_rate = 1 - overall_accuracy
+    mean_acc = region_accuracy.mean()
+    std_acc = region_accuracy.std()
+    median_acc = np.median(region_accuracy)
+    
+    n_lh = sum(1 for r in sorted_regions if r.startswith('LH_'))
+    n_rh = sum(1 for r in sorted_regions if r.startswith('RH_'))
+    n_subcort = n_regions - n_lh - n_rh
+    
+    # Calculate network-wise performance
+    network_accs = {}
+    for net_info in network_labels:
+        net_name = net_info['name']
+        start = net_info['start']
+        end = net_info['end'] + 1
+        net_acc = region_accuracy[start:end].mean()
+        network_accs[net_name] = net_acc
+    
+    # Top performers
+    best_idx = np.argsort(region_accuracy)[-5:][::-1]
+    worst_idx = np.argsort(region_accuracy)[:5]
+    
+    # Best/worst networks
+    sorted_nets = sorted(network_accs.items(), key=lambda x: x[1], reverse=True)
+    best_networks = sorted_nets[:3]
+    worst_networks = sorted_nets[-3:]
+    
+    stats_text = f"""RESEARCH QUESTIONS & FINDINGS
+{'='*42}
 
-Diagnostic Information:
-• Total regions: {n_regions}
-• Cortical regions (LH_/RH_): {n_cortical}
-• Non-zero off-diagonal: {n_nonzero}
-• Max confusion rate: {max_confusion:.1f}%
+RQ1: Can connectivity patterns predict regions?
+   ✓ YES - {overall_accuracy*100:.2f}% accuracy achieved
+   • {(overall_accuracy / (1.0/n_regions)):.1f}× better than chance ({100/n_regions:.2f}%)
+   • Error rate: {error_rate*100:.2f}%
 
-Possible reasons:
-1. Very high accuracy (near-perfect)
-2. Region names don't use LH_/RH_ prefix
-3. Matrix is all subcortical regions
-
-Sample regions:
-{', '.join(confusion_data.index[:3].tolist())}
-
-→ Check region naming in your data"""
-                
-                ax4.text(0.5, 0.5, message,
-                        ha='center', va='center', transform=ax4.transAxes,
-                        fontsize=9, family='monospace',
-                        bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.7))
-                print(f"  ⚠ No significant confusions found")
-                print(f"    - Regions: {n_regions} total, {n_cortical} cortical")
-                print(f"    - Non-zero confusions: {n_nonzero}")
-        else:
-            # IMPROVED: More helpful message with instructions
-            ax4.axis('off')
-            message = """No Confusion Matrix Available
-
-To display region confusions:
-
-1. Run the region-level analysis:
-   python 05_region_level_analysis.py
-
-2. Or ensure predictions exist:
-   data/processed/predictions_train.csv
-
-3. Panel D will then show:
-   • Top cortical region confusions
-   • Full anatomical names
-   • Color-coded by confusion severity
-   • Interpretation guidance"""
-            
-            ax4.text(0.5, 0.5, message, 
-                    ha='center', va='center', transform=ax4.transAxes,
-                    fontsize=10, family='monospace',
-                    bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.7))
-            print("  ℹ No confusion matrix - showing instructions")
-            
-    except Exception as e:
-        ax4.text(0.5, 0.5, f'Error:\n{str(e)}', 
-                ha='center', va='center', transform=ax4.transAxes, fontsize=9)
-        ax4.axis("off")
-        print(f"  ✗ Error: {e}")
-    
-    # =========================================================================
-    # PANEL E: Task-Induced Changes
-    # =========================================================================
-    ax5 = fig.add_subplot(gs[1, 1])
-    print("\nPanel E: Task-Induced Changes")
-    
-    try:
-        if 'error_rates' in results:
-            if 'N7_rest' in results['error_rates'] and 'N7_task' in results['error_rates']:
-                rest = results['error_rates']['N7_rest']
-                task = results['error_rates']['N7_task']
-                
-                if 'network' in rest.columns and 'network' in task.columns:
-                    merged = pd.merge(rest[['network', 'error_rate']], 
-                                    task[['network', 'error_rate']], 
-                                    on='network', suffixes=('_rest', '_task'))
-                    merged['change'] = merged['error_rate_task'] - merged['error_rate_rest']
-                    merged = merged.sort_values('change', ascending=False)
-                    
-                    colors = ['#E74C3C' if x > 0 else '#2ECC71' for x in merged['change']]
-                    
-                    ax5.barh(range(len(merged)), merged['change'], color=colors, 
-                            alpha=0.85, edgecolor='black')
-                    ax5.set_yticks(range(len(merged)))
-                    ax5.set_yticklabels(merged['network'], fontsize=9)
-                    ax5.set_xlabel('Error Change (Task - Rest)', fontweight='bold')
-                    ax5.set_title('E) Task-Induced Changes', fontweight='bold', fontsize=12)
-                    ax5.axvline(0, color='black', linewidth=2)
-                    ax5.invert_yaxis()
-                    ax5.grid(axis='x', alpha=0.3)
-                    
-                    for i, v in enumerate(merged['change']):
-                        x_pos = v + 0.005 if v > 0 else v - 0.005
-                        ha = 'left' if v > 0 else 'right'
-                        ax5.text(x_pos, i, f"{v:.3f}", ha=ha, va='center', 
-                               fontsize=9, color='black', weight='bold')
-                    
-                    print(f"  ✓ Plotted {len(merged)} network changes")
-                else:
-                    ax5.text(0.5, 0.5, 'No network column', ha='center', va='center', transform=ax5.transAxes)
-            else:
-                ax5.text(0.5, 0.5, 'Missing N7 data', ha='center', va='center', transform=ax5.transAxes)
-        else:
-            ax5.text(0.5, 0.5, 'No data', ha='center', va='center', transform=ax5.transAxes)
-    except Exception as e:
-        ax5.text(0.5, 0.5, f'Error: {str(e)}', ha='center', va='center', transform=ax5.transAxes)
-        print(f"  ✗ Error: {e}")
-    
-    # =========================================================================
-    # PANEL F: Key Findings
-    # =========================================================================
-    ax6 = fig.add_subplot(gs[1, 2])
-    ax6.axis('off')
-    print("\nPanel F: Key Findings")
-    
-    try:
-        if 'error_rates' in results and 'N7_rest' in results['error_rates']:
-            acc = 1 - results['error_rates']['N7_rest']['error_rate'].mean()
-            n = len(results['error_rates']['N7_rest'])
-            improvement = acc / (1.0/n) if n > 0 else 0
-        else:
-            acc = 0.95
-            improvement = 220
-            n = 232
-    except:
-        acc = 0.95
-        improvement = 220
-        n = 232
-    
-    summary = f"""
-F) KEY FINDINGS
-
-1. PERFORMANCE
-   • {acc:.1%} accuracy
-   • {improvement:.0f}× better than chance
+RQ2: Which regions are most/least predictable?
    
-2. TASK EFFECTS
-   • Networks reorganize
-   • Error increases
-   
-3. CONFUSIONS
-   • Full region names shown
-   • Reveals specific patterns
-   
-4. HIERARCHY
-   • Sensory: stable
-   • Cognitive: flexible
-   
-5. INTEGRATION
-   • Whole-brain coverage
-   • Multi-scale analysis
-    """
-    
-    ax6.text(0.05, 0.5, summary, fontsize=10, family='monospace',
-            verticalalignment='center',
-            bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.3))
-    
-    print("  ✓ Summary text added")
-    
-    plt.suptitle('Brain Atlas Performance - Summary (Improved)', fontsize=20, 
-                fontweight='bold', y=0.98)
-    
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    
-    print(f"\n✓ Saved: {output_path}")
-    print("="*60)
-
-
-def create_guide(findings, output_path):
-    """Create interpretation guide."""
-    guide_text = """
-INTERPRETATION GUIDE
-====================
-
-Panel D - Top Cortical Region Confusions (FULL NAMES):
-  NOW SHOWS COMPLETE region anatomical labels (e.g., "SomMotA_1", "DefaultB_PFCd_2")
-  instead of just network abbreviations.
-  
-  Format: "True Region → Predicted Region"
-  - Hemisphere prefix (LH_/RH_) removed for cleaner display
-  - Full anatomical labels preserved for accurate interpretation
-  
-  Key insights from FULL region names:
-  - Specific subregions within networks that confuse
-  - Numbered parcels (e.g., _1, _2) show fine-grained patterns
-  - Motor subnetworks (SomMotA vs SomMotB) may confuse
-  - Default Mode subsystems show distinct confusion patterns
-  - Visual areas typically have lower confusion (distinct processing)
-  
-  Clinical relevance with full names: 
-  - Identify SPECIFIC regions affected in disease
-  - Track connectivity changes in particular subregions
-  - Better anatomical localization for targeted interventions
-  - More precise biomarker identification
-  
-  Thesis significance:
-  - Granular view of classification errors
-  - Validates region-level connectivity patterns
-  - Supports hierarchical and subsystem-specific analysis
-  - Enhanced clinical translation with anatomical specificity
+   Most Predictable (Top 5):
 """
     
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, 'w') as f:
-        f.write(guide_text)
+    for idx in best_idx:
+        name = sorted_regions[idx].replace('LH_', '').replace('RH_', '')[:22]
+        acc = region_accuracy[idx]
+        stats_text += f"   • {name:22s} {acc*100:5.2f}%\n"
+    
+    stats_text += f"""
+   Least Predictable (Bottom 5):
+"""
+    
+    for idx in worst_idx:
+        name = sorted_regions[idx].replace('LH_', '').replace('RH_', '')[:22]
+        acc = region_accuracy[idx]
+        stats_text += f"   • {name:22s} {acc*100:5.2f}%\n"
+    
+    stats_text += f"""
+RQ3: Network-level performance patterns?
+   
+   Best Performing Networks:
+"""
+    
+    for net_name, net_acc in best_networks:
+        display_name = net_name.replace('_', ' ')[:22]
+        stats_text += f"   • {display_name:22s} {net_acc*100:5.2f}%\n"
+    
+    stats_text += f"""
+   Most Challenging Networks:
+"""
+    
+    for net_name, net_acc in worst_networks:
+        display_name = net_name.replace('_', ' ')[:22]
+        stats_text += f"   • {display_name:22s} {net_acc*100:5.2f}%\n"
+    
+    stats_text += f"""
+{'='*42}
+STATISTICAL SUMMARY
+{'='*42}
 
+Dataset Composition:
+   • Total Regions:      {n_regions:6,d}
+   • Left Hemisphere:    {n_lh:6,d}
+   • Right Hemisphere:   {n_rh:6,d}
+   • Subcortical:        {n_subcort:6,d}
+   • Networks:           {len(network_labels):6d}
+   • Total Samples:      {n_samples:6,d}
+
+Region-wise Accuracy:
+   • Mean:               {mean_acc*100:6.2f}%
+   • Median:             {median_acc*100:6.2f}%
+   • Std Dev:            {std_acc*100:6.2f}%
+   • Range:              [{region_accuracy.min()*100:5.2f}%, {region_accuracy.max()*100:5.2f}%]
+
+Performance Distribution:
+   • Excellent (>80%):   {(region_accuracy > 0.8).sum():6d} regions
+   • Good (60-80%):      {((region_accuracy > 0.6) & (region_accuracy <= 0.8)).sum():6d} regions
+   • Fair (40-60%):      {((region_accuracy > 0.4) & (region_accuracy <= 0.6)).sum():6d} regions
+   • Poor (<40%):        {(region_accuracy <= 0.4).sum():6d} regions
+"""
+    
+    ax_stats.text(0.05, 0.98, stats_text, transform=ax_stats.transAxes,
+                  fontsize=12, verticalalignment='top', fontfamily='monospace',  # Increased from 10.5
+                  bbox=dict(boxstyle='round,pad=1.0', facecolor='#E8F4F8', 
+                           alpha=0.95, edgecolor='#0066CC', linewidth=2.5))
+    
+    # ===================
+    # NETWORK LEGEND
+    # ===================
+    ax_legend.axis('off')
+    
+    # Title
+    ax_legend.text(0.5, 0.98, 'NETWORK COLOR LEGEND', 
+                   transform=ax_legend.transAxes,
+                   fontsize=14, fontweight='bold',  # Increased from 11
+                   horizontalalignment='center',
+                   verticalalignment='top')
+    
+    # Create compact legend - optimized to show ALL networks
+    y_pos = 0.93
+    y_spacing = 0.037  # Reduced spacing to fit all networks
+    seen_networks = []
+    
+    for net_info in network_labels:
+        if net_info['name'] not in seen_networks:
+            seen_networks.append(net_info['name'])
+            
+            color = NETWORK_COLORS.get(net_info['name'], '#808080')
+            name = net_info['name'].replace('_', ' ')
+            # Use actual count from network_region_counts instead of boundary size
+            n_reg = network_region_counts.get(net_info['name'], 0)
+            net_acc = network_accs.get(net_info['name'], 0)
+            
+            # Smaller color box
+            rect = Rectangle((0.05, y_pos - 0.022), 0.10, 0.025,
+                            facecolor=color, edgecolor='black', linewidth=0.8,
+                            transform=ax_legend.transAxes)
+            ax_legend.add_patch(rect)
+            
+            # Compact label with accuracy
+            label_text = f"{name:18s}({n_reg:2d}) {net_acc*100:4.1f}%"
+            ax_legend.text(0.17, y_pos - 0.0095, label_text,
+                          transform=ax_legend.transAxes,
+                          fontsize=10, verticalalignment='center',  # Increased from 8.5
+                          fontfamily='monospace')
+            
+            y_pos -= y_spacing
+            
+            # Stop if we run out of space (shouldn't happen with 24 networks)
+            if y_pos < 0.02:
+                break
+    
+    # Border
+    ax_legend.add_patch(Rectangle((0.02, 0.02), 0.96, 0.96,
+                                  fill=False, edgecolor='#0066CC',
+                                  linewidth=2.0, linestyle='-',
+                                  transform=ax_legend.transAxes))
+    
+    # Save
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_path, dpi=300, bbox_inches='tight', facecolor='white')
+    plt.close()
+    
+    print(f"  ✓ Saved: {output_path.name}")
+    print(f"    Overall Accuracy: {overall_accuracy:.4f} ({overall_accuracy*100:.2f}%)")
+    print(f"    Mean Region Accuracy: {mean_acc:.4f} ± {std_acc:.4f}")
+
+
+# =============================================================================
+# DIFFERENCE MAPS
+# =============================================================================
+
+def plot_difference(y_true_1, y_pred_1, y_true_2, y_pred_2,
+                    region_list, name1, name2, output_path):
+    """Difference map with flexible layout.
+    
+    NOTE: Uses ORIGINAL region order (no sorting)
+    """
+    n_regions = len(region_list)
+    
+    # DON'T sort - use original order
+    sorted_indices = list(range(n_regions))
+    sorted_regions = region_list.copy()
+    
+    # Assign networks for coloring only
+    sorted_networks = []
+    for region in sorted_regions:
+        name = region.lower()
+        
+        if 'viscent' in name:
+            network = 'Visual_Central'
+        elif 'visperi' in name:
+            network = 'Visual_Peripheral'
+        elif 'sommota' in name:
+            network = 'Somatomotor_A'
+        elif 'sommotb' in name:
+            network = 'Somatomotor_B'
+        elif 'dorsattna' in name:
+            network = 'DorsalAttn_A'
+        elif 'dorsattnb' in name:
+            network = 'DorsalAttn_B'
+        elif 'salventattna' in name:
+            network = 'VentralAttn_A'
+        elif 'salventattnb' in name:
+            network = 'VentralAttn_B'
+        elif 'limbica' in name:
+            network = 'Limbic_A'
+        elif 'limbicb' in name:
+            network = 'Limbic_B'
+        elif 'conta' in name and not 'contb' in name and not 'contc' in name:
+            network = 'Control_A'
+        elif 'contb' in name:
+            network = 'Control_B'
+        elif 'contc' in name:
+            network = 'Control_C'
+        elif 'defaulta' in name:
+            network = 'DefaultMode_A'
+        elif 'defaultb' in name:
+            network = 'DefaultMode_B'
+        elif 'defaultc' in name:
+            network = 'DefaultMode_C'
+        elif 'temppar' in name:
+            network = 'TemporalParietal'
+        elif 'ahip' in name or 'phip' in name:
+            network = 'Hippocampus'
+        elif 'lamy' in name or 'mamy' in name:
+            network = 'Amygdala'
+        elif 'tha-' in name:
+            network = 'Thalamus'
+        elif 'nac-' in name:
+            network = 'Accumbens'
+        elif 'aput' in name or 'pput' in name:
+            network = 'Putamen'
+        elif 'agp' in name or 'pgp' in name:
+            network = 'Pallidum'
+        elif 'acau' in name or 'pcau' in name:
+            network = 'Caudate'
+        else:
+            network = 'Unassigned'
+        
+        sorted_networks.append(network)
+    
+    # NO reordering
+    y_true_1_sorted = y_true_1
+    y_pred_1_sorted = y_pred_1
+    y_true_2_sorted = y_true_2
+    y_pred_2_sorted = y_pred_2
+    
+    labels = np.arange(n_regions)
+    
+    # Confusion matrices
+    cm1 = confusion_matrix(y_true_1_sorted, y_pred_1_sorted, labels=labels)
+    cm2 = confusion_matrix(y_true_2_sorted, y_pred_2_sorted, labels=labels)
+    
+    # Normalize
+    with np.errstate(divide='ignore', invalid='ignore'):
+        cm1_norm = cm1.astype('float') / cm1.sum(axis=1, keepdims=True) * 100
+        cm1_norm = np.nan_to_num(cm1_norm)
+        cm2_norm = cm2.astype('float') / cm2.sum(axis=1, keepdims=True) * 100
+        cm2_norm = np.nan_to_num(cm2_norm)
+    
+    # Difference
+    diff_matrix = cm2_norm - cm1_norm
+    
+    # Metrics
+    acc1 = np.diag(cm1_norm) / 100.0
+    acc2 = np.diag(cm2_norm) / 100.0
+    acc_change = acc2 - acc1
+    
+    overall_acc1 = accuracy_score(y_true_1_sorted, y_pred_1_sorted)
+    overall_acc2 = accuracy_score(y_true_2_sorted, y_pred_2_sorted)
+    overall_change = overall_acc2 - overall_acc1
+    
+    # Structure
+    hem_boundaries = find_hemisphere_boundaries(sorted_regions)
+    net_boundaries, network_labels = find_network_boundaries_hierarchical(sorted_networks)
+    
+    # FIXED: Count actual regions per network
+    network_region_counts = {}
+    for network in sorted_networks:
+        network_region_counts[network] = network_region_counts.get(network, 0) + 1
+    
+    # Colors
+    network_colors_hex = [NETWORK_COLORS.get(net, '#808080') for net in sorted_networks]
+    network_colors_rgb = [to_rgb(color) for color in network_colors_hex]
+    
+    # =========================
+    # CREATE FIGURE
+    # =========================
+    fig = plt.figure(figsize=(38, 20))
+    
+    # NO TOP NETWORK BAR
+    gs = GridSpec(2, 6, figure=fig,
+                  width_ratios=[1.2, 0.4, 18.0, 0.5, 6.0, 4.0],
+                  height_ratios=[16.5, 1.0],
+                  hspace=0.10, wspace=0.20,
+                  left=0.03, right=0.99, top=0.96, bottom=0.03)
+    
+    ax_acc = fig.add_subplot(gs[0, 0])
+    ax_left_net = fig.add_subplot(gs[0, 1])
+    ax_main = fig.add_subplot(gs[0, 2])
+    ax_cbar = fig.add_subplot(gs[0, 3])
+    ax_stats = fig.add_subplot(gs[0, 4])
+    ax_legend = fig.add_subplot(gs[:, 5])
+    
+    # ==================
+    # ACCURACY CHANGE BAR
+    # ==================
+    colors = ['#E74C3C' if x < -0.03 else '#2ECC71' if x > 0.03 else '#95A5A6' 
+              for x in acc_change]
+    ax_acc.barh(range(n_regions), acc_change, height=1.0, color=colors, 
+                edgecolor='none', alpha=0.88)
+    ax_acc.set_ylim([-0.5, n_regions-0.5])
+    ax_acc.invert_yaxis()
+    ax_acc.set_xlabel('Δ Accuracy', fontsize=18, fontweight='bold')  # Increased
+    ax_acc.set_yticks([])
+    ax_acc.axvline(x=0, color='black', linestyle='-', linewidth=3.0)
+    ax_acc.axvline(x=overall_change, color='#0066CC', linestyle='--', 
+                   linewidth=3.0, alpha=0.85, label=f'Overall\n{overall_change:+.3f}')
+    ax_acc.legend(loc='best', fontsize=13, framealpha=0.95, edgecolor='#0066CC', fancybox=True)  # Increased
+    ax_acc.grid(axis='x', alpha=0.35)
+    ax_acc.tick_params(axis='x', labelsize=14)  # Increased
+    
+    for boundary in hem_boundaries:
+        ax_acc.axhline(y=boundary-0.5, color='black', linewidth=3.0, alpha=0.75)
+    
+    # Highlight extremes
+    max_change_idx = np.argmax(acc_change)
+    min_change_idx = np.argmin(acc_change)
+    ax_acc.plot(acc_change[max_change_idx], max_change_idx, 'g*', markersize=16,
+                markeredgecolor='darkgreen', markeredgewidth=2.0, zorder=5)
+    ax_acc.plot(acc_change[min_change_idx], min_change_idx, 'r*', markersize=16,
+                markeredgecolor='darkred', markeredgewidth=2.0, zorder=5)
+    
+    # Left network bar only (NO TOP BAR)
+    color_array_left = np.array([[c] for c in network_colors_rgb])
+    ax_left_net.imshow(color_array_left, aspect='auto', interpolation='nearest')
+    ax_left_net.set_ylim([-0.5, n_regions-0.5])
+    ax_left_net.invert_yaxis()
+    ax_left_net.set_xticks([])
+    ax_left_net.set_yticks([])
+    ax_left_net.set_xlabel('Network', fontsize=14, fontweight='bold')  # Increased
+    for boundary in hem_boundaries:
+        ax_left_net.axhline(y=boundary-0.5, color='white', linewidth=4.0, alpha=0.98)
+    
+    # Main difference map
+    vmax = max(abs(diff_matrix.min()), abs(diff_matrix.max()))
+    im = ax_main.imshow(diff_matrix, cmap='RdBu_r', aspect='auto',
+                        vmin=-vmax, vmax=vmax, interpolation='nearest')
+    
+    ax_main.plot([0, n_regions-1], [0, n_regions-1], 'k--', linewidth=3.0, 
+                 alpha=0.6, label='Diagonal')
+    
+    for boundary in hem_boundaries:
+        ax_main.axhline(y=boundary-0.5, color='white', linewidth=4.0, alpha=0.98)
+        ax_main.axvline(x=boundary-0.5, color='white', linewidth=4.0, alpha=0.98)
+    
+    # Network boundaries - much more subtle (optional)
+    for boundary in net_boundaries:
+        if boundary not in hem_boundaries:
+            ax_main.axhline(y=boundary-0.5, color='black', linewidth=0.3, alpha=0.15)
+            ax_main.axvline(x=boundary-0.5, color='black', linewidth=0.3, alpha=0.15)
+    
+    tick_spacing = 20
+    tick_pos = np.arange(0, n_regions, tick_spacing)
+    ax_main.set_xticks(tick_pos)
+    ax_main.set_yticks(tick_pos)
+    tick_labels = [sorted_regions[i][:35] for i in tick_pos]
+    ax_main.set_xticklabels(tick_labels, rotation=90, ha='right', fontsize=11)  # Increased
+    ax_main.set_yticklabels(tick_labels, fontsize=11)  # Increased
+    
+    ax_main.set_xlabel('Predicted Region', fontweight='bold', fontsize=20)  # Increased
+    ax_main.set_ylabel('True Region', fontweight='bold', fontsize=20)  # Increased
+    
+    title = f'Performance Difference: {name2} vs {name1}\n'
+    title += f'{name1}: {overall_acc1:.4f} → {name2}: {overall_acc2:.4f} '
+    title += f'(Δ = {overall_change:+.4f} / {overall_change*100:+.2f}%)'
+    ax_main.set_title(title, fontweight='bold', fontsize=22, pad=30)  # Increased, reduced pad
+    
+    ax_main.legend(loc='upper left', fontsize=14, framealpha=0.95, fancybox=True)  # Increased
+    
+    # Colorbar
+    cbar = plt.colorbar(im, cax=ax_cbar)
+    cbar.set_label('Δ Prediction Probability (%)', fontweight='bold', fontsize=16,  # Increased
+                   rotation=270, labelpad=30)  # Increased
+    cbar.ax.tick_params(labelsize=13)  # Increased
+    
+    # Statistics
+    ax_stats.axis('off')
+    
+    mean_change = acc_change.mean()
+    std_change = acc_change.std()
+    median_change = np.median(acc_change)
+    
+    threshold = 0.05
+    n_improved = (acc_change > threshold).sum()
+    n_degraded = (acc_change < -threshold).sum()
+    n_stable = n_regions - n_improved - n_degraded
+    
+    most_improved = np.argsort(acc_change)[-10:][::-1]
+    most_degraded = np.argsort(acc_change)[:10]
+    
+    # Network-wise changes
+    network_changes = {}
+    for net_info in network_labels:
+        net_name = net_info['name']
+        start = net_info['start']
+        end = net_info['end'] + 1
+        net_change = acc_change[start:end].mean()
+        network_changes[net_name] = net_change
+    
+    sorted_net_changes = sorted(network_changes.items(), key=lambda x: x[1], reverse=True)
+    
+    stats_text = f"""RESEARCH QUESTION: GENERALIZATION
+{'='*42}
+
+RQ: How well does the model generalize
+    from {name1} to {name2}?
+
+Overall Performance Change:
+   • {name1} Accuracy:     {overall_acc1*100:6.2f}%
+   • {name2} Accuracy:     {overall_acc2*100:6.2f}%
+   • Absolute Change:      {overall_change*100:+6.2f}%
+   • Relative Change:      {(overall_change/overall_acc1)*100:+6.1f}%
+
+Generalization Assessment:
+"""
+    
+    if overall_change > 0.02:
+        stats_text += f"   ✓ POSITIVE - Model improves on {name2}\n"
+    elif overall_change < -0.02:
+        stats_text += f"   ✗ NEGATIVE - Model degrades on {name2}\n"
+    else:
+        stats_text += f"   ≈ STABLE - Similar performance\n"
+    
+    stats_text += f"""
+{'='*42}
+REGION-WISE GENERALIZATION
+{'='*42}
+
+Statistical Summary:
+   • Mean Change:         {mean_change*100:+6.2f}%
+   • Median Change:       {median_change*100:+6.2f}%
+   • Std Dev:             {std_change*100:6.2f}%
+   • Range:               [{acc_change.min()*100:+5.1f}%, {acc_change.max()*100:+5.1f}%]
+
+Change Distribution (±{threshold*100:.0f}% threshold):
+   • Improved:            {n_improved:6d} regions
+   • Stable:              {n_stable:6d} regions  
+   • Degraded:            {n_degraded:6d} regions
+
+Top 10 Most Improved Regions:
+"""
+    
+    for idx in most_improved:
+        name = sorted_regions[idx].replace('LH_', '').replace('RH_', '')[:22]
+        change = acc_change[idx]
+        stats_text += f"   {name:22s} {change*100:+6.2f}%\n"
+    
+    stats_text += f"""
+Top 10 Most Degraded Regions:
+"""
+    
+    for idx in most_degraded:
+        name = sorted_regions[idx].replace('LH_', '').replace('RH_', '')[:22]
+        change = acc_change[idx]
+        stats_text += f"   {name:22s} {change*100:+6.2f}%\n"
+    
+    stats_text += f"""
+{'='*42}
+NETWORK-LEVEL CHANGES
+{'='*42}
+
+Most Improved Networks:
+"""
+    
+    for net_name, net_change in sorted_net_changes[:5]:
+        display_name = net_name.replace('_', ' ')[:22]
+        stats_text += f"   {display_name:22s} {net_change*100:+6.2f}%\n"
+    
+    stats_text += f"""
+Most Degraded Networks:
+"""
+    
+    for net_name, net_change in sorted_net_changes[-5:]:
+        display_name = net_name.replace('_', ' ')[:22]
+        stats_text += f"   {display_name:22s} {net_change*100:+6.2f}%\n"
+    
+    ax_stats.text(0.05, 0.98, stats_text, transform=ax_stats.transAxes,
+                  fontsize=12, verticalalignment='top', fontfamily='monospace',  # Increased
+                  bbox=dict(boxstyle='round,pad=1.0', facecolor='#FFF8E8', 
+                           alpha=0.95, edgecolor='#FF8C00', linewidth=2.5))
+    
+    # Legend
+    ax_legend.axis('off')
+    
+    ax_legend.text(0.5, 0.98, 'NETWORK COLOR LEGEND', 
+                   transform=ax_legend.transAxes,
+                   fontsize=14, fontweight='bold',  # Increased
+                   horizontalalignment='center',
+                   verticalalignment='top')
+    
+    y_pos = 0.93
+    y_spacing = 0.037  # Reduced spacing to fit all networks
+    seen_networks = []
+    
+    for net_info in network_labels:
+        if net_info['name'] not in seen_networks:
+            seen_networks.append(net_info['name'])
+            
+            color = NETWORK_COLORS.get(net_info['name'], '#808080')
+            name = net_info['name'].replace('_', ' ')
+            # Use actual count from network_region_counts
+            n_reg = network_region_counts.get(net_info['name'], 0)
+            net_change = network_changes.get(net_info['name'], 0)
+            
+            rect = Rectangle((0.05, y_pos - 0.022), 0.10, 0.025,
+                            facecolor=color, edgecolor='black', linewidth=0.8,
+                            transform=ax_legend.transAxes)
+            ax_legend.add_patch(rect)
+            
+            label_text = f"{name:18s}({n_reg:2d}) {net_change*100:+4.1f}%"
+            ax_legend.text(0.17, y_pos - 0.0095, label_text,
+                          transform=ax_legend.transAxes,
+                          fontsize=10, verticalalignment='center',  # Increased
+                          fontfamily='monospace')
+            
+            y_pos -= y_spacing
+            
+            if y_pos < 0.02:
+                break
+    
+    ax_legend.add_patch(Rectangle((0.02, 0.02), 0.96, 0.96,
+                                  fill=False, edgecolor='#FF8C00',
+                                  linewidth=2.0, linestyle='-',
+                                  transform=ax_legend.transAxes))
+    
+    plt.savefig(output_path, dpi=300, bbox_inches='tight', facecolor='white')
+    plt.close()
+    
+    print(f"  ✓ Saved: {output_path.name}")
+    print(f"    Overall Change: {overall_change:+.4f} ({overall_change*100:+.2f}%)")
+    print(f"    Mean Region Change: {mean_change:+.4f} ± {std_change:.4f}")
+
+
+# =============================================================================
+# MAIN
+# =============================================================================
 
 def main():
-    """Main execution function."""
-    print("="*60)
-    print("SUMMARY REPORT GENERATOR - FULL REGION NAMES")
-    print("="*60)
+    parser = argparse.ArgumentParser(
+        description='Confusion matrices with flexible, research-focused design'
+    )
+    parser.add_argument('--config', type=str, default='config.yaml')
+    parser.add_argument('--sample', action='store_true')
+    args = parser.parse_args()
     
-    required = ['reports/tables/atlas_analysis',
-                'reports/tables/atlas_comparison',
-                'reports/tables/connectivity_analysis']
+    print_section("CONFUSION MATRICES")
+    print("Design Philosophy:")
+    print("  • Research question focused")
+    print("  • Readable summary statistics")
+    print("  • Flexible, adaptive layout")
+    print("  • Publication-ready quality\n")
     
-    missing = [d for d in required if not Path(d).exists()]
-    if missing:
-        print("\n❌ Missing directories:")
-        for d in missing:
-            print(f"   - {d}")
-        print("\nRun previous scripts first!")
-        return 1
+    config = load_config(args.config)
+    set_random_seeds(config.get('random_seed', 42))
     
-    print("\nLoading results...")
-    results = load_results()
+    # Load data
+    print_section("Loading Data")
+    piop2_file = config['data']['piop2_file']
+    piop1_file = config['data']['piop1_file']
     
-    if not any(results.values()):
-        print("❌ No results found!")
-        return 1
+    if args.sample:
+        piop2_file = "data/sample/sample_piop2_small.csv"
+        piop1_file = "data/sample/sample_piop1_small.csv"
     
-    print(f"\n✓ Loaded successfully")
-    print(f"  - Error rates: {len(results['error_rates'])} files")
-    print(f"  - Comparisons: {len(results['comparisons'])} files")
-    print(f"  - Connectivity: {len(results['connectivity'])} files")
-    print(f"  - Confusion matrices: {len(results['confusion'])} files")
+    df_rest = load_connectivity_data(piop2_file)
+    df_task = load_connectivity_data(piop1_file)
+    conn_cols = extract_connection_columns(df_rest)
     
-    output_dir = Path('reports/summary')
-    output_dir.mkdir(parents=True, exist_ok=True)
+    print_section("Extracting Regions")
+    region_list, region_to_idx, n_regions = extract_regions(conn_cols)
+    print(f"Total Regions: {n_regions}")
     
-    print("\n" + "="*60)
-    print("CREATING OUTPUTS")
-    print("="*60)
+    # Load predictions
+    print_section("Loading Predictions")
+    pred_dir = Path(config.get('output_dirs', {}).get('processed', 'data/processed'))
     
-    print("\n1. Summary statistics...")
-    stats = create_summary_stats(results)
-    stats.to_csv(output_dir / 'summary_statistics.csv', index=False)
-    print(f"   ✓ Saved {len(stats)} statistics")
+    df_pred_train = pd.read_csv(pred_dir / 'predictions_train.csv')
+    df_pred_val = pd.read_csv(pred_dir / 'predictions_cv_validation.csv')
+    df_pred_task = pd.read_csv(pred_dir / 'predictions_task.csv')
     
-    print("\n2. Key findings...")
-    findings = create_key_findings(results)
-    findings.to_csv(output_dir / 'key_findings.csv', index=False)
-    print(f"   ✓ Saved {len(findings)} findings")
+    y_train = df_pred_train['true_region'].values
+    y_train_pred = df_pred_train['predicted_region'].values
+    y_val = df_pred_val['true_region'].values
+    y_val_pred = df_pred_val['predicted_region'].values
+    y_task = df_pred_task['true_region'].values
+    y_task_pred = df_pred_task['predicted_region'].values
     
-    print("\n3. Summary figure with FULL REGION NAMES...")
-    plot_summary(results, output_dir / 'master_summary.png')
+    print(" All predictions loaded successfully")
     
-    print("\n4. Interpretation guide...")
-    create_guide(findings, output_dir / 'interpretation_guide.txt')
+    # Output
+    figures_dir = Path('reports/figures/region_level_analysis')
+    figures_dir.mkdir(parents=True, exist_ok=True)
     
-    print("\n" + "="*60)
-    print("✅ COMPLETE!")
-    print("="*60)
+    print_section("Generating Confusion Matrices")
+    
+    print("\n Training Dataset...")
+    plot_confusion_matrix(
+        y_train, y_train_pred, region_list, "Training (Rest fMRI)",
+        figures_dir / 'confusion_training.png'
+    )
+    
+    print("\n Validation Dataset...")
+    plot_confusion_matrix(
+        y_val, y_val_pred, region_list, "Validation (Cross-Validation)",
+        figures_dir / 'confusion_validation.png'
+    )
+    
+    print("\n Task Dataset...")
+    plot_confusion_matrix(
+        y_task, y_task_pred, region_list, "Task (Gender Stroop)",
+        figures_dir / 'confusion_task.png'
+    )
+    
+    print_section("Generating Difference Maps")
+    
+    print("\n Training → Task Generalization...")
+    plot_difference(
+        y_train, y_train_pred, y_task, y_task_pred,
+        region_list, "Training", "Task",
+        figures_dir / 'difference_training_vs_task.png'
+    )
+    
+    print("\n Validation → Task Generalization...")
+    plot_difference(
+        y_val, y_val_pred, y_task, y_task_pred,
+        region_list, "Validation", "Task",
+        figures_dir / 'difference_validation_vs_task.png'
+    )
+    
+    print_section("ANALYSIS COMPLETE!")
     print(f"""
-Output Files:
-  • {output_dir}/summary_statistics.csv
-  • {output_dir}/key_findings.csv
-  • {output_dir}/master_summary.png  
-  • {output_dir}/interpretation_guide.txt
+    Output Directory: {figures_dir}
+
+Generated Visualizations:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ confusion_training.png
+ confusion_validation.png
+ confusion_task.png
+ difference_training_vs_task.png
+ difference_validation_vs_task.png
 """)
     
     return 0
