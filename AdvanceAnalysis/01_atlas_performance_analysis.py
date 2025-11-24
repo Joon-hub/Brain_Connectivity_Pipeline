@@ -579,6 +579,11 @@ def main():
     print("N7 CORTICAL (7 Networks)")
     print("="*70)
     mapping_n7 = map_schaefer(region_list, n_networks=7)
+    
+    # Note: We explicitly exclude "Cortical Other" and "Subcortical Other" 
+    # from analysis because these are unmapped regions. This is intentional
+    # to focus analysis on known networks.
+    
     results['N7_cortical'] = analyze_atlas(
         y_rest, y_rest_pred, y_task, y_task_pred,
         region_list, mapping_n7, 'cortical', ['Cortical Other'],

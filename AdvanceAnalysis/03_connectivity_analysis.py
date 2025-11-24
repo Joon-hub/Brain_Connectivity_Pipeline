@@ -30,6 +30,10 @@ sns.set_palette("husl")
 # =============================================================================
 # NETWORK MAPPING
 # =============================================================================
+# Note: Unlike 01_atlas_performance_analysis.py, we do NOT filter out
+# unmapped regions here. This is intentional - connectivity analysis 
+# includes all regions to capture full brain connectivity patterns.
+
 def map_to_schaefer_n7_only(region_list):
     """Map cortical regions to Schaefer N7 networks only."""
     cortical_map = {
