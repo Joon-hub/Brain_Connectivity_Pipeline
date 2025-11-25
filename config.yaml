@@ -14,16 +14,9 @@ output_dirs:
 
 # Feature extraction & preprocessing
 preprocessing:
-  diagonal_strategy: "sample_from_matrix"            # Options: "zero", "random", "region_mean", "network_mean", "sample_from_matrix"
+  diagonal_strategy: "zero"                          # Options: "zero", "random", "region_mean", "network_mean", "sample_from_matrix"
   include_diagonal: false                            # Should be false if diagonal was imputed
   apply_fisher_z: true                               # Apply Fisher Z transformation to correlation values (RECOMMENDED)
-
-# Model training
-model:
-  C: 0.002                                           # L2 regularization strength (smaller = stronger regularization)
-  max_iter: 1000                                     # Maximum iterations for solver
-  n_splits: 5                                        # Number of GroupKFold cross-validation folds
-  random_seed: 42                                    # Random seed for reproducibility
 
 # Evaluation & Visualization
 visualization:

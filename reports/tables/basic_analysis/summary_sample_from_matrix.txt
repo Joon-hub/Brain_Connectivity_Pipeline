@@ -1,0 +1,46 @@
+
+RESULTS SUMMARY
+======================================================================
+
+Data:
+  Training subjects: 224
+  Brain regions: 232
+  Chance level: 0.0043
+
+Model Configuration:
+  Diagonal strategy: sample_from_matrix
+  Regularization (C): 1000000
+  CV folds: 3
+  Max iterations: 1000
+  Fisher Z transform: Enabled
+  
+
+Cross-Validation Results (LEAK-FREE):
+  Validation accuracy: 0.7101 ± 0.0081  
+  Training accuracy: 1.0000 ± 0.0000  
+  Improvement over chance: 164.8x
+
+Final Training Accuracy: 0.9977  
+
+Task Data (Gender Stroop):
+  Test subjects: 200
+  Test accuracy: 0.6369
+
+======================================================================
+
+Output Locations:
+  Models: models
+  Tables: reports/tables/basic_analysis
+  Figures: reports/figures/basic_analysis
+  Predictions: data/processed
+
+Execution Time: 2.7m
+Completed: 2025-11-24 18:22:42
+
+======================================================================
+
+✅ Pipeline completed successfully!
+
+IMPORTANT NOTES:
+• Training accuracy is higher due to overfitting - this is expected
+• Fisher Z transformation was applied to correlation values

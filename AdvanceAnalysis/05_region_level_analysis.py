@@ -28,7 +28,7 @@ from matplotlib.colors import to_rgb
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 from data import load_connectivity_data, extract_connection_columns
-from features import extract_regions
+from old_code.features_251125 import extract_regions
 from utils import load_config, set_random_seeds, print_section
 
 plt.style.use('seaborn-v0_8-paper')

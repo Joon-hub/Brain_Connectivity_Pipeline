@@ -21,8 +21,8 @@ def test_imports():
     print("\n[Test 1/7] Testing imports...")
     try:
         from data import load_connectivity_data, get_connection_columns
-        from features import extract_regions, create_dataset
-        from model import train_classifier, predict
+        from old_code.features_251125 import extract_regions, create_dataset
+        from old_code.model_251125 import train_classifier, predict
         from evaluate import calculate_error_map
         from visualize import plot_error_map
         from utils import set_random_seeds, load_config
@@ -73,7 +73,7 @@ def test_region_extraction():
     """Test 3: Can we extract regions from connection columns?"""
     print("\n[Test 3/7] Testing region extraction...")
     try:
-        from features import extract_regions
+        from old_code.features_251125 import extract_regions
         
         # Dummy connection columns
         connections = ['RegionA~RegionB', 'RegionA~RegionC', 'RegionB~RegionC']
@@ -94,7 +94,7 @@ def test_feature_creation(df, connection_columns):
     """Test 4: Can we create features?"""
     print("\n[Test 4/7] Testing feature creation...")
     try:
-        from features import extract_regions, create_dataset
+        from old_code.features_251125 import extract_regions, create_dataset
         
         region_list, region_to_idx, n_regions = extract_regions(connection_columns)
         
@@ -118,7 +118,7 @@ def test_model_training(X, y, subjects):
     """Test 5: Can we train a model?"""
     print("\n[Test 5/7] Testing model training...")
     try:
-        from model import train_classifier
+        from old_code.model_251125 import train_classifier
         
         model, scaler, cv_results = train_classifier(
             X, y, subjects, n_splits=2, C=0.01, random_state=42
@@ -138,7 +138,7 @@ def test_prediction(model, scaler, X):
     """Test 6: Can we make predictions?"""
     print("\n[Test 6/7] Testing predictions...")
     try:
-        from model import predict
+        from old_code.model_251125 import predict
         
         y_pred, y_proba = predict(model, scaler, X)
         
@@ -155,7 +155,7 @@ def test_evaluation(y, y_pred):
     """Test 7: Can we calculate error map?"""
     print("\n[Test 7/7] Testing evaluation...")
     try:
-        from features import extract_regions
+        from old_code.features_251125 import extract_regions
         from evaluate import calculate_error_map
         
         # Create dummy region list

@@ -32,8 +32,8 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Import project modules
-from src.features import BrainConnectivityPreprocessor
-from src.model import BrainRegionClassifier
+from old_code.features_251125 import BrainConnectivityPreprocessor
+from old_code.model_251125 import BrainRegionClassifier
 from src.evaluate import (
     calculate_error_map, save_results_csv, 
     save_confusion_matrix, compare_error_maps

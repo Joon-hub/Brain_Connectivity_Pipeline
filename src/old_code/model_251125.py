@@ -500,7 +500,7 @@ if __name__ == "__main__":
     # Import preprocessor
     import sys
     sys.path.insert(0, '/mnt/user-data/outputs')
-    from features import BrainConnectivityPreprocessor
+    from old_code.features_251125 import BrainConnectivityPreprocessor
     
     # Create classifier
     classifier = BrainRegionClassifier(

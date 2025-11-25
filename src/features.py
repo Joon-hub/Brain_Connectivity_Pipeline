@@ -1,114 +1,110 @@
 """
-Feature Engineering: Connectivity Matrix Preprocessing 
-======================================================
-All preprocessing is now fold-aware and compatible with sklearn Pipeline.
-No statistics are computed globally - everything happens within fit/transform.
-
-CORRECTED VERSION:
-- Fisher Z transformation moved to preprocessing (applied to correlation values)
-- Memory optimization (removed unnecessary copies)
-- Better validation and error messages
+Feature Enginerring: Connectivity Matrix Processing
 """
 
 import numpy as np
 import pandas as pd
-from typing import Tuple, Dict, List, Optional, Any
+from typing import Tuple, Dict, List, Optional
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.linear_model import Ridge
-import warnings
-import pickle
-from pathlib import Path
 
-
-# ======================
-# UTILITY FUNCTIONS 
-# ======================
+# ==============================
+# UTILITY FUNCTIONS
+# Helper function to extract unique brain regions from connection column names
+# ==============================
 
 def extract_regions(connection_columns: List[str]) -> Tuple[List[str], Dict[str, int], int]:
     """
     Extract unique brain regions from connection column names.
-    
-    Args:
-        connection_columns: List of 'Region_A~Region_B' column names
-        
+
+    Parameters:
+    ----------
+    connection_columns : List[str]
+        List of connection column names in the format 'RegionA~RegionB'.
+
     Returns:
-        region_list: Ordered list of region names
-        region_to_idx: Mapping from name to index
-        n_regions: Total number of regions
+    -------
+    regions : List[str]
+        Ordered list of unique brain regions.
+    region_to_idx : Dict[str, int]
+        Mapping from region name to its index.
+    n_regions : int
+        Total number of unique regions.
     """
     unique_regions = []
-    seen = set()
-    
-    # Extract unique regions
+    seen = set() # To maintain order of first appearance
+
     for col in connection_columns:
         if '~' not in col:
-            raise ValueError(f"Invalid connection column format: {col}. Expected 'Region_A~Region_B'")
+            raise ValueError(f"Invalid column name format: {col}. Expected 'RegionA~RegionB'.")
         
-        region_a, region_b = col.split('~', 1)  # Split only on first ~
-        
-        for region in [region_a, region_b]:
+        region_a, region_b = col.split('~')
+        for region in [region_a, region_b]:         # Iterate over both regions in the connection   
             if region not in seen:
-                seen.add(region)
-                unique_regions.append(region)
-    
+                seen.add(region)                    # Keep track of seen regions
+                unique_regions.append(region)       # Maintain order
+
+    # Create mapping from region to index
     region_to_idx = {region: idx for idx, region in enumerate(unique_regions)}
-    
-    return unique_regions, region_to_idx, len(unique_regions)
+    n_regions = len(unique_regions)
 
+    return unique_regions, region_to_idx, n_regions
 
-def reconstruct_connectivity_matrix(
-    subject_values: np.ndarray,
-    connection_columns: List[str],
-    region_to_idx: Dict[str, int],
-    n_regions: int
+def reconstruct_matrices_from_dataframe(
+        df: pd.DataFrame,
+        connection_columns: List[str],
+        region_to_idx: Dict[str, int],
+        n_regions: int
 ) -> np.ndarray:
-    """
-    Reconstruct symmetric connectivity matrix from flattened data.
-    
-    Args:
-        subject_values: Connectivity values for one subject
-        connection_columns: Column names
-        region_to_idx: Region name to index mapping
-        n_regions: Total regions
-        
-    Returns:
-        Symmetric connectivity matrix (n_regions × n_regions)
-    """
-    # Initialize connectivity matrix with zeros
-    matrix = np.zeros((n_regions, n_regions), dtype=float)
-    
-    # Fill off-diagonal elements
-    for col, value in zip(connection_columns, subject_values):
-        region_a, region_b = col.split('~', 1)
-        idx_a = region_to_idx[region_a]
-        idx_b = region_to_idx[region_b]
-        
-        matrix[idx_a, idx_b] = value
-        matrix[idx_b, idx_a] = value
-    
-    # Set diagonal to 1.0 (perfect self-correlation)
-    np.fill_diagonal(matrix, 1.0)
-    
-    return matrix
+    """"
+    Reconstruct connectivity matrices from flattened DataFrame.
 
+    Parameters:
+    ----------
+    df : pd.DataFrame
+        DataFrame containing flattened connectivity data.
+    connection_columns : List[str]
+        List of connection column names in the format 'RegionA~RegionB'.
+    region_to_idx : Dict[str, int]
+        Mapping from region name to its index.
+    n_regions : int
+        Total number of unique regions.
+
+    Returns:
+    -------
+    connectivity_matrix : np.ndarray
+        3D array (n_subjects x n_regions x n_regions).
+    """
+    n_subjects = df.shape[0]
+    matrices = np.zeros((n_subjects, n_regions, n_regions))
+
+    # Get values as numpy array for efficiency
+    values = df[connection_columns].values
+
+    # Populate the connectivity matrices
+    for subj_idx in range(n_subjects):
+        matrix = matrices[subj_idx]
+        for col_idx, col in enumerate(connection_columns):
+            region_a, region_b = col.split('~', 1)
+            idx_a = region_to_idx[region_a]
+            idx_b = region_to_idx[region_b]
+
+            value = values[subj_idx, col_idx]
+            matrix[idx_a, idx_b] = value
+            matrix[idx_b, idx_a] = value  # Ensure symmetry
+
+        # Set diagonal to 1.0 (self-correlations)
+        np.fill_diagonal(matrix, 1.0)
+    return matrices
 
 def parse_networks(region_list: List[str]) -> Dict[str, str]:
-    """
-    Parse network membership from region names.
-    
-    Args:
-        region_list: List of region names
-        
-    Returns:
-        Dictionary mapping region names to network labels
-    """
+    """ Parse network memberships from region names. """
     network_map = {}
-    
+
     for region in region_list:
         name = region.lower()
-        network = 'Unknown'
-        
-        # --- Cortical (Schaefer 17 networks) ---
+        network = 'unknown'
+
+        # Cortical (Schaefer 17 networks)
         if region.startswith(('LH_', 'RH_')):
             if 'viscent' in name or 'vis_cent' in name:
                 network = 'VisCent'
@@ -147,7 +143,7 @@ def parse_networks(region_list: List[str]) -> Dict[str, str]:
             else:
                 network = 'CorticalOther'
         
-        # Subcortical Tian II regions
+        # Subcortical (Tian II)
         else:
             if 'ahip' in name:
                 network = 'Hippocampus_ant'
@@ -188,406 +184,444 @@ def parse_networks(region_list: List[str]) -> Dict[str, str]:
     
     return network_map
 
+# ==============================     
+# Diagonal Imputation Methods 
+# ==============================
+def impute_diagonal_zero(matrix: np.ndarray) -> np.ndarray:
+    """ Impute diagonal with zeros. """
+    result = matrix.copy()
+    n_subjects = result.shape[0]
 
-# ============================================================================
-# SKLEARN-COMPATIBLE TRANSFORMERS 
-# ============================================================================
+    for s in range(n_subjects):
+        np.fill_diagonal(result[s], 0.0)
+    return result
 
-class ConnectivityMatrixReconstructor(BaseEstimator, TransformerMixin):
+def impute_diagonal_random(matrices: np.ndarray) -> np.ndarray:
+    """ Impute diagonal with random values (Stochastic). """
+    result = matrices.copy()
+    n_subjects = result.shape[0]
+    n_regions = result.shape[1]
+
+    for s in range(n_subjects):
+        random_values = np.random.uniform(-1, 1, n_regions) # Uniform distribution between low and high 
+        np.fill_diagonal(result[s], random_values)
+    return result
+
+def impute_diagonal_region_mean(matrices: np.ndarray) -> np.ndarray:
+    """ 
+    Impute diagonal with region-wise mean connectivity (Deterministic, subject-specific). 
+    Each subject gets their own row means as diagonal values.
     """
-    Reconstruct connectivity matrices from flattened DataFrame.
+    result = matrices.copy()
+    n_subjects = result.shape[0]
+    n_regions = result.shape[1]
+
+    # create mask for off-diagonal elements
+    off_diag_mask = ~np.eye(n_regions, dtype=bool)
+
+    for s in range(n_subjects):
+        matrix = result[s]
+
+        # compute row means excluding diagonal
+        row_means = np.zeros(n_regions)                     # Initialize array to hold row means
+        for r in range(n_regions):                          # Iterate over each row
+            row_vals = matrix[r][off_diag_mask[r]]          # Extract off-diagonal values
+            row_means[r] = np.mean(row_vals) if len(row_vals) > 0 else 0.0
+
+        np.fill_diagonal(result[s], row_means)
+
+    return result
+
+def impute_diagonal_network_mean(
+        matrices: np.ndarray,
+        region_list: List[str]
+) -> np.ndarray:
+    """ 
+    Impute diagonal with network-wise mean connectivity (Deterministic, subject-specific). 
+    For each region, use mean of connections to same-network regions.
+    Fall back to row mean if no same-network connections exist.
     """
+
+    result = matrices.copy()
+    n_subjects = result.shape[0]
+    n_regions = result.shape[1]
+
+    # Parse networks
+    network_map = parse_networks(region_list)
     
-    def __init__(self, connection_columns: Optional[List[str]] = None):
-        self.connection_columns = connection_columns
-    
-    def fit(self, X, y=None):
-        """Extract region information from columns."""
-        if self.connection_columns is None:
-            if isinstance(X, pd.DataFrame):
-                self.connection_columns = [col for col in X.columns if '~' in str(col)]
+    # Build same-netowrk indices 
+    same_network_indices = []
+    for r in range(n_regions):  # 
+        r_name = region_list[r]
+        r_network = network_map.get(r_name, 'unknown') # Get network of region r 
+
+        idx = [
+            j for j in range(n_regions)
+            if j != r and network_map.get(region_list[j], 'unknown') == r_network
+        ]                                                       # Indices of regions in the same network excluding self
+        same_network_indices.append(np.array(idx, dtype=int))  
+
+    # create mask for off-diagonal elements
+    off_diag_mask = ~np.eye(n_regions, dtype=bool)
+
+    # Impute for each subject
+    for s in range(n_subjects):
+        matrix = result[s]
+        diag_vals = np.zeros(n_regions)
+
+        for r in range(n_regions):
+            # Try network mean first
+            if len(same_network_indices[r]) > 0:
+                net_vals = matrix[r][same_network_indices[r]]   # Values connecting to same-network regions
+                network_mean = np.nanmean(net_vals)             # Compute network mean
+
+                if not np.isnan(network_mean):                  # Valid mean found  
+                    diag_vals[r] = network_mean                 # Assign network mean to diagonal
+                    continue
+
+            # Fall back to row mean
+            row_vals = matrix[r][off_diag_mask[r]]
+            diag_vals[r] = np.nanmean(row_vals) if len(row_vals) > 0 else 0.0
+
+        np.fill_diagonal(result[s], diag_vals)
+    return result
+
+def impute_diagonal_sample_from_row(
+        matrices: np.ndarray
+):
+    """
+    Impute diagonal by sampling from each row (Stochastic).   
+    """
+    result = matrices.copy()
+    n_subjects = result.shape[0]
+    n_regions = result.shape[1]
+
+    # create mask for off-diagonal elements
+    off_diag_mask = ~np.eye(n_regions, dtype=bool)
+
+    for s in range(n_subjects):
+        matrix = result[s]
+
+        for r in range(n_regions):
+           # Get off-diagonal values for this row
+           candidates = matrix[r][off_diag_mask[r]]        # Extract off-diagonal values
+           candidates = candidates[~np.isnan(candidates)]  # Remove NaNs
+
+           # Sample one value 
+           if len(candidates) > 0:
+               val = np.random.choice(candidates)     # Randomly sample from candidates
+           else:
+               val = 0.0  
+           
+           matrix[r, r] = val
+
+    return result
+
+def impute_diagonal_sample_from_matrix(
+        matrices: np.ndarray
+):
+    """
+    Impute diagonal by sampling from entire matrix (Stochastic).   
+    """
+    result = matrices.copy()
+    n_subjects = result.shape[0]
+    n_regions = result.shape[1]
+
+    # create mask for off-diagonal elements
+    off_diag_mask = ~np.eye(n_regions, dtype=bool)
+
+    for s in range(n_subjects):
+        matrix = result[s]
+
+        # Get all off-diagonal values
+        candidates = matrix[off_diag_mask]               # Extract off-diagonal values
+        candidates = candidates[~np.isnan(candidates)]   # Remove NaNs
+
+        for r in range(n_regions):
+            # Sample one value 
+            if len(candidates) > 0:
+                val = np.random.choice(candidates)     # Randomly sample from candidates
             else:
-                raise ValueError("connection_columns must be provided for non-DataFrame input")
-        
-        if len(self.connection_columns) == 0:
-            raise ValueError("No connection columns found (expected 'Region_A~Region_B' format)")
-        
-        # Extract regions
-        self.region_list_, self.region_to_idx_, self.n_regions_ = extract_regions(self.connection_columns)
-        
-        return self
-    
-    def transform(self, X):
-        """Reconstruct connectivity matrices."""
-        if isinstance(X, pd.DataFrame):
-            X_values = X[self.connection_columns].values
-        else:
-            X_values = X
-        
-        n_subjects = X_values.shape[0]
-        matrices = np.zeros((n_subjects, self.n_regions_, self.n_regions_))
-        
-        for i in range(n_subjects):
-            matrices[i] = reconstruct_connectivity_matrix(
-                X_values[i],
-                self.connection_columns,
-                self.region_to_idx_,
-                self.n_regions_
-            )
-        
-        return matrices
+                val = 0.0  
+           
+            matrix[r, r] = val
 
+    return result   
 
-class FoldAwareDiagonalImputer(BaseEstimator, TransformerMixin):
+def impute_diagonal(
+        matrices: np.ndarray,
+        Strategy: str,
+        region_list: Optional[List[str]] = None
+) -> np.ndarray:
     """
-    Impute the diagonal of connectivity matrices in a fold-aware manner.
+    Impute diagonal values in connectivity matrices using specified method.
 
-    Strategies:
-      - "zero": fill 0 on the diagonal (deterministic)
-      - "random": fill U(-1,1) per subject/region (deterministic via random_state)
-      - "region_mean": SUBJECT-SPECIFIC row mean (exclude diagonal)
-      - "network_mean": SUBJECT-SPECIFIC mean over same-network targets; fallback to row mean
-      - "sample_from_matrix": SUBJECT-SPECIFIC sample from that subject's off-diagonal entries
-    
-    CORRECTED: Memory optimized - operates in-place where possible
+    Parameters:
+    ----------
+    matrices : np.ndarray
+        3D array (n_subjects x n_regions x n_regions).
+    region_list : List[str]
+        List of region names corresponding to matrix indices.
+    method : str
+        Imputation method. Options:
+        -- Deterministic --
+        - 'zero': Fill diagonal with zeros.
+        - 'region_mean': Fill diagonal with region-wise mean connectivity.
+        - 'network_mean': Fill diagonal with network-wise mean connectivity.
+
+        -- Stochastic --
+        - 'random': Fill diagonal with random values.
+        - 'sample_row': Sample diagonal values from each row.
+        - 'sample_matrix': Sample diagonal values from entire matrix.
+
+    Returns:
+    -------
+    imputed_matrices : np.ndarray
+        Matrices with imputed diagonal values.
     """
+    # Deterministic Methods
+    if Strategy == 'zero':
+        return impute_diagonal_zero(matrices)
+    elif Strategy == 'region_mean':
+        return impute_diagonal_region_mean(matrices)
+    elif Strategy == 'network_mean':
+        if region_list is None:
+            raise ValueError("region_list must be provided for network_mean imputation.")
+        return impute_diagonal_network_mean(matrices, region_list)
     
-    def __init__(
-        self, 
-        strategy: str = "zero",
-        region_list: Optional[List[str]] = None,
-        k_neighbors: int = 5,
-        random_state: int = 42
-    ):
-        """
-        Args:
-            strategy: 'zero', 'region_mean', 'network_mean', 'random', 'sample_from_matrix'
-            region_list: Required for 'network_mean'
-            k_neighbors: For future KNN strategy
-            random_state: For 'random' and 'sample_from_matrix' strategies
-        """
-        self.strategy = strategy
-        self.region_list = region_list
-        self.k_neighbors = k_neighbors
-        self.random_state = random_state
-        self.same_net_idx_: Optional[List[np.ndarray]] = None
-        self.offdiag_mask_: Optional[np.ndarray] = None
-        self.offdiag_den_: Optional[np.ndarray] = None
-        
-        # Statistics computed during fit (ONLY on training data)
-        self.statistics_ = None
-        self.network_map_ = None
-        self.n_regions_ = None
-        
-    def _build_same_net_indices(self):
-        """Precompute index lists of same-network partners for each region (exclude self)."""
-        assert self.region_list is not None and self.network_map_ is not None
-        R = self.n_regions_
-        same_net_idx = []
-        for r in range(R):
-            r_name = self.region_list[r]
-            r_net = self.network_map_.get(r_name, "Unknown")
-            idx = [
-                j for j in range(R)
-                if j != r and self.network_map_.get(self.region_list[j], "Unknown") == r_net
-            ]
-            same_net_idx.append(np.asarray(idx, dtype=int))
-        self.same_net_idx_ = same_net_idx
-        
-    def fit(self, X, y=None):
-        """
-        X: array of shape (n_subjects, n_regions, n_regions)
-        Only metadata is prepared here; no cross-subject statistics are computed.
-        """
-        if X.ndim != 3:
-            raise ValueError(f"Expected 3D array, got shape {X.shape}")
-        _, R, C = X.shape
-        if R != C:
-            raise ValueError("Connectivity matrices must be square.")
-        self.n_regions_ = R
+    # Stochastic Methods
+    elif Strategy == 'random':
+        return impute_diagonal_random(matrices)
+    elif Strategy == 'sample_row':
+        return impute_diagonal_sample_from_row(matrices)
+    elif Strategy == 'sample_matrix':
+        return impute_diagonal_sample_from_matrix(matrices)
+    else:
+        raise ValueError(f"Unknown imputation method: {Strategy}")
+    
 
-        # Validate random_state for stochastic strategies
-        if self.strategy in ["random", "sample_from_matrix"]:
-            if self.random_state is None:
-                raise ValueError(f"random_state is required for '{self.strategy}' strategy")
-
-        # Prepare a mask that excludes the diagonal
-        offdiag_mask = np.ones((R, R), dtype=bool)
-        np.fill_diagonal(offdiag_mask, False)
-        self.offdiag_mask_ = offdiag_mask
-        self.offdiag_den_ = offdiag_mask.sum(axis=1).astype(float)  # == R-1
-
-        # For subject-specific region/network means we don't keep global stats
-        self.statistics_ = None
-
-        # For network_mean we need network membership & same-net indices
-        if self.strategy == "network_mean":
-            if self.region_list is None:
-                raise ValueError("region_list is required for 'network_mean' strategy.")
-            self.network_map_ = parse_networks(self.region_list)
-            self._build_same_net_indices()
-
-        return self
-
-    def transform(self, X):
-        """
-        Apply the selected strategy per subject.
-        Returns X_imputed with diagonals replaced.
-        
-        CORRECTED: Memory optimized - works in-place when safe
-        """
-        if X.ndim != 3:
-            raise ValueError(f"Expected 3D array, got shape {X.shape}")
-        if X.shape[1] != self.n_regions_ or X.shape[2] != self.n_regions_:
-            raise ValueError("Input shape does not match fit() dimensions.")
-
-        n_subjects = X.shape[0]
-        R = self.n_regions_
-        
-        # Work in-place for memory efficiency (X is already a copy from previous transform)
-        X_imputed = X
-
-        if self.strategy == "zero":
-            for s in range(n_subjects):
-                np.fill_diagonal(X_imputed[s], 0.0)
-            return X_imputed
-
-        if self.strategy == "random":
-            rng = np.random.RandomState(self.random_state)
-            for s in range(n_subjects):
-                np.fill_diagonal(X_imputed[s], rng.uniform(-1, 1, R))
-            return X_imputed
-
-        if self.strategy == "sample_from_matrix":
-            rng = np.random.RandomState(self.random_state)
-            mask = self.offdiag_mask_
-            for s in range(n_subjects):
-                M = X_imputed[s]
-                off_diag_vals = M[mask]
-                for r in range(R):
-                    M[r, r] = rng.choice(off_diag_vals)
-            return X_imputed
-
-        if self.strategy == "region_mean":
-            # SUBJECT-SPECIFIC row means (exclude diagonal)
-            mask = self.offdiag_mask_
-            den = self.offdiag_den_
-            for s in range(n_subjects):
-                M = X_imputed[s]
-                row_sums = np.nansum(M * mask, axis=1)
-                row_means = row_sums / den
-                row_means = np.nan_to_num(row_means, nan=0.0)
-                np.fill_diagonal(M, row_means)
-            return X_imputed
-
-        if self.strategy == "network_mean":
-            if self.same_net_idx_ is None:
-                raise RuntimeError("fit() must be called before transform() for 'network_mean'.")
-
-            mask = self.offdiag_mask_
-            den = self.offdiag_den_
-
-            for s in range(n_subjects):
-                M = X_imputed[s]
-                # Precompute per-subject row means for fallback
-                row_sums = np.nansum(M * mask, axis=1)
-                row_means = row_sums / den
-                row_means = np.nan_to_num(row_means, nan=0.0)
-
-                diag_vals = np.empty(R, dtype=float)
-                for r in range(R):
-                    idx = self.same_net_idx_[r]
-                    if idx.size > 0:
-                        v = np.nanmean(M[r, idx])
-                        if np.isnan(v):
-                            v = row_means[r]
-                    else:
-                        v = row_means[r]
-                    diag_vals[r] = v
-
-                np.fill_diagonal(M, diag_vals)
-
-            return X_imputed
-
-        raise ValueError(f"Unknown strategy: {self.strategy}")
-
-
-class RegionConnectivityExtractor(BaseEstimator, TransformerMixin):
+def extract_features_for_classification(
+        matrices : np.ndarray,
+        include_diagonal: bool = False
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Extract per-region connectivity patterns for classification.
+     Extract per-region connectivity patterns for classification.
     
-    CORRECTED: Better documentation of include_diagonal parameter
+    Args:
+        matrices (np.ndarray): 3D array of shape (n_subjects, n_regions, n_regions).
+        include_diagonal (bool): Whether to include diagonal elements in the features.
+
+    Returns:
+        X_features : 2D array of shape (n_subjects*n_regions, n_features).
+        labels: Region labels for each sample.
+        subjects: Subject indices for each sample.
     """
+    # Determine dimensions
+    n_subjects = matrices.shape[0]
+    n_regions = matrices.shape[1]
+    n_samples = n_subjects * n_regions
+    n_features = n_regions if include_diagonal else n_regions - 1
+
+    # Initialize arrays
+    X_features = np.zeros((n_samples, n_features), dtype=float)
+    labels = np.zeros(n_samples, dtype=int)
+    subjects = np.zeros(n_samples, dtype=int)
     
-    def __init__(self, include_diagonal: bool = False):
-        """
-        Args:
-            include_diagonal: If True, include diagonal values in features.
-                             Should be False if diagonal was imputed (default).
-        """
-        self.include_diagonal = include_diagonal
-    
-    def fit(self, X, y=None):
-        """Store region count."""
-        if len(X.shape) != 3:
-            raise ValueError(f"Expected 3D array, got shape {X.shape}")
-        
-        self.n_regions_ = X.shape[1]
-        return self
-    
-    def transform(self, X):
-        """
-        Extract connectivity patterns.
-        
-        Args:
-            X: 3D array (n_subjects × n_regions × n_regions)
-        
-        Returns:
-            X_features: 2D array (n_subjects*n_regions × n_features)
-        """
-        n_subjects, n_regions, _ = X.shape
-        n_samples = n_subjects * n_regions
-        n_features = n_regions if self.include_diagonal else n_regions - 1
-        
-        X_features = np.zeros((n_samples, n_features), dtype=float)
-        self.labels_ = np.zeros(n_samples, dtype=int)
-        self.subjects_ = np.zeros(n_samples, dtype=int)
-        
-        sample_idx = 0
-        for subj_idx in range(n_subjects):
-            for region_idx in range(n_regions):
-                row = X[subj_idx, region_idx, :]
+    sample_idx = 0
+    # Iterate over subjects and regions
+    for subj in range(n_subjects):
+        # Iterate over regions
+        for region_idx in range(n_regions):
+            # Get connectivity vector for this region
+            conn_vector = matrices[subj, region_idx, :]
+
+            # Extract features (exclude diagonal unless specified)
+            if include_diagonal:
+                features = conn_vector
+            else:
+                features = np.delete(conn_vector, region_idx)  # Exclude diagonal element
                 
-                if self.include_diagonal:
-                    features = row
-                else:
-                    features = np.delete(row, region_idx)
-                
-                X_features[sample_idx] = features
-                self.labels_[sample_idx] = region_idx
-                self.subjects_[sample_idx] = subj_idx
-                
-                sample_idx += 1
-        
-        return X_features
-    
-    def get_labels(self):
-        """Get region labels (must call after transform)."""
-        if not hasattr(self, 'labels_'):
-            raise RuntimeError("Must call transform() before get_labels()")
-        return self.labels_
-    
-    def get_subjects(self):
-        """Get subject indices (must call after transform)."""
-        if not hasattr(self, 'subjects_'):
-            raise RuntimeError("Must call transform() before get_subjects()")
-        return self.subjects_
+            X_features[sample_idx, :] = features
+            labels[sample_idx] = region_idx
+            subjects[sample_idx] = subj
+            
+            sample_idx += 1
 
+    return X_features, labels, subjects 
+
+# ==============================
+# Main Preprocessor Class
+# ==============================
 
 class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
     """
-    Complete preprocessing pipeline.
+    Complete preprocessing pipeline for brain connectivity data.
     
-    All statistics are computed during fit() using only training data,
-    then applied during transform() to any dataset.
-    
-    CORRECTED VERSION:
-    - Fisher Z transformation now applied HERE (on correlation values)
-    - Better validation of parameters
-    - Memory optimized
+    Steps:
+    1. Reconstruct connectivity matrices from flattened DataFrame.
+    2. Impute diagonal values using specified strategy.
+    3. Extract per-region connectivity patterns for classification.
+    Parameters:
+    ----------
+    connection_columns : List[str]
+        List of connection column names in the format 'RegionA~RegionB'.
+    diagonal_imputation_strategy : str
+        Strategy for diagonal imputation. Options:
+        - 'zero'
+        - 'region_mean'
+        - 'network_mean'
+        - 'random'
+        - 'sample_row'
+        - 'sample_matrix'
+    include_diagonal_in_features : bool
+        Whether to include diagonal elements in the extracted features.
+    Returns:
+    -------
+    X_features : np.ndarray
+        2D array of shape (n_subjects*n_regions, n_features).
+    labels : np.ndarray
+        Region labels for each sample.
+    subjects : np.ndarray
+        Subject indices for each sample.
     """
-    
+
     def __init__(
         self,
         connection_columns: Optional[List[str]] = None,
-        diagonal_strategy: str = "zero",
+        imputation_strategy: str = 'zero',
         region_list: Optional[List[str]] = None,
         include_diagonal: bool = False,
         apply_fisher_z: bool = True,
-        random_state: int = 42
+        random_state: int = 42,
+        enable_diagnostic: bool = False
     ):
         """
         Args:
-            connection_columns: List of connection column names
-            diagonal_strategy: Imputation strategy
-            region_list: List of region names (required for network_mean)
-            include_diagonal: Include diagonal in features (should be False)
-            apply_fisher_z: Apply Fisher Z transformation (should be True)
-            random_state: Random seed for stochastic strategies
+            connection_columns (List[str]): List of connection column names.
+            imputation_strategy (str): Diagonal imputation strategy.
+            region_list (List[str]): List of region names.
+            include_diagonal (bool): Include diagonal in features.
+            apply_fisher_z (bool): Apply Fisher Z-transformation.
+            random_state (int): Random seed (for reproducibility testing only).
+            enable_diagnostic (bool): Enable diagnostic logging.
         """
+        # Store parameters
         self.connection_columns = connection_columns
-        self.diagonal_strategy = diagonal_strategy
+        self.imputation_strategy = imputation_strategy
         self.region_list = region_list
         self.include_diagonal = include_diagonal
         self.apply_fisher_z = apply_fisher_z
         self.random_state = random_state
-        
-        # Component transformers (will be created in fit)
-        self.reconstructor_ = None
-        self.imputer_ = None
-        self.extractor_ = None
-    
-    def fit(self, X, y=None):
+        self.enable_diagnostic = enable_diagnostic
+
+        # will be set during fit
+        self.region_list_ = None
+        self.region_to_idx_ = None
+        self.n_regions_ = None
+
+        # Diagnostic tracking
+        self._transform_count = 0
+
+    def fit(self, X: pd.DataFrame, y: Optional[np.ndarray] = None):
         """
-        Fit all preprocessing components on training data.
-        
+        Fit the preprocessor to the data.
+
+        Fit just extracts region information from the connection columns - no statistics are learned.
+
         Args:
-            X: DataFrame with connectivity data (training fold only)
+            X (pd.DataFrame): Input DataFrame with flattened connectivity data.
+            y (np.ndarray, optional): Target labels (not used).
         """
-        # Step 1: Reconstruct matrices
-        self.reconstructor_ = ConnectivityMatrixReconstructor(self.connection_columns)
-        X_matrices = self.reconstructor_.fit_transform(X)
+
+        # Extract connection columns if not provided
+        if self.connection_columns is None:
+            if isinstance(X, pd.DataFrame):
+                self.connection_columns = [col for col in X.columns if '~' in str(col)]
+            else:
+                raise ValueError("connection_columns must be provided for a non dataframe input.")
         
-        # Store region info for convenience
-        self.region_list_ = self.reconstructor_.region_list_
-        self.n_regions_ = self.reconstructor_.n_regions_
+        if len(self.connection_columns) == 0:
+            raise ValueError("No connection columns found in the input data.")
         
-        # Step 2: Fit imputer on training matrices
-        self.imputer_ = FoldAwareDiagonalImputer(
-            strategy=self.diagonal_strategy,
-            region_list=self.region_list_,
-            random_state=self.random_state
-        )
-        X_imputed = self.imputer_.fit_transform(X_matrices)
+        # Extract region information
+        self.region_list_, self.region_to_idx_, self.n_regions_ = extract_regions(self.connection_columns)
         
-        # Step 3: Extractor (no fitting needed, but we initialize)
-        self.extractor_ = RegionConnectivityExtractor(
-            include_diagonal=self.include_diagonal
-        )
-        self.extractor_.fit(X_imputed)
+        # Reset diagnostic counter
+        self._transform_count = 0
         
         return self
     
-    def transform(self, X):
+    def transform(self, X: pd.DataFrame):
         """
-        Apply preprocessing using statistics from training data.
-        
-        CORRECTED: Fisher Z transformation now applied HERE (on correlation values)
-        
+        Transform the data using the preprocessing pipeline.
+
         Args:
-            X: DataFrame with connectivity data (can be train or test)
-        
+            X (pd.DataFrame): Input DataFrame with flattened connectivity data.
         Returns:
-            X_features: 2D feature array (Fisher Z transformed if enabled)
+        -------
+        X_features : np.ndarray
+            2D array of shape (n_subjects*n_regions, n_features).
+        
+        Pipeline Steps:
+        ---------------
+        1. Reconstruct connectivity matrices from flattened DataFrame.
+        2. Impute diagonal values using specified strategy.
+        3. Extract per-region connectivity patterns for classification.
+        4. Apply Fisher Z-transformation to connectivity values.
         """
-        X_matrices = self.reconstructor_.transform(X)
-        X_imputed = self.imputer_.transform(X_matrices)
-        X_features = self.extractor_.transform(X_imputed)
+        self._transform_count += 1
         
-        # Apply Fisher Z transformation to correlation values
-        # CRITICAL: Must be done BEFORE StandardScaler
+        if self.enable_diagnostic:
+            print(f"\n[Preprocessor Transform call count: {self._transform_count}]")
+        
+        # Step 1: Reconstruct connectivity matrices
+        matrices = reconstruct_matrices_from_dataframe(
+            X,
+            self.connection_columns
+            self.region_to_idx_,
+            self.n_regions_
+        )
+
+        if self.enable_diagnostic:
+            print(f"  -> Reconstructed {matrices.shape[0]} connectivity matrices of size {matrices.shape[1]}x{matrices.shape[2]}.")
+        
+        # Step 2: Impute diagonal values
+        matrices = impute_diagonal(
+            matrices,
+            self.imputation_strategy,
+            self.region_list_
+        )
+        if self.enable_diagnostic:
+            print(f"  -> Applied diagonal imputation using strategy: '{self.imputation_strategy}'.")
+            print(f"    Subject 0 diagonal sample after imputation: {matrices[0].diagonal()[:5]} ...")
+
+        # Step 3: Extract features or per-region connectivity patterns
+        X_features, self.labels_, self.subjects_ = extract_features_for_classification(
+            matrices,
+            self.include_diagonal
+        )
+
+        if self.enable_diagnostic:
+            print(f"  -> Extracted features for classification: {X_features.shape[0]} samples with {X_features.shape[1]} features each.")            
+
+        # Step 4: Apply Fisher Z-transformation
         if self.apply_fisher_z:
-            # Clip to avoid ±1 which would give ±inf
             eps = 1e-6
-            X_clipped = np.clip(X_features, -1.0 + eps, 1.0 - eps)
+            X_clipped = np.clip(X_features, -1 + eps, 1 - eps)
             X_features = np.arctanh(X_clipped)
-        
+            if self.enable_diagnostic:
+                print(f"  -> Applied Fisher Z-transformation to connectivity values.")
+
         return X_features
-    
-    def get_labels(self):
-        """Get region labels for samples (after transform)."""
-        return self.extractor_.get_labels()
-    
-    def get_subjects(self):
-        """Get subject indices for samples (after transform)."""
-        return self.extractor_.get_subjects()
+
+    def get_labels(self) -> np.ndarray:
+        """ Get region labels for each sample after transform. """
+        if not hasattr(self, 'labels_'):
+            raise RuntimeError("Must call transform() before get_labels()")
+        return self.labels_
+
+    def get_subjects(self) -> np.ndarray:
+        """ Get subject indices for each sample after transform. """
+        if not hasattr(self, 'subjects_'):
+            raise RuntimeError("Must call transform() before get_subjects()")
+        return self.subjects_
