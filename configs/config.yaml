@@ -1,0 +1,33 @@
+# Brain Connectivity Classification - Configuration
+
+# Data files 
+data:
+  piop2_file: "data/raw/PIOP2_restingstate.csv"      
+  piop1_file: "data/raw/PIOP1_gstroop.csv"           
+
+# Output directories
+output_dirs:
+  processed: "data/processed"                        
+
+# Feature extraction & preprocessing
+preprocessing:
+  diagonal_strategy: "zero"                          # Options: "zero", "random", "region_mean", "network_mean", "sample_from_matrix","sample_from_row"
+  include_diagonal: false                            # Should be false if diagonal was imputed
+  apply_fisher_z: true                               # Apply Fisher Z transformation to correlation values (RECOMMENDED)
+
+# Model training settings
+model:
+  n_splits: 3          
+  random_seed: 42      
+
+# Evaluation & Visualization
+visualization:
+  dpi: 300                                           # Resolution for saved figures
+  high_error_threshold: 0.30                         # Regions with error ≥ this = "hard to predict"
+  low_error_threshold: 0.10                          # Regions with error ≤ this = "easy to predict"
+  colormap_error: "RdBu_r"                           # Matplotlib colormap for error maps
+  colormap_diff: "PRGn"                              # For rest vs. task difference plots
+
+# Sample mode settings
+sample:
+  n_subjects: 10                                  # Number of subjects used with --sample flag

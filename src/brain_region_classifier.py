@@ -1,12 +1,18 @@
 """
-Brain Region Classifier with Leak Free Cross-Validation
+Brain Region Classifier with Leak-Free Cross-Validation
 ========================================================
 Implements subject-wise GroupKFold cross-validation with proper preprocessing isolation. 
 All preprocessing happens inside the cross-validation loop to prevent data leakage.
+
+Key Features:
+- Subject-wise cross-validation (GroupKFold) to prevent data leakage
+- Preprocessing done inside each CV fold
+- Support for multiple models via YAML configuration
+- Comprehensive diagnostic capabilities
+- Proper handling of symmetric connectivity matrices
 """
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GroupKFold
@@ -15,7 +21,8 @@ from sklearn.base import clone
 import pickle
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
-from src.models import load_model_from_config
+from datetime import datetime
+
 
 # ==============================================
 # Cross-Validation with Preprocessing Isolation
@@ -25,7 +32,7 @@ def cross_validate_no_leakage(
     df_raw: pd.DataFrame,
     preprocessor_class,
     preprocessor_params: Dict,
-    classifier_params: Dict,
+    model_instance,
     n_splits: int = 5,
     random_state: int = 42,
     verbose: bool = True
@@ -36,23 +43,23 @@ def cross_validate_no_leakage(
     Uses sklearn's GroupKFold for proper subject-level splitting.
 
     Args:
-        df_raw : Raw connectivity DataFrame
-        preprocessor_class : Preprocessor class to be instantiated
-        preprocessor_params : Parameters for the preprocessor
-        classifier_params : Parameters for the classifier
-        n_splits : Number of cross-validation splits
-        random_state : Random seed
-        verbose : Print progress
+        df_raw (pd.DataFrame): Raw connectivity DataFrame
+        preprocessor_class: Preprocessor class to be instantiated
+        preprocessor_params (dict): Parameters for the preprocessor
+        model_instance: Instantiated classifier (e.g., LogisticRegression, XGBClassifier)
+        n_splits (int): Number of cross-validation splits
+        random_state (int): Random seed
+        verbose (bool): Print progress
 
     Returns:
-        results : Dictionary with accuracy, classification report, confusion matrix
+        results (dict): Dictionary with accuracy, fold results, and validation predictions
     """
 
     # Validate first column is subject_id
     first_col_name = df_raw.columns[0]
     if 'subject' not in first_col_name.lower() and 'id' not in first_col_name.lower():
         raise ValueError(
-            F"Expected first column to contain 'subject' or 'id', got '{first_col_name}'. "
+            f"Expected first column to contain 'subject' or 'id', got '{first_col_name}'. "
             f"Subject ID column must be the first column in the DataFrame."
         )
 
@@ -77,29 +84,28 @@ def cross_validate_no_leakage(
     all_val_subjects = []
 
     if verbose:
-        print(f"\n {'='*60}")
+        print(f"\n{'='*60}")
         print(f"Leak-Free Cross-Validation with {n_splits} Folds")
         print(f"{'='*60}\n")
         print(f"Total number of subjects: {len(unique_subjects)}")
-        print(f"Total number of samples: {df.shape[0]}\n")
+        print(f"Total number of samples: {df_raw.shape[0]}\n")
         print(f"Preprocessing: {preprocessor_params.get('diagonal_strategy', 'Unknown')}")
 
-        # check if stratergy is deterministic or stochastic
+        # Check if strategy is deterministic or stochastic
         strategy = preprocessor_params.get('diagonal_strategy', 'unknown')
 
         # Deterministic strategies
         if strategy in ['zero', 'region_mean', 'network_mean']:
             print(f"Deterministic diagonal imputation strategy: {strategy}, diagonal values are constant per subject.")
         # Stochastic strategies
-        elif strategy in ['random','sample_from_row', 'sample_from_matrix']:
+        elif strategy in ['random', 'sample_from_row', 'sample_from_matrix']:
             print(f"Stochastic diagonal imputation strategy: {strategy}, diagonal values vary per subject.")
         print()
 
     # Split at sample level with subject grouping
-
-    for fold, (train_idx,val_idx) in enumerate(gkf.split(df_raw, groups=subject_ids), 1):
+    for fold, (train_idx, val_idx) in enumerate(gkf.split(df_raw, groups=subject_ids), 1):
         
-        # get dataframe for this fold
+        # Get dataframe for this fold
         df_train = df_raw.iloc[train_idx].copy()
         df_val = df_raw.iloc[val_idx].copy()
 
@@ -123,10 +129,10 @@ def cross_validate_no_leakage(
         y_val = preprocessor.get_labels()
         subjects_val = preprocessor.get_subjects()
 
-        # Create and fit classifier
+        # Create pipeline with scaler and cloned model
         pipeline = Pipeline([
             ('scaler', StandardScaler()),
-            ('classifier', LogisticRegression(**classifier_params, random_state=random_state))
+            ('classifier', clone(model_instance))
         ])
 
         pipeline.fit(X_train, y_train)
@@ -159,11 +165,10 @@ def cross_validate_no_leakage(
         if verbose:
             print(f"  Training Accuracy: {train_acc:.4f}")
             print(f"  Validation Accuracy: {val_acc:.4f}\n")
-            print()
 
     # Aggregate overall validation results
-    val_accs = [r['val_acc'] for r in fold_results]
-    train_accs = [r['train_acc'] for r in fold_results]
+    val_accs = [r['val_accuracy'] for r in fold_results]
+    train_accs = [r['train_accuracy'] for r in fold_results]
 
     cv_results = {
         'fold_results': fold_results,
@@ -186,23 +191,23 @@ def cross_validate_no_leakage(
 
     return cv_results
 
+
 def train_final_model(
-        df_train: pd.DataFrame,
-        preprocessor_class,
-        preprocessor_params: Dict,
-        classifier_params: Dict,
-        verbose: bool = True
-    ) -> Tuple[Pipeline, object]:
+    df_train: pd.DataFrame,
+    preprocessor_class,
+    preprocessor_params: Dict,
+    model_instance,
+    verbose: bool = True
+) -> Tuple[Pipeline, object]:
     """
     Train final model on all training data.
     
-    
     Args:
-        df_train: Full training DataFrame
+        df_train (pd.DataFrame): Full training DataFrame
         preprocessor_class: Preprocessor class
-        preprocessor_params: Preprocessor parameters
-        classifier_params: Classifier parameters
-        verbose: Print progress
+        preprocessor_params (dict): Preprocessor parameters
+        model_instance: Instantiated classifier
+        verbose (bool): Print progress
     
     Returns:
         (pipeline, preprocessor): Trained pipeline and fitted preprocessor
@@ -218,10 +223,10 @@ def train_final_model(
     X_train = preprocessor.transform(df_train)
     y_train = preprocessor.get_labels()
 
-    # Create and fit classifier
+    # Create and fit pipeline
     pipeline = Pipeline([
         ('scaler', StandardScaler()),
-        ('classifier', LogisticRegression(**classifier_params, random_state=42))
+        ('classifier', clone(model_instance))
     ])
 
     pipeline.fit(X_train, y_train)
@@ -240,6 +245,7 @@ def train_final_model(
 
     return pipeline, preprocessor
 
+
 # ==============================
 # Main Classifier Class
 # ==============================
@@ -247,21 +253,57 @@ def train_final_model(
 class BrainRegionClassifier:
     """
     Brain Connectivity Classifier with Leak-Free Cross-Validation.
+    
+    This class handles the complete workflow:
+    1. Subject-wise cross-validation with GroupKFold
+    2. Preprocessing isolation (no data leakage)
+    3. Training final model on all data
+    4. Prediction on new data
+    
+    Example:
+        >>> from src.models import load_model_from_config
+        >>> from src.features import BrainConnectivityPreprocessor
+        >>> 
+        >>> model = load_model_from_config("logistic_regression")
+        >>> classifier = BrainRegionClassifier(
+        ...     preprocessor_class=BrainConnectivityPreprocessor,
+        ...     model_instance=model,
+        ...     diagonal_strategy="zero"
+        ... )
+        >>> classifier.fit(df_train)
+        >>> y_pred, y_true, subjects = classifier.predict(df_test)
     """
 
     def __init__(
         self,
         preprocessor_class,
-        model_name: str = "logistic_regression"
+        model_instance,
+        model_name: str = "unknown_model",
         diagonal_strategy: str = "zero",
         connection_columns: Optional[List[str]] = None,
         include_diagonal: bool = False,
         apply_fisher_z: bool = True,
         n_splits: int = 5,
         random_state: int = 42,
-        enable_diagnostics: bool = False ):
-
+        enable_diagnostics: bool = False
+    ):
+        """
+        Initialize the Brain Region Classifier.
+        
+        Args:
+            preprocessor_class: Class for preprocessing (e.g., BrainConnectivityPreprocessor)
+            model_instance: Instantiated model (e.g., from load_model_from_config())
+            model_name (str): Name of the model for logging/saving
+            diagonal_strategy (str): Diagonal imputation strategy
+            connection_columns (list): List of connection column names
+            include_diagonal (bool): Include diagonal in features
+            apply_fisher_z (bool): Apply Fisher Z transformation
+            n_splits (int): Number of CV folds
+            random_state (int): Random seed
+            enable_diagnostics (bool): Enable diagnostic logging
+        """
         self.preprocessor_class = preprocessor_class
+        self.model_instance = model_instance
         self.model_name = model_name
         self.diagonal_strategy = diagonal_strategy
         self.connection_columns = connection_columns
@@ -271,22 +313,27 @@ class BrainRegionClassifier:
         self.random_state = random_state
         self.enable_diagnostics = enable_diagnostics
 
-        # Initialize preprocessor and classifier
+        # Will be set during fit
         self.pipeline_ = None
         self.preprocessor_ = None
         self.cv_results_ = None
         self.region_list_ = None
         self.n_regions_ = None
         self.is_fitted_ = False
+        self.fit_timestamp_ = None
 
     def fit(self, df_train: pd.DataFrame, verbose: bool = True):
         """
         Fit the classifier with leak-free cross-validation.
 
         Args:
-            df_train: Training DataFrame
-            verbose: Print progress
+            df_train (pd.DataFrame): Training DataFrame
+            verbose (bool): Print progress
+            
+        Returns:
+            self: Fitted classifier
         """
+        self.fit_timestamp_ = datetime.now()
 
         # Prepare preprocessor parameters
         preprocessor_params = {
@@ -295,15 +342,7 @@ class BrainRegionClassifier:
             'include_diagonal': self.include_diagonal,
             'apply_fisher_z': self.apply_fisher_z,
             'random_state': self.random_state,
-            'enable_diagnostic': self.enable_diagnostic
-        }
-
-        # Prepare classifier parameters
-        classifier_params = {
-            'C': self.C,
-            'max_iter': self.max_iter,
-            'multi_class': 'multinomial',
-            'random_state': self.random_state
+            'enable_diagnostics': self.enable_diagnostics
         }
 
         # Perform cross-validation
@@ -311,7 +350,7 @@ class BrainRegionClassifier:
             df_train,
             self.preprocessor_class,
             preprocessor_params,
-            classifier_params,
+            self.model_instance,
             n_splits=self.n_splits,
             random_state=self.random_state,
             verbose=verbose
@@ -322,7 +361,7 @@ class BrainRegionClassifier:
             df_train,
             self.preprocessor_class,
             preprocessor_params,
-            classifier_params,
+            self.model_instance,
             verbose=verbose
         )
 
@@ -338,23 +377,22 @@ class BrainRegionClassifier:
         Predict on new data.
 
         Args:
-            df_test: Test DataFrame
+            df_test (pd.DataFrame): Test DataFrame
 
         Returns:
             (y_pred, y_true, subjects): Predicted labels, true labels, subject IDs
         """
-
         if not self.is_fitted_:
             raise RuntimeError("The model must be fitted before prediction.")
 
         # Transform test data
         X_test = self.preprocessor_.transform(df_test)
         y_test = self.preprocessor_.get_labels()
-        subject_ids = self.preprocessor_.get_subjects()
+        subjects = self.preprocessor_.get_subjects()
 
         # Get subject IDs from DataFrame
         subject_ids = df_test.iloc[:, 0].values
-        subject_ids_mapped = subject_ids[subject_ids]
+        subject_ids_mapped = subject_ids[subjects]
 
         # Predict
         y_pred = self.pipeline_.predict(X_test)
@@ -366,12 +404,11 @@ class BrainRegionClassifier:
         Predict class probabilities on new data.
 
         Args:
-            df_test: Test DataFrame
+            df_test (pd.DataFrame): Test DataFrame
 
         Returns:
-            y_proba: Predicted class probabilities
+            y_proba (np.ndarray): Predicted class probabilities
         """
-
         if not self.is_fitted_:
             raise RuntimeError("The model must be fitted before prediction.")
 
@@ -383,9 +420,12 @@ class BrainRegionClassifier:
 
         return y_proba
     
-    def get_cv_results(self):
+    def get_cv_results(self) -> Dict:
         """
         Get cross-validation results including validation predictions.
+        
+        Returns:
+            dict: CV results with fold statistics and predictions
         """
         if self.cv_results_ is None:
             raise RuntimeError("Cross-validation results are not available. Must call fit() first.")
@@ -394,6 +434,9 @@ class BrainRegionClassifier:
     def get_cv_validation_predictions(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Get cross-validation validation predictions, true labels, and subject IDs.
+        
+        Returns:
+            (val_predictions, val_true, val_subjects): Arrays of predictions, labels, and subjects
         """
         if self.cv_results_ is None:
             raise RuntimeError("Cross-validation results are not available. Must call fit() first.")
@@ -403,15 +446,47 @@ class BrainRegionClassifier:
             self.cv_results_['val_subjects']
         )
     
+    def get_metadata(self) -> Dict:
+        """
+        Get metadata about this classifier run.
+        
+        Returns:
+            dict: Metadata including model config, preprocessing, and results
+        """
+        if not self.is_fitted_:
+            raise RuntimeError("Metadata not available. Must call fit() first.")
+        
+        return {
+            'model_name': self.model_name,
+            'model_type': type(self.model_instance).__name__,
+            'diagonal_strategy': self.diagonal_strategy,
+            'apply_fisher_z': self.apply_fisher_z,
+            'include_diagonal': self.include_diagonal,
+            'n_splits': self.n_splits,
+            'random_state': self.random_state,
+            'n_regions': self.n_regions_,
+            'fit_timestamp': self.fit_timestamp_.isoformat() if self.fit_timestamp_ else None,
+            'cv_val_mean': self.cv_results_['val_mean'],
+            'cv_val_std': self.cv_results_['val_std'],
+            'cv_train_mean': self.cv_results_['train_mean'],
+            'cv_train_std': self.cv_results_['train_std'],
+        }
+    
     def save(self, output_dir: str):
-        """Save the trained model and preprocessor to disk."""
+        """
+        Save the trained model and preprocessor to disk.
+        
+        Args:
+            output_dir (str): Directory to save models
+        """
         if not self.is_fitted_:
             raise RuntimeError("The model must be fitted before saving.")
+        
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Save pipeline
-        pipeline_path = output_dir / f"pipeline_{}_{self.diagonal_strategy}.pkl"
+        pipeline_path = output_dir / f"pipeline_{self.model_name}_{self.diagonal_strategy}.pkl"
         with open(pipeline_path, 'wb') as f:
             pickle.dump(self.pipeline_, f)
 
@@ -420,4 +495,13 @@ class BrainRegionClassifier:
         with open(preprocessor_path, 'wb') as f:
             pickle.dump(self.preprocessor_, f)
 
-        print(f"Model and preprocessor saved to {output_dir}")
+        # Save metadata
+        metadata_path = output_dir / f"metadata_{self.model_name}_{self.diagonal_strategy}.json"
+        import json
+        with open(metadata_path, 'w') as f:
+            json.dump(self.get_metadata(), f, indent=2)
+
+        print(f"✓ Model saved to {output_dir}")
+        print(f"  - Pipeline: {pipeline_path.name}")
+        print(f"  - Preprocessor: {preprocessor_path.name}")
+        print(f"  - Metadata: {metadata_path.name}")

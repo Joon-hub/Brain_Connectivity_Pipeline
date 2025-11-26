@@ -488,31 +488,31 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
     def __init__(
         self,
         connection_columns: Optional[List[str]] = None,
-        imputation_strategy: str = 'zero',
+        diagonal_strategy: str = 'zero',
         region_list: Optional[List[str]] = None,
         include_diagonal: bool = False,
         apply_fisher_z: bool = True,
         random_state: int = 42,
-        enable_diagnostic: bool = False
+        enable_diagnostics: bool = False
     ):
         """
         Args:
             connection_columns (List[str]): List of connection column names.
-            imputation_strategy (str): Diagonal imputation strategy.
+            diagonal_strategy (str): Diagonal imputation strategy.
             region_list (List[str]): List of region names.
             include_diagonal (bool): Include diagonal in features.
             apply_fisher_z (bool): Apply Fisher Z-transformation.
             random_state (int): Random seed (for reproducibility testing only).
-            enable_diagnostic (bool): Enable diagnostic logging.
+            enable_diagnostics (bool): Enable diagnostic logging.
         """
         # Store parameters
         self.connection_columns = connection_columns
-        self.imputation_strategy = imputation_strategy
+        self.diagonal_strategy = diagonal_strategy
         self.region_list = region_list
         self.include_diagonal = include_diagonal
         self.apply_fisher_z = apply_fisher_z
         self.random_state = random_state
-        self.enable_diagnostic = enable_diagnostic
+        self.enable_diagnostics = enable_diagnostics
 
         # will be set during fit
         self.region_list_ = None
@@ -571,28 +571,28 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
         """
         self._transform_count += 1
         
-        if self.enable_diagnostic:
+        if self.enable_diagnostics:
             print(f"\n[Preprocessor Transform call count: {self._transform_count}]")
         
         # Step 1: Reconstruct connectivity matrices
         matrices = reconstruct_matrices_from_dataframe(
             X,
-            self.connection_columns
+            self.connection_columns,
             self.region_to_idx_,
             self.n_regions_
         )
 
-        if self.enable_diagnostic:
+        if self.enable_diagnostics:
             print(f"  -> Reconstructed {matrices.shape[0]} connectivity matrices of size {matrices.shape[1]}x{matrices.shape[2]}.")
         
         # Step 2: Impute diagonal values
         matrices = impute_diagonal(
             matrices,
-            self.imputation_strategy,
+            self.diagonal_strategy,
             self.region_list_
         )
-        if self.enable_diagnostic:
-            print(f"  -> Applied diagonal imputation using strategy: '{self.imputation_strategy}'.")
+        if self.enable_diagnostics:
+            print(f"  -> Applied diagonal imputation using strategy: '{self.diagonal_strategy}'.")
             print(f"    Subject 0 diagonal sample after imputation: {matrices[0].diagonal()[:5]} ...")
 
         # Step 3: Extract features or per-region connectivity patterns
@@ -601,7 +601,7 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
             self.include_diagonal
         )
 
-        if self.enable_diagnostic:
+        if self.enable_diagnostics:
             print(f"  -> Extracted features for classification: {X_features.shape[0]} samples with {X_features.shape[1]} features each.")            
 
         # Step 4: Apply Fisher Z-transformation
@@ -609,7 +609,7 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
             eps = 1e-6
             X_clipped = np.clip(X_features, -1 + eps, 1 - eps)
             X_features = np.arctanh(X_clipped)
-            if self.enable_diagnostic:
+            if self.enable_diagnostics:
                 print(f"  -> Applied Fisher Z-transformation to connectivity values.")
 
         return X_features

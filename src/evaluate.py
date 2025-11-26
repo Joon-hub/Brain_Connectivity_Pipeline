@@ -8,17 +8,54 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, confusion_matrix
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Union
 
 
 def calculate_error_map(
     y_true: np.ndarray,
     y_pred: np.ndarray,
+    n_regions: int
+) -> np.ndarray:
+    """
+    Calculate per-region misclassification rates.
+    
+    Args:
+        y_true: True labels
+        y_pred: Predicted labels
+        n_regions: Number of regions
+    
+    Returns:
+        Array of error rates (one per region)
+    """
+    error_rates = np.zeros(n_regions)
+    
+    for region_idx in range(n_regions):
+        mask = (y_true == region_idx)
+        if mask.any():
+            region_true = y_true[mask]
+            region_pred = y_pred[mask]
+            acc = accuracy_score(region_true, region_pred)
+            error_rates[region_idx] = 1.0 - acc
+        else:
+            # No samples for this region
+            error_rates[region_idx] = 0.0
+    
+    return error_rates
+
+
+def calculate_error_map_detailed(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
     region_list: List[str]
 ) -> pd.DataFrame:
     """
-    Calculate per-region misclassification rates.
-
+    Calculate per-region misclassification rates with detailed info.
+    
+    Args:
+        y_true: True labels
+        y_pred: Predicted labels
+        region_list: List of region names
+    
     Returns:
         DataFrame with columns: region_index, region_name,
         misclassification_rate, n_samples
@@ -68,12 +105,12 @@ def calculate_global_metrics(
     }
 
 
-def save_results_csv(df: pd.DataFrame, filepath: str) -> None:
+def save_results_csv(df: pd.DataFrame, filepath: Union[str, Path]) -> None:
     """Save DataFrame to CSV, creating directories if needed."""
     filepath = Path(filepath)
     filepath.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(filepath, index=False)
-    print(f"✓ Saved: {filepath}")
+    print(f"✓ Saved: {filepath.name}")
 
 
 # ===============================================================
@@ -84,44 +121,40 @@ def save_confusion_matrix(
     y_true: np.ndarray,
     y_pred: np.ndarray,
     region_list: List[str],
-    dataset_name: str
+    output_path: Union[str, Path]
 ) -> None:
     """
     Save raw and normalized confusion matrices.
-
-    Automatically ensures full class coverage.
+    
+    Args:
+        y_true: True labels
+        y_pred: Predicted labels
+        region_list: List of region names
+        output_path: Path where to save the confusion matrix CSV
     """
-    base_dir = Path("reports/tables/confusion_matrix")
-    base_dir.mkdir(parents=True, exist_ok=True)
-
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
     labels = np.arange(len(region_list))
     cm = confusion_matrix(y_true, y_pred, labels=labels)
 
-    # Raw
+    # Save raw confusion matrix
     cm_df = pd.DataFrame(cm, index=region_list, columns=region_list)
-    save_results_csv(cm_df.reset_index().rename(columns={"index": "True_Label"}),
-                     base_dir / f"{dataset_name}_raw.csv")
-
-    # Normalized
-    with np.errstate(divide='ignore', invalid='ignore'):
-        cm_norm = cm.astype(float) / cm.sum(axis=1, keepdims=True)
-        cm_norm = np.nan_to_num(cm_norm)
-    cm_norm_df = pd.DataFrame(cm_norm, index=region_list, columns=region_list)
-    save_results_csv(cm_norm_df.reset_index().rename(columns={"index": "True_Label"}),
-                     base_dir / f"{dataset_name}_normalized.csv")
-
-    print(f"✓ Confusion matrices saved for {dataset_name} set (raw & normalized)")
+    cm_df_with_index = cm_df.reset_index().rename(columns={"index": "True_Label"})
+    cm_df_with_index.to_csv(output_path, index=False)
+    
+    print(f"✓ Saved confusion matrix: {output_path.name}")
 
 
 def save_predictions_table(
     y_true: np.ndarray,
     y_pred: np.ndarray,
-    dataset_name: str,
-    region_list: List[str]
+    region_list: List[str],
+    output_path: Union[str, Path]
 ) -> None:
     """Save table of true vs predicted labels for inspection."""
-    base_dir = Path("reports/tables/confusion_matrix")
-    base_dir.mkdir(parents=True, exist_ok=True)
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     df = pd.DataFrame({
         "y_true_index": y_true,
@@ -130,24 +163,33 @@ def save_predictions_table(
         "y_pred_label": [region_list[i] for i in y_pred]
     })
 
-    filepath = base_dir / f"{dataset_name}_predictions.csv"
-    df.to_csv(filepath, index=False)
-    print(f"✓ Saved predictions table: {filepath}")
+    df.to_csv(output_path, index=False)
+    print(f"✓ Saved predictions table: {output_path.name}")
 
-def compare_error_maps(error_rest, error_task):
+
+def compare_error_maps(error_rest: np.ndarray, error_task: np.ndarray) -> pd.DataFrame:
     """
     Compare misclassification rates between rest and task.
-    Returns a DataFrame with error difference per region.
+    
+    Args:
+        error_rest: Error rates for rest condition (numpy array)
+        error_task: Error rates for task condition (numpy array)
+    
+    Returns:
+        DataFrame with error comparison per region
     """
-    comparison = error_rest[['region_name', 'misclassification_rate']].copy()
-    comparison = comparison.merge(
-        error_task[['region_name', 'misclassification_rate']],
-        on='region_name',
-        suffixes=('_rest', '_task')
-    )
-    comparison['error_increase'] = comparison['misclassification_rate_task'] - comparison['misclassification_rate_rest']
+    n_regions = len(error_rest)
+    
+    comparison = pd.DataFrame({
+        'region_index': range(n_regions),
+        'error_rate_rest': error_rest,
+        'error_rate_task': error_task,
+        'error_increase': error_task - error_rest
+    })
+    
     comparison = comparison.sort_values('error_increase', ascending=False).reset_index(drop=True)
     return comparison
+
 
 # ===============================================================
 # Example Usage
@@ -178,6 +220,10 @@ if __name__ == "__main__" and False:
     print(f"\nTrain Accuracy: {train_metrics['accuracy']:.4f}")
     print(f"Test Accuracy:  {test_metrics['accuracy']:.4f}")
 
+    # --- Error maps ---
+    error_map_train = calculate_error_map(y_true_train, y_pred_train, n_regions)
+    print(f"\nAverage training error: {error_map_train.mean():.4f}")
+
     # --- Confusion matrices ---
-    save_confusion_matrix(y_true_train, y_pred_train, region_list, "train")
-    save_confusion_matrix(y_true_test, y_pred_test, region_list, "test")
+    save_confusion_matrix(y_true_train, y_pred_train, region_list, "test_output/confusion_train.csv")
+    save_confusion_matrix(y_true_test, y_pred_test, region_list, "test_output/confusion_test.csv")

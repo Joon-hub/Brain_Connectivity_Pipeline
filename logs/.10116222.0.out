@@ -1,0 +1,217 @@
+===========================================
+Starting Brain Connectivity Classification
+===========================================
+Current directory: /home/sjoon/projects/brain_connectivity_classifier
+Running on host: cpu43
+Start time: Wed Nov 26 06:37:34 PM CET 2025
+===========================================
+
+======================================================================
+  BRAIN CONNECTIVITY CLASSIFICATION - PHASE 2
+======================================================================
+
+Mode: SAMPLE DATA
+Config: configs/config.yaml
+Model: logistic_regression
+Diagnostics: Disabled
+Experiment Tracking: ENABLED
+Start: 2025-11-26 18:37:35
+
+✓ Created experiment: my_test_20251126_183735
+  Location: results/experiments/my_test_20251126_183735
+Configuration:
+  Model: logistic_regression
+  Diagonal strategy: zero
+    → DETERMINISTIC: Diagonal values constant per subject
+  CV folds: 3
+  Random seed: 42
+  Fisher Z transform: Enabled
+
+======================================================================
+  STEP 1: Load Training Data (PIOP-2 Resting State)
+======================================================================
+
+✓ Loaded 10 subjects from sample_piop2.csv
+  Subjects: 10
+  Connections: 26796
+
+======================================================================
+  STEP 2: Load Model & Create Classifier
+======================================================================
+
+Loaded LogisticRegression ← logistic_regression.yaml
+   Params: {'C': 10, 'penalty': 'l2', 'solver': 'lbfgs', 'multi_class': 'multinomial', 'max_iter': 1000}
+✓ Loaded model: LogisticRegression
+✓ Created classifier
+  Preprocessor: BrainConnectivityPreprocessor
+  Model: LogisticRegression
+  Cross-validation: 3-fold GroupKFold
+
+======================================================================
+  STEP 3: Train with Leak-Free Cross-Validation
+======================================================================
+
+⚠️  IMPORTANT: Preprocessing happens INSIDE each CV fold
+   → Statistics computed only on training fold
+   → No information leakage to validation fold
+   → Fisher Z applied to correlation values (before scaling)
+
+
+============================================================
+Leak-Free Cross-Validation with 3 Folds
+============================================================
+
+Total number of subjects: 10
+Total number of samples: 10
+
+Preprocessing: zero
+Deterministic diagonal imputation strategy: zero, diagonal values are constant per subject.
+
+Fold 1/3:
+  Training subjects: 6, Validation subjects: 4
+  Training Accuracy: 1.0000
+  Validation Accuracy: 0.4289
+
+Fold 2/3:
+  Training subjects: 7, Validation subjects: 3
+  Training Accuracy: 1.0000
+  Validation Accuracy: 0.5201
+
+Fold 3/3:
+  Training subjects: 7, Validation subjects: 3
+  Training Accuracy: 1.0000
+  Validation Accuracy: 0.4957
+
+============================================================
+Cross-Validation Results:
+  Mean Training Accuracy: 1.0000 ± 0.0000
+  Mean Validation Accuracy: 0.4816 ± 0.0386
+============================================================
+
+
+Training final model on all training data...
+============================================================
+Final Model Results:
+  Training Accuracy: 1.0000
+  Trained on 2320 samples.
+
+============================================================
+
+
+============================================================
+Cross-Validation Summary:
+  Training Accuracy:   1.0000 ± 0.0000
+  Validation Accuracy: 0.4816 ± 0.0386
+============================================================
+
+✓ Saved: cv_fold_results.csv
+✓ Saved: error_map_cv_validation.csv
+✓ Saved confusion matrix: confusion_matrix_cv_validation.csv
+
+======================================================================
+  STEP 3.5: Evaluate on Training Data (for reference)
+======================================================================
+
+Training accuracy: 1.0000
+NOTE: This is overfitted - use CV validation for unbiased estimate
+✓ Saved: error_map_train.csv
+✓ Saved confusion matrix: confusion_matrix_train.csv
+
+======================================================================
+  STEP 4: Save Trained Model
+======================================================================
+
+✓ Model saved to results/experiments/my_test_20251126_183735/models
+  - Pipeline: pipeline_logistic_regression_zero.pkl
+  - Preprocessor: preprocessor_zero.pkl
+  - Metadata: metadata_logistic_regression_zero.json
+✓ Model saved to: results/experiments/my_test_20251126_183735/models
+
+======================================================================
+  STEP 5: Evaluate on Task Data (PIOP-1 Gender Stroop)
+======================================================================
+
+✓ Loaded 10 subjects from sample_piop1.csv
+  Test subjects: 10
+
+Test Results:
+  Test Accuracy: 0.4784
+  CV Validation → Test drop: 0.0031
+✓ Saved: error_map_test.csv
+✓ Saved confusion matrix: confusion_matrix_test.csv
+✓ Saved: comparison_cv_validation_vs_task.csv
+✓ Saved: comparison_train_vs_task.csv
+
+======================================================================
+  STEP 6: Generate Visualizations
+======================================================================
+
+Figure saved: error_map_cv_validation.png
+✓ Generated: error_map_cv_validation.png
+Figure saved: error_map_train.png
+✓ Generated: error_map_train.png
+Figure saved: error_map_task.png
+✓ Generated: error_map_task.png
+Figure saved: comparison_cv_validation_vs_task.png
+✓ Generated: comparison_cv_validation_vs_task.png
+Figure saved: comparison_train_vs_task.png
+✓ Generated: comparison_train_vs_task.png
+
+Total figures: 5
+✓ Saved metadata to: metadata.json
+
+======================================================================
+  PIPELINE COMPLETE!
+======================================================================
+
+
+RESULTS SUMMARY
+======================================================================
+
+Experiment: logistic_regression_zero
+Model: LogisticRegression
+
+Data:
+  Training subjects: 10
+  Brain regions: 232
+  Chance level: 0.0043
+
+Configuration:
+  Diagonal strategy: zero
+  CV folds: 3
+  Fisher Z transform: Enabled
+  Random seed: 42
+
+Cross-Validation Results (LEAK-FREE):
+  Validation accuracy: 0.4816 ± 0.0386  
+  Training accuracy: 1.0000 ± 0.0000  
+  Full Training Accuracy: 1.0000 (overfitted)
+  Improvement over chance: 111.7x
+
+Task Data (Gender Stroop):
+  Test subjects: 10
+  Test accuracy: 0.4784
+  CV validation → Task drop: 0.0031
+
+======================================================================
+
+Output Locations:
+  Experiment: results/experiments/my_test_20251126_183735
+  Models: results/experiments/my_test_20251126_183735/models
+  Metrics: results/experiments/my_test_20251126_183735/metrics
+  Figures: results/experiments/my_test_20251126_183735/figures
+  Predictions: results/experiments/my_test_20251126_183735/predictions
+
+Execution Time: 33.2s
+Completed: 2025-11-26 18:38:08
+
+======================================================================
+
+✅ Pipeline completed successfully!
+
+
+===========================================
+Pipeline finished!
+End time: Wed Nov 26 06:38:08 PM CET 2025
+Exit code: 
+===========================================

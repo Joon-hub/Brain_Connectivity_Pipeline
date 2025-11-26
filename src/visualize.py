@@ -1,13 +1,9 @@
+# src/visualize.py
 """
-Visualization Module
-====================
-Create publication-quality figures for thesis.
-
-Generates 4 key figures:
-1. Training error map (resting-state)
-2. Task error map
-3. Rest vs task comparison
-4. Network-level analysis
+Visualization Module (Updated for Phase 2 Pipeline)
+==================================================
+Creates publication-quality 4-panel figures with proper region names.
+Now compatible with new pipeline outputs (numpy arrays + region_list).
 """
 
 import matplotlib.pyplot as plt
@@ -15,6 +11,7 @@ import seaborn as sns
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from typing import List, Optional, Union
 
 # Set publication style
 plt.style.use('seaborn-v0_8-paper')
@@ -24,52 +21,68 @@ plt.rcParams['axes.labelsize'] = 11
 plt.rcParams['axes.titlesize'] = 12
 
 
-def plot_error_map(error_df: pd.DataFrame, 
-                   title: str,
-                   output_path: str,
-                   dpi: int = 300):
+def plot_error_map(
+    error_rates: Union[np.ndarray, List[float]],
+    title: str,
+    output_path: str,
+    region_list: Optional[List[str]] = None,
+    dpi: int = 300
+):
     """
-    Create 4-panel error map visualization.
+    Create 4-panel error map visualization from raw error rates + region names.
     
     Args:
-        error_df: Error map DataFrame
+        error_rates: 1D array/list of misclassification rates (length = n_regions)
         title: Figure title
         output_path: Save path
+        region_list: List of region names (same order as error_rates)
         dpi: Resolution
     """
+    error_rates = np.array(error_rates)
+    n_regions = len(error_rates)
+    
+    if region_list is None:
+        region_list = [f"Region_{i:02d}" for i in range(n_regions)]
+    
+    # Create DataFrame for easier handling
+    error_df = pd.DataFrame({
+        'region_name': region_list,
+        'misclassification_rate': error_rates
+    }).sort_values('misclassification_rate', ascending=False).reset_index(drop=True)
+    
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     
-    # Panel 1: All regions bar plot
+    # Panel 1: All regions bar plot (sorted)
     ax1 = axes[0, 0]
     colors = plt.cm.RdYlGn_r(error_df['misclassification_rate'] / error_df['misclassification_rate'].max())
-    ax1.bar(range(len(error_df)), error_df['misclassification_rate'], 
-            color=colors, edgecolor='black', linewidth=0.5, alpha=0.8)
-    ax1.axhline(error_df['misclassification_rate'].mean(), 
-                color='blue', linestyle='--', linewidth=2, label='Mean')
-    ax1.set_xlabel('Region Index', fontweight='bold')
+    bars1 = ax1.bar(range(n_regions), error_df['misclassification_rate'], 
+                    color=colors, edgecolor='black', linewidth=0.5, alpha=0.8)
+    mean_err = error_df['misclassification_rate'].mean()
+    ax1.axhline(mean_err, color='blue', linestyle='--', linewidth=2, label=f'Mean = {mean_err:.3f}')
+    ax1.set_xlabel('Region (sorted by error)', fontweight='bold')
     ax1.set_ylabel('Misclassification Rate', fontweight='bold')
-    ax1.set_title('All Regions', fontweight='bold')
+    ax1.set_title('All Regions - Sorted by Error', fontweight='bold')
     ax1.legend()
     ax1.grid(axis='y', alpha=0.3)
     
     # Panel 2: Top 20 worst regions
     ax2 = axes[0, 1]
     top_20 = error_df.head(20)
-    ax2.barh(range(20), top_20['misclassification_rate'], 
-             color='red', alpha=0.7, edgecolor='black')
+    bars2 = ax2.barh(range(20), top_20['misclassification_rate'], 
+                     color='red', alpha=0.7, edgecolor='black')
     ax2.set_yticks(range(20))
-    ax2.set_yticklabels([name[:35] for name in top_20['region_name']], fontsize=8)
+    ax2.set_yticklabels([name[:40] + "..." if len(name) > 40 else name 
+                         for name in top_20['region_name']], fontsize=8.5)
     ax2.set_xlabel('Misclassification Rate', fontweight='bold')
-    ax2.set_title('Top 20 Misclassified Regions', fontweight='bold')
+    ax2.set_title('Top 20 Most Confused Regions', fontweight='bold')
     ax2.invert_yaxis()
     ax2.grid(axis='x', alpha=0.3)
     
     # Panel 3: Distribution histogram
     ax3 = axes[1, 0]
-    ax3.hist(error_df['misclassification_rate'], bins=50, 
-             alpha=0.7, color='steelblue', edgecolor='black')
-    ax3.axvline(error_df['misclassification_rate'].mean(), 
-                color='red', linestyle='--', linewidth=2, label='Mean')
+    ax3.hist(error_df['misclassification_rate'], bins=min(50, n_regions//2), 
+             alpha=0.7, color='steelblue', edgecolor='black', linewidth=0.8)
+    ax3.axvline(mean_err, color='red', linestyle='--', linewidth=2, label=f'Mean = {mean_err:.3f}')
     ax3.set_xlabel('Misclassification Rate', fontweight='bold')
     ax3.set_ylabel('Number of Regions', fontweight='bold')
     ax3.set_title('Distribution of Error Rates', fontweight='bold')
@@ -82,220 +95,159 @@ def plot_error_map(error_df: pd.DataFrame,
     
     stats_text = f"""
     SUMMARY STATISTICS
-    ==================
+    {'='*25}
     
-    Total Regions: {len(error_df)}
-    Mean Error: {error_df['misclassification_rate'].mean():.4f}
-    Median Error: {error_df['misclassification_rate'].median():.4f}
-    Std Error: {error_df['misclassification_rate'].std():.4f}
-    Min Error: {error_df['misclassification_rate'].min():.4f}
-    Max Error: {error_df['misclassification_rate'].max():.4f}
+    Total Regions        → {n_regions}
+    Mean Error           → {mean_err:.4f}
+    Median Error         → {error_df['misclassification_rate'].median():.4f}
+    Std Deviation        → {error_df['misclassification_rate'].std():.4f}
+    Min Error            → {error_df['misclassification_rate'].min():.4f}
+    Max Error            → {error_df['misclassification_rate'].max():.4f}
     
-    High Error (>30%): {(error_df['misclassification_rate'] > 0.3).sum()}
-    Low Error (<10%): {(error_df['misclassification_rate'] < 0.1).sum()}
+    High Error (>0.30)   → {(error_rates > 0.30).sum()}
+    Low Error (<0.10)    → {(error_rates < 0.10).sum()}
     """
     
-    ax4.text(0.1, 0.5, stats_text, fontsize=11, family='monospace',
-             verticalalignment='center', fontweight='bold',
-             bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
+    ax4.text(0.05, 0.95, stats_text, transform=ax4.transAxes, fontsize=11, family='monospace',
+             verticalalignment='top', fontweight='bold',
+             bbox=dict(boxstyle='round,pad=1', facecolor='lightblue', alpha=0.9))
     
-    plt.suptitle(title, fontsize=14, fontweight='bold')
-    plt.tight_layout()
+    plt.suptitle(title, fontsize=15, fontweight='bold', y=0.98)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path, dpi=dpi, bbox_inches='tight')
-    plt.close()
+    plt.close(fig)
     
-    print(f"✓ Saved figure: {output_path}")
+    print(f"Figure saved: {Path(output_path).name}")
 
-
-def plot_rest_vs_task_comparison(error_rest: pd.DataFrame,
-                                 error_task: pd.DataFrame,
-                                 comparison: pd.DataFrame,
-                                 output_path: str,
-                                 dpi: int = 300):
+def plot_rest_vs_task_comparison(
+    error_rest: Union[np.ndarray, List[float]],
+    error_task: Union[np.ndarray, List[float]],
+    comparison_df: Optional[pd.DataFrame] = None,
+    output_path: str = None,
+    region_list: Optional[List[str]] = None,
+    dpi: int = 300
+):
     """
     Create rest vs task comparison figure.
-    
-    Args:
-        error_rest: Resting-state errors
-        error_task: Task errors
-        comparison: Comparison DataFrame
-        output_path: Save path
-        dpi: Resolution
+    Now robust: uses comparison_df if provided, otherwise builds it.
     """
+    error_rest = np.array(error_rest)
+    error_task = np.array(error_task)
+
+    if region_list is None:
+        region_list = [f"Region_{i:02d}" for i in range(len(error_rest))]
+
+    # Use provided comparison_df if valid, otherwise build it
+    if comparison_df is not None and not comparison_df.empty:
+        comp_df = comparison_df.copy()
+        # Ensure required columns exist — standardize them
+        if 'error_increase' not in comp_df.columns:
+            print("Warning: comparison_df missing 'error_increase', rebuilding...")
+            comp_df = None
+        elif 'region_name' not in comp_df.columns:
+            comp_df = None
+    else:
+        comp_df = None
+
+    if comp_df is None:
+        # Rebuild from raw errors
+        comp_df = pd.DataFrame({
+            'region_name': region_list,
+            'error_rest': error_rest,
+            'error_task': error_task,
+            'error_increase': error_task - error_rest
+        }).sort_values('error_increase', ascending=False).reset_index(drop=True)
+    else:
+        # Standardize column names for consistency
+        comp_df = comp_df.rename(columns={
+            'error_diff': 'error_increase',
+            'diff': 'error_increase',
+            'difference': 'error_increase'
+        })
+        if 'region_name' not in comp_df.columns:
+            comp_df['region_name'] = region_list
+
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-    
+
     # Panel 1: Scatter plot
     ax1 = axes[0, 0]
-    merged = pd.merge(
-        error_rest[['region_name', 'misclassification_rate']],
-        error_task[['region_name', 'misclassification_rate']],
-        on='region_name',
-        suffixes=('_rest', '_task')
-    )
-    ax1.scatter(merged['misclassification_rate_rest'],
-                merged['misclassification_rate_task'],
-                alpha=0.5, s=50)
-    ax1.plot([0, 1], [0, 1], 'r--', linewidth=2, label='Equal Error')
-    ax1.set_xlabel('Resting-State Error', fontweight='bold')
-    ax1.set_ylabel('Task Error', fontweight='bold')
-    ax1.set_title('Error Rate Comparison', fontweight='bold')
+    ax1.scatter(comp_df['error_rest'] if 'error_rest' in comp_df.columns else error_rest,
+                comp_df['error_task'] if 'error_task' in comp_df.columns else error_task,
+                alpha=0.6, s=40, color='steelblue', edgecolor='black', linewidth=0.5)
+    ax1.plot([0, 1], [0, 1], 'r--', linewidth=2, label='No Change')
+    ax1.set_xlabel('Resting-State Error Rate', fontweight='bold')
+    ax1.set_ylabel('Task Error Rate', fontweight='bold')
+    ax1.set_title('Rest vs Task: Classification Stability', fontweight='bold')
     ax1.legend()
     ax1.grid(alpha=0.3)
-    
-    # Panel 2: Top altered regions
+
+    # Panel 2: Top 20 most disrupted regions
+    top_20 = comp_df.sort_values('error_increase', ascending=False).head(20)
     ax2 = axes[0, 1]
-    top_20 = comparison.head(20)
-    colors = ['red' if x > 0.1 else 'orange' for x in top_20['error_increase']]
-    ax2.barh(range(20), top_20['error_increase'], color=colors,
-             edgecolor='black', alpha=0.7)
+    colors = ['red' if x > 0.1 else 'orange' if x > 0.05 else 'lightgray' for x in top_20['error_increase']]
+    bars = ax2.barh(range(20), top_20['error_increase'], color=colors, edgecolor='black', alpha=0.8)
     ax2.set_yticks(range(20))
-    ax2.set_yticklabels([name[:35] for name in top_20['region_name']], fontsize=8)
-    ax2.set_xlabel('Error Increase (Task - Rest)', fontweight='bold')
-    ax2.set_title('Top 20 Task-Altered Regions', fontweight='bold')
+    ax2.set_yticklabels([name[:40] + "..." if len(name) > 40 else name 
+                         for name in top_20['region_name']], fontsize=8.5)
+    ax2.set_xlabel('Error Increase (Task − Rest)', fontweight='bold')
+    ax2.set_title('Top 20 Regions Most Affected by Task', fontweight='bold')
     ax2.invert_yaxis()
     ax2.axvline(0, color='black', linewidth=1)
     ax2.grid(axis='x', alpha=0.3)
-    
-    # Panel 3: Error increase distribution
+
+    # Panel 3: Distribution of changes
+    changes = comp_df['error_increase']
     ax3 = axes[1, 0]
-    ax3.hist(comparison['error_increase'], bins=50, alpha=0.7,
-             color='steelblue', edgecolor='black')
+    ax3.hist(changes, bins=50, alpha=0.7, color='steelblue', edgecolor='black', linewidth=0.8)
     ax3.axvline(0, color='red', linestyle='--', linewidth=2, label='No Change')
-    ax3.axvline(comparison['error_increase'].mean(), color='green',
-                linestyle='--', linewidth=2, label='Mean')
-    ax3.set_xlabel('Error Increase', fontweight='bold')
+    ax3.axvline(changes.mean(), color='green', linestyle='--', linewidth=2,
+                label=f'Mean Δ = {changes.mean():+.4f}')
+    ax3.set_xlabel('Error Change (Task − Rest)', fontweight='bold')
     ax3.set_ylabel('Number of Regions', fontweight='bold')
-    ax3.set_title('Distribution of Error Changes', fontweight='bold')
+    ax3.set_title('Distribution of Task-Induced Changes', fontweight='bold')
     ax3.legend()
     ax3.grid(axis='y', alpha=0.3)
-    
+
     # Panel 4: Summary
     ax4 = axes[1, 1]
     ax4.axis('off')
-    
-    n_increased = (comparison['error_increase'] > 0.05).sum()
-    n_decreased = (comparison['error_increase'] < -0.05).sum()
-    n_stable = len(comparison) - n_increased - n_decreased
-    
-    stats_text = f"""
-    COMPARISON SUMMARY
-    ==================
-    
-    Regions Analyzed: {len(comparison)}
-    
-    Error Changes:
-      Increased (>5%):  {n_increased}
-      Decreased (>5%):  {n_decreased}
-      Stable:           {n_stable}
-    
-    Mean Error Increase: {comparison['error_increase'].mean():.4f}
-    Max Error Increase:  {comparison['error_increase'].max():.4f}
-    
-    Rest Mean Error: {error_rest['misclassification_rate'].mean():.4f}
-    Task Mean Error: {error_task['misclassification_rate'].mean():.4f}
-    """
-    
-    ax4.text(0.1, 0.5, stats_text, fontsize=11, family='monospace',
-             verticalalignment='center', fontweight='bold',
-             bbox=dict(boxstyle='round', facecolor='lightgreen', alpha=0.8))
-    
-    plt.suptitle('Rest vs Task Comparison', fontsize=14, fontweight='bold')
-    plt.tight_layout()
-    
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(output_path, dpi=dpi, bbox_inches='tight')
-    plt.close()
-    
-    print(f"✓ Saved figure: {output_path}")
+    n_inc = (changes > 0.05).sum()
+    n_dec = (changes < -0.05).sum()
+    n_stable = len(changes) - n_inc - n_dec
 
-
-def plot_network_analysis(error_df: pd.DataFrame,
-                         network_stats: pd.DataFrame,
-                         output_path: str,
-                         dpi: int = 300):
-    """
-    Create network-level analysis figure.
-    
-    Args:
-        error_df: Per-region error DataFrame
-        network_stats: Network statistics DataFrame
-        output_path: Save path
-        dpi: Resolution
-    """
-    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-    
-    # Panel 1: Network mean errors
-    ax1 = axes[0, 0]
-    colors = plt.cm.RdYlGn_r(network_stats['mean_error'] / network_stats['mean_error'].max())
-    bars = ax1.barh(range(len(network_stats)), network_stats['mean_error'],
-                    color=colors, edgecolor='black', linewidth=1.5, alpha=0.8)
-    ax1.set_yticks(range(len(network_stats)))
-    ax1.set_yticklabels(network_stats['network'], fontsize=9)
-    ax1.set_xlabel('Mean Misclassification Rate', fontweight='bold')
-    ax1.set_title('Error Rate by Network', fontweight='bold')
-    ax1.invert_yaxis()
-    ax1.grid(axis='x', alpha=0.3)
-    
-    # Panel 2: Network error bars with std
-    ax2 = axes[0, 1]
-    ax2.barh(range(len(network_stats)), network_stats['mean_error'],
-             xerr=network_stats['std_error'], color='steelblue',
-             edgecolor='black', linewidth=1.5, alpha=0.7, capsize=5)
-    ax2.set_yticks(range(len(network_stats)))
-    ax2.set_yticklabels(network_stats['network'], fontsize=9)
-    ax2.set_xlabel('Mean Error ± Std', fontweight='bold')
-    ax2.set_title('Network Variability', fontweight='bold')
-    ax2.invert_yaxis()
-    ax2.grid(axis='x', alpha=0.3)
-    
-    # Panel 3: Number of regions per network
-    ax3 = axes[1, 0]
-    ax3.bar(range(len(network_stats)), network_stats['n_regions'],
-            color='coral', edgecolor='black', linewidth=1.5, alpha=0.7)
-    ax3.set_xticks(range(len(network_stats)))
-    ax3.set_xticklabels(network_stats['network'], rotation=45, ha='right', fontsize=8)
-    ax3.set_ylabel('Number of Regions', fontweight='bold')
-    ax3.set_title('Regions per Network', fontweight='bold')
-    ax3.grid(axis='y', alpha=0.3)
-    
-    # Panel 4: Summary table
-    ax4 = axes[1, 1]
-    ax4.axis('off')
-    
-    best_network = network_stats.iloc[-1]  # Lowest error (sorted ascending False in aggregate)
-    worst_network = network_stats.iloc[0]  # Highest error
-    
     stats_text = f"""
-    NETWORK ANALYSIS
-    ================
-    
-    Total Networks: {len(network_stats)}
-    Total Regions: {network_stats['n_regions'].sum()}
-    
-    Best Network:
-      {best_network['network']}
-      Mean Error: {best_network['mean_error']:.4f}
-      N Regions: {int(best_network['n_regions'])}
-    
-    Worst Network:
-      {worst_network['network']}
-      Mean Error: {worst_network['mean_error']:.4f}
-      N Regions: {int(worst_network['n_regions'])}
-    
-    Overall Mean: {network_stats['mean_error'].mean():.4f}
+    REST vs TASK COMPARISON
+    {'='*28}
+
+    Regions Analyzed     → {len(comp_df)}
+
+    Significant Changes (>5%):
+      Increased          → {n_inc}
+      Decreased          → {n_dec}
+      Stable             → {n_stable}
+
+    Mean Change          → {changes.mean():+.4f}
+    Max Increase         → {changes.max():+.4f}
+    Max Decrease         → {changes.min():+.4f}
+
+    Rest Mean Error      → {error_rest.mean():.4f}
+    Task Mean Error      → {error_task.mean():.4f}
     """
-    
-    ax4.text(0.1, 0.5, stats_text, fontsize=11, family='monospace',
-             verticalalignment='center', fontweight='bold',
-             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.8))
-    
-    plt.suptitle('Network-Level Analysis', fontsize=14, fontweight='bold')
-    plt.tight_layout()
-    
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(output_path, dpi=dpi, bbox_inches='tight')
-    plt.close()
-    
-    print(f"✓ Saved figure: {output_path}")
+
+    ax4.text(0.05, 0.95, stats_text, transform=ax4.transAxes, fontsize=11, family='monospace',
+             verticalalignment='top', fontweight='bold',
+             bbox=dict(boxstyle='round,pad=1', facecolor='lightgreen', alpha=0.9))
+
+    plt.suptitle('Resting-State vs Task: How Task Affects Brain Region Decoding', 
+                 fontsize=15, fontweight='bold', y=0.98)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+
+    if output_path:
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(output_path, dpi=dpi, bbox_inches='tight')
+        plt.close(fig)
+        print(f"Figure saved: {Path(output_path).name}")
+    else:
+        plt.show()

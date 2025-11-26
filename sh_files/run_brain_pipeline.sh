@@ -32,9 +32,14 @@ source /home/sjoon/projects/brain_connectivity_classifier/masterthesis_venv2/bin
 mkdir -p logs
 
 # echo "Running: python run.py --config config.yaml --help"
-python3 run.py --config config.yaml --diagonal zero
+# python run.py --config configs/config.yaml --model logistic_regression --diagonal zero --n_splits 3 --sample
 
-EXIT_CODE=$?
+python run.py \
+    --config configs/config.yaml \
+    --sample \
+    --experiment-name "my_test" \
+    --model logistic_regression \
+    --n-splits 3 
 
 # Wrap up
 echo
