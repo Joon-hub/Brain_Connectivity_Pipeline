@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 """
-Brain Connectivity Classification Pipeline (LEAK-FREE VERSION)
-===============================================================
-Pipeline to classify brain regions from functional connectivity data
-with strict leak-free cross-validation and evaluation on task data.
+Brain Connectivity Classification Pipeline (FULLY CORRECTED)
+=============================================================
+FEDE'S FEEDBACK IMPLEMENTED:
+✅ Fixed random imputation strategies (truly random across transforms)
+✅ Proper sklearn GroupKFold usage
+✅ Better interpretation of results
+✅ Diagnostic capabilities to verify randomness
+✅ Clear documentation of expected behaviors
 
-Steps:
-1. Load PIOP-2 resting-state data for training.
-2. Train machine learning classifier with leak-free cross-validation.
-   - Preprocessing (imputation, scaling) done INSIDE each CV fold.
-3. Evaluate classifier on training data and save results.
-4. Apply trained classifier to PIOP-1 task data and compare performance.
+This version eliminates all data leakage by:
+1. Fitting preprocessing INSIDE each CV fold
+2. Computing all statistics only on training data
+3. Proper subject-level splitting before any preprocessing
+4. Correct handling of deterministic vs stochastic diagonal strategies
 
 Usage:
     python run.py --config config.yaml
-    python run.py --config config.yaml --sample
-    python run.py --config config.yaml --diagonal region_mean --n_splits 5
+    python run.py --diagonal sample_from_matrix --C 0.01
+    python run.py --sample  # Quick test
+    python run.py --diagnose  # Run diagnostics
 """
 
 import sys
@@ -32,9 +36,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 # Import project modules
 from src.features import BrainConnectivityPreprocessor
-from src.brain_region_classifier import BrainRegionClassifier
-from src.evaluate import calculate_error_map, save_results_csv, save_confusion_matrix, compare_error_maps
-from src.visualize import plot_error_map,plot_rest_vs_task_comparison
+from src.model import BrainRegionClassifier
+from src.evaluate import (
+    calculate_error_map, save_results_csv, 
+    save_confusion_matrix, compare_error_maps
+)
+from src.visualize import plot_error_map, plot_rest_vs_task_comparison
 
 
 # ============================================================================
@@ -73,6 +80,7 @@ def extract_connection_columns(df: pd.DataFrame) -> list:
         raise ValueError("No connection columns found. Expected format: 'Region_A~Region_B'")
     return connection_cols
 
+
 def create_sample_dataset(input_path: str, output_path: str, n_subjects: int = 10):
     """Create small sample dataset for testing."""
     df = pd.read_csv(input_path)
@@ -81,6 +89,7 @@ def create_sample_dataset(input_path: str, output_path: str, n_subjects: int = 1
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     df_sample.to_csv(output_path, index=False)
     print(f"✓ Created sample dataset: {output_path} ({n_subjects} subjects)")
+
 
 def print_section(title: str):
     """Print formatted section header."""
@@ -98,9 +107,11 @@ def format_time(seconds: float) -> str:
     else:
         return f"{seconds/3600:.1f}h"
 
+
 # ============================================================================
-# Diagnostic Functions
+# DIAGNOSTIC FUNCTIONS
 # ============================================================================
+
 def run_diagonal_diagnostics(
     df_train: pd.DataFrame,
     connection_columns: list,
@@ -177,7 +188,7 @@ def run_diagonal_diagnostics(
             print("✗ FAIL: Deterministic strategy produces different results!")
             print("  BUG: Diagonal values should be constant per subject")
     
-    elif diagonal_strategy in ['random', 'sample_row','sample_from_matrix']:
+    elif diagonal_strategy in ['random', 'sample_from_matrix']:
         # Stochastic strategies
         if not all_same:
             print("✓ PASS: Stochastic strategy produces different results")
@@ -187,7 +198,6 @@ def run_diagonal_diagnostics(
             print("  BUG: Diagonal values should change each transform")
     
     print("="*60 + "\n")
-
 
 
 # ============================================================================
