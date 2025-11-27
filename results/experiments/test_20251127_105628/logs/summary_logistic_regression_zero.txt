@@ -1,0 +1,44 @@
+
+RESULTS SUMMARY
+======================================================================
+
+Experiment: logistic_regression_zero
+Model: LogisticRegression
+
+Data:
+  Training subjects: 224
+  Brain regions: 232
+  Chance level: 0.0043
+
+Configuration:
+  Diagonal strategy: zero
+  CV folds: 3
+  Fisher Z transform: Disabled
+  Random seed: 42
+
+Cross-Validation Results (LEAK-FREE):
+  Validation accuracy: 0.9107 ± 0.0054  
+  Training accuracy: 1.0000 ± 0.0000  
+  Full Training Accuracy: 0.9989 (overfitted)
+  Improvement over chance: 211.3x
+
+Task Data (Gender Stroop):
+  Test subjects: 200
+  Test accuracy: 0.8752
+  CV validation → Task drop: 0.0354
+
+======================================================================
+
+Output Locations:
+  Experiment: results/experiments/test_20251127_105628
+  Models: results/experiments/test_20251127_105628/models
+  Metrics: results/experiments/test_20251127_105628/metrics
+  Figures: results/experiments/test_20251127_105628/figures
+  Predictions: results/experiments/test_20251127_105628/predictions
+
+Execution Time: 55.4s
+Completed: 2025-11-27 10:57:23
+
+======================================================================
+
+✅ Pipeline completed successfully!

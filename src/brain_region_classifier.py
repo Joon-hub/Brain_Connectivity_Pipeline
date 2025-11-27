@@ -131,7 +131,7 @@ def cross_validate_no_leakage(
 
         # Create pipeline with scaler and cloned model
         pipeline = Pipeline([
-            ('scaler', StandardScaler()),
+            # ('scaler', StandardScaler()),
             ('classifier', clone(model_instance))
         ])
 
@@ -225,7 +225,7 @@ def train_final_model(
 
     # Create and fit pipeline
     pipeline = Pipeline([
-        ('scaler', StandardScaler()),
+        # ('scaler', StandardScaler()),
         ('classifier', clone(model_instance))
     ])
 
@@ -281,7 +281,7 @@ class BrainRegionClassifier:
         model_name: str = "unknown_model",
         diagonal_strategy: str = "zero",
         connection_columns: Optional[List[str]] = None,
-        include_diagonal: bool = False,
+        include_diagonal: bool = True,
         apply_fisher_z: bool = True,
         n_splits: int = 5,
         random_state: int = 42,

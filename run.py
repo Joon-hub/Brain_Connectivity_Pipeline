@@ -174,7 +174,8 @@ def run_diagonal_diagnostics(
     df_train: pd.DataFrame,
     connection_columns: list,
     diagonal_strategy: str,
-    random_state: int
+    random_state: int,
+    include_diagonal: bool = True
 ):
     """
     Run diagnostic tests to verify diagonal imputation behavior.
@@ -193,6 +194,7 @@ def run_diagonal_diagnostics(
         diagonal_strategy=diagonal_strategy,
         apply_fisher_z=False,  # Easier to see raw values
         random_state=random_state,
+        include_diagonal= include_diagonal,
         enable_diagnostics=True  # Enable diagnostic logging
     )
     
@@ -316,6 +318,7 @@ Examples:
     parser.add_argument('--no-fisher-z', action='store_true',
                         help='Disable Fisher Z transformation (not recommended)')
     
+    
     # Training overrides
     parser.add_argument('--n-splits', type=int,
                         help='Override number of CV folds')
@@ -351,6 +354,7 @@ Examples:
     # Preprocessing settings
     diagonal_strategy = args.diagonal or config.get('preprocessing', {}).get('diagonal_strategy', 'zero')
     apply_fisher_z = not args.no_fisher_z and config.get('preprocessing', {}).get('apply_fisher_z', True)
+    include_diagonal = config.get('preprocessing', {}).get('include_diagonal', True)  
     
     # Training settings
     n_splits = args.n_splits if args.n_splits is not None else config.get('model', {}).get('n_splits', 5)
@@ -460,7 +464,8 @@ Examples:
             df_train,
             connection_columns,
             diagonal_strategy,
-            random_seed
+            random_seed,
+            include_diagonal
         )
         
         # Ask user if they want to continue with full pipeline
@@ -498,7 +503,7 @@ Examples:
         model_name=args.model,
         diagonal_strategy=diagonal_strategy,
         connection_columns=connection_columns,
-        include_diagonal=False,
+        include_diagonal=include_diagonal,
         apply_fisher_z=apply_fisher_z,
         n_splits=n_splits,
         random_state=random_seed,
