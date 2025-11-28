@@ -1,20 +1,4 @@
 #!/usr/bin/env python3
-"""
-Brain Connectivity Classification - Minimal Implementation
-===========================================================
-Direct approach: Raw data → Zero diagonal → Logistic Regression → 3-fold CV
-NO scaling, NO Fisher Z, NO complexity - just the essentials
-
-This script tests whether diagonal=0 signal is preserved through preprocessing.
-
-Expected results:
-- WITH diagonal (232 features): ~98-99% validation accuracy
-- WITHOUT diagonal (231 features): ~70-90% validation accuracy
-
-Usage:
-    python minimal_test.py
-"""
-
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -22,18 +6,14 @@ from sklearn.model_selection import GroupKFold
 from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 
-print("="*70)
-print("BRAIN CONNECTIVITY CLASSIFICATION - MINIMAL TEST")
-print("="*70)
-print()
-
 # ==============================================================================
-# STEP 1: LOAD RAW DATA
+# STEP 1: LOAD RAW DATA (ONLY 30 SUBJECTS)
 # ==============================================================================
-print("STEP 1: Loading raw data...")
+print("STEP 1: Loading raw data (first 30 subjects only)...")
 
 data_path = "data/raw/PIOP2_restingstate.csv"  # Change this to your path
-df = pd.read_csv(data_path)
+df_full = pd.read_csv(data_path)
+df = df_full.head(30)  # Use only first 30 subjects
 
 print(f"✓ Loaded data shape: {df.shape}")
 print(f"✓ Number of subjects: {len(df)}")
@@ -123,21 +103,21 @@ print()
 
 
 # ==============================================================================
-# STEP 4: SET DIAGONAL TO ZERO
+# STEP 4: SET DIAGONAL TO 1000
 # ==============================================================================
-print("STEP 4: Setting diagonal to zero...")
+print("STEP 4: Setting diagonal to 1000...")
 
-def impute_diagonal_zero(matrix):
-    """Set all diagonal elements to 0.0."""
+def impute_diagonal_1000(matrix):
+    """Set all diagonal elements to 1000."""
     matrix_copy = matrix.copy()
-    np.fill_diagonal(matrix_copy, 0.0)
+    np.fill_diagonal(matrix_copy, 1000.0)
     return matrix_copy
 
-test_matrix_zero = impute_diagonal_zero(test_matrix)
+test_matrix_1000 = impute_diagonal_1000(test_matrix)
 
 print(f"✓ After diagonal imputation:")
-print(f"  Diagonal (first 10): {test_matrix_zero.diagonal()[:10]}")
-print(f"  All diagonal zeros: {np.all(test_matrix_zero.diagonal() == 0.0)}")
+print(f"  Diagonal (first 10): {test_matrix_1000.diagonal()[:10]}")
+print(f"  All diagonal 1000: {np.all(test_matrix_1000.diagonal() == 1000.0)}")
 print()
 
 
@@ -167,7 +147,7 @@ def create_classification_dataset(df, connection_columns, region_to_idx, n_regio
     print(f"  Processing {n_subjects} subjects...")
     
     for subj_idx in range(n_subjects):
-        if (subj_idx + 1) % 50 == 0:
+        if (subj_idx + 1) % 10 == 0:
             print(f"    Processed {subj_idx + 1}/{n_subjects} subjects...")
         
         # Reconstruct matrix
@@ -178,15 +158,15 @@ def create_classification_dataset(df, connection_columns, region_to_idx, n_regio
             n_regions
         )
         
-        # Impute diagonal to zero
-        matrix = impute_diagonal_zero(matrix)
+        # Impute diagonal to 1000
+        matrix = impute_diagonal_1000(matrix)
         
         # Extract one sample per region
         for region_idx in range(n_regions):
             row = matrix[region_idx, :]  # Connectivity of this region to all regions
             
             if include_diagonal:
-                features = row  # Keep all 232 features (including diagonal=0)
+                features = row  # Keep all 232 features (including diagonal=1)
             else:
                 features = np.delete(row, region_idx)  # Remove diagonal
             
@@ -198,8 +178,8 @@ def create_classification_dataset(df, connection_columns, region_to_idx, n_regio
     
     return X, y, subjects
 
-# Create dataset WITH diagonal (should get ~98-99% accuracy)
-print("\nCreating dataset WITH diagonal included...")
+# Create dataset WITH diagonal (diagonal=1000)
+print("\nCreating dataset WITH diagonal included (diagonal=1000)...")
 X_with_diag, y, subjects = create_classification_dataset(
     df, 
     connection_columns, 
@@ -215,20 +195,20 @@ print(f"  Number of features: {X_with_diag.shape[1]}")
 print(f"  Number of samples: {X_with_diag.shape[0]}")
 print(f"  Samples per subject: {X_with_diag.shape[0] / len(df):.0f}")
 
-# Check zeros
-n_zeros = (X_with_diag == 0.0).sum()
+# Check 1000s
+n_1000s = (X_with_diag == 1000.0).sum()
 total_values = X_with_diag.size
-print(f"\n✓ Zero statistics:")
-print(f"  Total zeros: {n_zeros}")
-print(f"  Percentage: {100*n_zeros/total_values:.2f}%")
+print(f"\n✓ Value 1000 statistics:")
+print(f"  Total 1000s: {n_1000s}")
+print(f"  Percentage: {100*n_1000s/total_values:.2f}%")
 print(f"  Expected (1 per sample): {X_with_diag.shape[0]}")
-print(f"  Match: {n_zeros == X_with_diag.shape[0]}")
+print(f"  Match: {n_1000s == X_with_diag.shape[0]}")
 
 # Check first few samples
 print(f"\n✓ First 3 samples (first 10 features):")
 for i in range(3):
-    zeros_in_sample = (X_with_diag[i] == 0.0).sum()
-    print(f"  Sample {i}: [{X_with_diag[i, 0]:.4f}, {X_with_diag[i, 1]:.4f}, {X_with_diag[i, 2]:.4f}, ...] (zeros: {zeros_in_sample})")
+    n_1000s_in_sample = (X_with_diag[i] == 1000.0).sum()
+    print(f"  Sample {i}: [{X_with_diag[i, 0]:.4f}, {X_with_diag[i, 1]:.4f}, {X_with_diag[i, 2]:.4f}, ...] (1000s: {n_1000s_in_sample})")
 print()
 
 
@@ -282,10 +262,10 @@ def cross_validate_simple(X, y, subjects, n_splits=3, C=1e18):
         print(f"  Train: {len(train_subjects)} subjects, {len(y_train)} samples")
         print(f"  Val:   {len(val_subjects)} subjects, {len(y_val)} samples")
         
-        # Check zeros in training data
-        train_zeros = (X_train == 0.0).sum()
-        train_zero_pct = 100 * train_zeros / X_train.size
-        print(f"  Train zeros: {train_zeros} ({train_zero_pct:.2f}%)")
+        # Check 1000s in training data
+        train_1000s = (X_train == 1000.0).sum()
+        train_1000_pct = 100 * train_1000s / X_train.size
+        print(f"  Train 1000s: {train_1000s} ({train_1000_pct:.2f}%)")
         
         # Create model - NO SCALING, just raw features
         model = LogisticRegression(
@@ -356,9 +336,9 @@ print(f"\n✓ Dataset WITHOUT diagonal:")
 print(f"  X shape: {X_no_diag.shape}")
 print(f"  Number of features: {X_no_diag.shape[1]}")
 
-# Check zeros (should be very few or none)
-n_zeros_no_diag = (X_no_diag == 0.0).sum()
-print(f"  Zeros: {n_zeros_no_diag} ({100*n_zeros_no_diag/X_no_diag.size:.2f}%)")
+# Check 1000s (should be very few or none after removing diagonal)
+n_1000s_no_diag = (X_no_diag == 1000.0).sum()
+print(f"  1000s: {n_1000s_no_diag} ({100*n_1000s_no_diag/X_no_diag.size:.2f}%)")
 
 # Run CV without diagonal
 results_no_diag = cross_validate_simple(X_no_diag, y_no_diag, subjects_no_diag, n_splits=3)
@@ -378,7 +358,7 @@ fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
 # Plot 1: Fold-by-fold comparison
 folds = [1, 2, 3]
-axes[0].plot(folds, with_diag_val, 'o-', label='WITH diagonal (232 features)', 
+axes[0].plot(folds, with_diag_val, 'o-', label='WITH diagonal=1000 (232 features)', 
              linewidth=2, markersize=10, color='#2ecc71')
 axes[0].plot(folds, no_diag_val, 's-', label='WITHOUT diagonal (231 features)', 
              linewidth=2, markersize=10, color='#e74c3c')
@@ -386,7 +366,7 @@ axes[0].axhline(1/n_regions, color='red', linestyle='--',
                 label=f'Chance ({100/n_regions:.2f}%)', linewidth=1)
 axes[0].set_xlabel('Fold', fontsize=12, fontweight='bold')
 axes[0].set_ylabel('Validation Accuracy', fontsize=12, fontweight='bold')
-axes[0].set_title('Validation Accuracy by Fold', fontsize=14, fontweight='bold')
+axes[0].set_title('Validation Accuracy by Fold (30 subjects)', fontsize=14, fontweight='bold')
 axes[0].set_xticks(folds)
 axes[0].legend(fontsize=10)
 axes[0].grid(alpha=0.3)
@@ -395,14 +375,14 @@ axes[0].set_ylim([0, 1.05])
 # Plot 2: Mean comparison with error bars
 means = [np.mean(with_diag_val), np.mean(no_diag_val)]
 stds = [np.std(with_diag_val), np.std(no_diag_val)]
-labels = ['WITH diagonal\n(232 features)', 'WITHOUT diagonal\n(231 features)']
+labels = ['WITH diagonal=1000\n(232 features)', 'WITHOUT diagonal\n(231 features)']
 colors = ['#2ecc71', '#e74c3c']
 
 bars = axes[1].bar(labels, means, yerr=stds, capsize=10, color=colors, 
                    alpha=0.7, edgecolor='black', linewidth=2)
 axes[1].axhline(1/n_regions, color='red', linestyle='--', label='Chance', linewidth=2)
 axes[1].set_ylabel('Validation Accuracy', fontsize=12, fontweight='bold')
-axes[1].set_title('Mean Validation Accuracy', fontsize=14, fontweight='bold')
+axes[1].set_title('Mean Validation Accuracy (30 subjects)', fontsize=14, fontweight='bold')
 axes[1].set_ylim([0, 1.05])
 axes[1].legend(fontsize=10)
 axes[1].grid(axis='y', alpha=0.3)
@@ -415,8 +395,8 @@ for bar, mean, std in zip(bars, means, stds):
                 ha='center', va='bottom', fontweight='bold', fontsize=10)
 
 plt.tight_layout()
-plt.savefig('diagonal_comparison.png', dpi=300, bbox_inches='tight')
-print("✓ Saved figure: diagonal_comparison.png")
+plt.savefig('diagonal_comparison_1000_30subj.png', dpi=300, bbox_inches='tight')
+print("✓ Saved figure: diagonal_comparison_1000_30subj.png")
 plt.close()
 
 
@@ -428,13 +408,13 @@ print("DIAGNOSTIC SUMMARY")
 print("="*70)
 
 print("\n1. DATA LOADING:")
-print(f"   ✓ Loaded {len(df)} subjects")
+print(f"   ✓ Loaded {len(df)} subjects (FIRST 30 ONLY)")
 print(f"   ✓ Extracted {n_regions} regions")
 print(f"   ✓ Found {len(connection_columns)} connections")
 
 print("\n2. PREPROCESSING:")
 print(f"   ✓ Reconstructed {n_regions}×{n_regions} connectivity matrices")
-print(f"   ✓ Set diagonal to 0.0 (deterministic)")
+print(f"   ✓ Set diagonal to 1000 (deterministic)")
 print(f"   ✓ NO Fisher Z transformation")
 print(f"   ✓ NO StandardScaler")
 print(f"   ✓ Raw correlation values fed directly to model")
@@ -442,27 +422,27 @@ print(f"   ✓ Raw correlation values fed directly to model")
 print("\n3. DATASET WITH DIAGONAL:")
 print(f"   ✓ Features: {X_with_diag.shape[1]}")
 print(f"   ✓ Samples: {X_with_diag.shape[0]}")
-print(f"   ✓ Zeros: {(X_with_diag == 0.0).sum()} ({100*(X_with_diag == 0.0).sum()/X_with_diag.size:.2f}%)")
-print(f"   ✓ Expected zeros: {X_with_diag.shape[0]} (1 per sample)")
+print(f"   ✓ 1000s: {(X_with_diag == 1000.0).sum()} ({100*(X_with_diag == 1000.0).sum()/X_with_diag.size:.2f}%)")
+print(f"   ✓ Expected 1000s: {X_with_diag.shape[0]} (1 per sample)")
 
 print("\n4. CROSS-VALIDATION RESULTS:")
 with_diag_mean = np.mean(with_diag_val)
 no_diag_mean = np.mean(no_diag_val)
 
-print(f"   WITH diagonal:    {with_diag_mean:.2%} ± {np.std(with_diag_val):.2%}")
+print(f"   WITH diagonal (=1000):    {with_diag_mean:.2%} ± {np.std(with_diag_val):.2%}")
 print(f"   WITHOUT diagonal: {no_diag_mean:.2%} ± {np.std(no_diag_val):.2%}")
 
 print("\n5. INTERPRETATION:")
 if with_diag_mean > 0.95:
-    print("   ✓ EXCELLENT: Model correctly learned the diagonal=0 pattern!")
-    print("   ✓ Zeros are preserved through preprocessing")
+    print("   ✓ EXCELLENT: Model correctly learned the diagonal=1000 pattern!")
+    print("   ✓ 1000s are preserved through preprocessing")
     print("   ✓ No scaling is destroying the signal")
 elif with_diag_mean > 0.85:
     print("   ⚠️  GOOD but not great: Model partially learned the pattern")
-    print("   → Possible issue: Some preprocessing affecting zeros")
+    print("   → Possible issue: Some preprocessing affecting 1000s")
 elif with_diag_mean > 0.70:
     print("   ⚠️  WARNING: Model is NOT leveraging the diagonal signal well")
-    print("   → Problem: Zeros might be getting normalized/transformed")
+    print("   → Problem: 1000s might be getting normalized/transformed")
     print("   → Check if StandardScaler or other preprocessing is active")
 else:
     print("   ✗ FAIL: Model performance similar to WITHOUT diagonal")
@@ -485,5 +465,5 @@ else:
     print("   → ✓ Good gain - diagonal signal is being used")
 
 print("="*70)
-print("\n✅ Test complete! Check 'diagonal_comparison.png' for visualization.")
+print("\n✅ Test complete! Check 'diagonal_comparison_1000_30subj.png' for visualization.")
 print()
