@@ -52,9 +52,9 @@ run_step() {
 
 run_step 1 "Atlas Performance Analysis" "01_atlas_performance_analysis.sh"
 run_step 2 "Atlas Comparison"           "02_atlas_comparison.sh"
-run_step 3 "Connectivity Analysis"      "03_connectivity_analysis.sh"
+run_step 3 "Region Level Analysis"      "03_region_level_analysis.sh"
 run_step 4 "Generate Summary Report"    "04_generate_summary_report.sh"
-run_step 5 "Region Level Analysis"      "05_region_level_analysis.sh"
+
 
 echo "============================================================================"
 echo "PIPELINE COMPLETED SUCCESSFULLY"

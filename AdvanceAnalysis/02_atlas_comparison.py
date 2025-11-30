@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Atlas Comparison Analysis - IMPROVED VERSION
+Atlas Comparison Analysis 
 
 IMPROVEMENTS:
 - Standardized color scheme (rest: #2E86AB blue, task: #A23B72 purple)
@@ -34,7 +34,7 @@ plt.rcParams.update({
     'figure.dpi': 300
 })
 
-# IMPROVED: Consistent professional color scheme across all plots
+# Consistent professional color scheme across all plots
 COLORS = {
     'rest': '#2E86AB',        # Blue (consistent)
     'task': '#A23B72',        # Purple/Red (consistent)
@@ -156,7 +156,7 @@ def paired_statistics(group1, group2, name1="Pre", name2="Post"):
 
 
 def format_pvalue(p):
-    """IMPROVED: Format p-value for display with space before stars."""
+    """Format p-value for display with space before stars."""
     if p < 0.001: return "p < 0.001 ***"
     elif p < 0.01: return f"p = {p:.3f} **"
     elif p < 0.05: return f"p = {p:.3f} *"
@@ -198,7 +198,7 @@ def log_statistics(stat, comparison_name):
 
 
 # =============================================================================
-# IMPROVED PLOTTING HELPER FUNCTIONS
+# PLOTTING HELPER FUNCTIONS
 # =============================================================================
 
 def compute_basic_stats(group1, group2):
@@ -231,7 +231,7 @@ def add_stat_annotation(ax, x1, x2, y, p_val, text_offset=0.002):
 
 def plot_hybrid_violin_box(ax, data1, data2, label1, label2, color1, color2, title):
     """
-    IMPROVED: Simplified violin plot using inner='box' parameter.
+    Simplified violin plot using inner='box' parameter.
     Creates a cleaner visualization with violin + embedded box plot.
     """
     df = pd.DataFrame({
@@ -240,7 +240,7 @@ def plot_hybrid_violin_box(ax, data1, data2, label1, label2, color1, color2, tit
     })
     palette = {label1: color1, label2: color2}
 
-    # IMPROVED: Use inner='box' for cleaner look (combines violin + box in one call)
+    # Use inner='box' for cleaner look (combines violin + box in one call)
     sns.violinplot(data=df, x='Group', y='Error Rate', ax=ax, 
                    palette=palette, inner='box', linewidth=1.5, saturation=0.75)
     
@@ -275,11 +275,11 @@ def plot_hybrid_violin_box(ax, data1, data2, label1, label2, color1, color2, tit
     return stats_res
 
 # =============================================================================
-# FIGURE 1 & 2 GENERATORS (IMPROVED HYBRID PLOTS)
+# FIGURE 1 & 2 GENERATORS (HYBRID PLOTS)
 # =============================================================================
 
 def plot_resolution_effects(error_data, output_path):
-    """Parcellation Resolution Effects (Improved Hybrid Violin/Box)."""
+    """Parcellation Resolution Effects (Hybrid Violin/Box)."""
     fig, axes = plt.subplots(2, 2, figsize=(14, 12))
     fig.suptitle('Impact of Parcellation Resolution on Model Performance', 
                  fontsize=20, fontweight='bold', y=0.98)
@@ -315,11 +315,11 @@ def plot_resolution_effects(error_data, output_path):
     plt.tight_layout(rect=[0, 0.03, 1, 0.96])
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"✓ Saved Figure 1 (Resolution Analysis - Improved): {output_path.name}")
+    print(f"✓ Saved Figure 1 (Resolution Analysis): {output_path.name}")
     return None
 
 def plot_cortical_vs_subcortical(error_data, output_path):
-    """Cortical vs. Subcortical Performance (Improved Hybrid Violin/Box)."""
+    """Cortical vs. Subcortical Performance (Hybrid Violin/Box)."""
     fig, axes = plt.subplots(2, 2, figsize=(14, 12))
     fig.suptitle('Cortical vs. Subcortical Performance', 
                  fontsize=20, fontweight='bold', y=0.98)
@@ -342,15 +342,15 @@ def plot_cortical_vs_subcortical(error_data, output_path):
     plt.tight_layout(rect=[0, 0.03, 1, 0.96])
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"✓ Saved Figure 2 (System Comparison - Improved): {output_path.name}")
+    print(f"✓ Saved Figure 2 (System Comparison): {output_path.name}")
     return None
 
 # =============================================================================
-# FIGURE 3 (IMPROVED HYBRID VIOLIN/BOX)
+# FIGURE 3 HYBRID VIOLIN/BOX
 # =============================================================================
 
 def plot_task_effects(error_data, output_path):
-    """Rest vs. Task State Comparison (Improved Hybrid Violin/Box)."""
+    """Rest vs. Task State Comparison (Hybrid Violin/Box)."""
     fig, axes = plt.subplots(2, 2, figsize=(14, 12))
     fig.suptitle('Rest vs. Task State Comparison', 
                  fontsize=20, fontweight='bold', y=0.98)
@@ -373,15 +373,15 @@ def plot_task_effects(error_data, output_path):
     plt.tight_layout(rect=[0, 0.03, 1, 0.96])
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"✓ Saved Figure 3 (Task Effects - Improved): {output_path.name}")
+    print(f"✓ Saved Figure 3 (Task Effects): {output_path.name}")
     return None 
 
 # =============================================================================
-# FIGURE 3a (IMPROVED BAR CHART WITH ERROR BARS)
+# FIGURE 3a BAR CHART WITH ERROR BARS
 # =============================================================================
 
 def plot_task_effects_bar_chart(error_data, output_path):
-    """IMPROVED: Bar chart with error bars showing Task effects."""
+    """Bar chart with error bars showing Task effects."""
     fig, axes = plt.subplots(2, 2, figsize=(18, 14))
     fig.suptitle('Task-Induced Changes in Classification Performance',
                  fontsize=20, fontweight='bold', y=0.995)
@@ -414,7 +414,7 @@ def plot_task_effects_bar_chart(error_data, output_path):
                 rest_vals = merged['error_rate_rest'].values
                 task_vals = merged['error_rate_task'].values
                 
-                # IMPROVED: Calculate standard errors for error bars
+                # Calculate standard errors for error bars
                 rest_sem = rest_df.groupby('network')['error_rate'].sem().reindex(merged['network']).fillna(0).values
                 task_sem = task_df.groupby('network')['error_rate'].sem().reindex(merged['network']).fillna(0).values
                 
@@ -423,7 +423,7 @@ def plot_task_effects_bar_chart(error_data, output_path):
                 
                 y_pos = np.arange(len(merged))
                 
-                # IMPROVED: Add error bars
+                # Add error bars
                 ax.barh(y_pos - 0.2, rest_vals, 0.4, xerr=rest_sem, label='Rest',
                        color=COLORS['rest'], alpha=0.8, edgecolor='black', linewidth=1,
                        error_kw={'linewidth': 1.5, 'ecolor': 'black', 'capsize': 3})
@@ -457,15 +457,15 @@ def plot_task_effects_bar_chart(error_data, output_path):
     plt.tight_layout()
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"✓ Saved Figure 3a (Task Effects Bar Chart - Improved with Error Bars): {output_path.name}")
+    print(f"✓ Saved Figure 3a (Task Effects Bar Chart): {output_path.name}")
     return pd.DataFrame(all_stats)
 
 
 # =============================================================================
-# FIGURE 4 (DISTRIBUTION OVERVIEW - IMPROVED)
+# FIGURE 4 (DISTRIBUTION OVERVIEW)
 # =============================================================================
 def plot_distribution_overview_orig(error_data, output_path):
-    """IMPROVED: Distribution overview with better annotations."""
+    """Distribution overview with better annotations."""
     fig = plt.figure(figsize=(18, 12))
     gs = fig.add_gridspec(2, 2, hspace=0.3, wspace=0.3)
     
@@ -608,7 +608,7 @@ def plot_distribution_overview_orig(error_data, output_path):
     plt.tight_layout()
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"✓ Saved Figure 4 (Distribution Overview - Improved): {output_path.name}")
+    print(f"✓ Saved Figure 4 (Distribution Overview): {output_path.name}")
     return None
 
 
@@ -619,7 +619,7 @@ def plot_distribution_overview_orig(error_data, output_path):
 def main():
     
     print("="*60)
-    print("ATLAS COMPARISON - IMPROVED VERSION")
+    print("ATLAS COMPARISON")
     print("="*60)
     
     tables_dir = Path('reports/tables/atlas_analysis')
@@ -640,45 +640,34 @@ def main():
     print(f"✓ Loaded {len(data)} datasets\n")
 
 
-    print("\n" + "▶"*40)
-    print("  GENERATING IMPROVED HYBRID VIOLIN/BOX PLOTS")
-    print("▶"*40)
+    print("  GENERATING HYBRID VIOLIN/BOX PLOTS")
     
-    # FIGURE 1: Resolution Effects (Improved)
+    # FIGURE 1: Resolution Effects 
     plot_resolution_effects(data, output_figures / 'fig1_resolution_violin.png')
     
-    # FIGURE 2: Cortical vs Subcortical (Improved)
+    # FIGURE 2: Cortical vs Subcortical 
     plot_cortical_vs_subcortical(data, output_figures / 'fig2_systems_violin.png')
     
-    # FIGURE 3: Task Effects (Improved)
+    # FIGURE 3: Task Effects 
     plot_task_effects(data, output_figures / 'fig3_task_violin.png') 
     
-    print("\n" + "▶"*40)
-    print("  GENERATING IMPROVED BAR CHART & DISTRIBUTIONS")
-    print("▶"*40)
+    print("  GENERATING BAR CHART & DISTRIBUTIONS")
 
-    # FIGURE 3a: Bar Chart with Error Bars (Improved)
+    # FIGURE 3a: Bar Chart with Error Bars 
     task_stats_orig = plot_task_effects_bar_chart(data, 
                                                   output_figures / 'fig3a_task_effects_bar.png') 
     
-    # FIGURE 4: Distribution Overview (Improved)
+    # FIGURE 4: Distribution Overview 
     plot_distribution_overview_orig(data, 
                                     output_figures / 'fig4_distribution_overview_orig.png')
     
     # SAVE STATISTICS
     if task_stats_orig is not None and len(task_stats_orig) > 0:
         task_stats_orig.to_csv(output_tables / 'rest_vs_task_comparison_orig.csv', index=False)
-        print(f"\n✓ Saved statistics table: rest_vs_task_comparison_orig.csv")
+        print(f"\n Saved statistics table: rest_vs_task_comparison_orig.csv")
 
     print("\n" + "="*60)
-    print("DONE. Improved figures saved to 'reports/figures/atlas_comparison'")
-    print("\nIMPROVEMENTS:")
-    print("  • Consistent color scheme (rest: blue, task: purple)")
-    print("  • Simplified violin/box plots using inner='box'")
-    print("  • Error bars added to bar charts")
-    print("  • Standardized fonts (18pt titles, 14pt labels, 11pt ticks)")
-    print("  • Better p-value formatting (space before stars)")
-    print("  • Improved legend positioning")
+    print("DONE. figures saved to 'reports/figures/atlas_comparison'")
     print("="*60)
 
 if __name__ == "__main__":
