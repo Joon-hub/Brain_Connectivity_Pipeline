@@ -264,7 +264,7 @@ def load_results():
     
     if not results['confusion']:
         print(f"\n  ⚠ No confusion matrices available - Panel D will show message")
-        print(f"  → To fix this, run: python 05_region_level_analysis.py --config config.yaml")
+        print(f"  → To fix this, run: python 05_region_level_analysis.py --config configs/config.yaml")
         print(f"  → Or ensure predictions_train.csv exists in data/processed/")
     
     return results

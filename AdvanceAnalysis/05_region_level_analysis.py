@@ -28,7 +28,7 @@ from matplotlib.colors import to_rgb
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 from data import load_connectivity_data, extract_connection_columns
-from old_code.features_251125 import extract_regions
+from features import extract_regions
 from utils import load_config, set_random_seeds, print_section
 
 plt.style.use('seaborn-v0_8-paper')
@@ -1060,7 +1060,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Confusion matrices with flexible, research-focused design'
     )
-    parser.add_argument('--config', type=str, default='config.yaml')
+    parser.add_argument('--config', type=str, default='configs/config.yaml')
     parser.add_argument('--sample', action='store_true')
     args = parser.parse_args()
     

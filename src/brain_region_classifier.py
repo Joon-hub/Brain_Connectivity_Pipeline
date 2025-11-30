@@ -7,9 +7,6 @@ All preprocessing happens inside the cross-validation loop to prevent data leaka
 Key Features:
 - Subject-wise cross-validation (GroupKFold) to prevent data leakage
 - Preprocessing done inside each CV fold
-- Support for multiple models via YAML configuration
-- Comprehensive diagnostic capabilities
-- Proper handling of symmetric connectivity matrices
 """
 import numpy as np
 import pandas as pd
@@ -38,9 +35,7 @@ def cross_validate_no_leakage(
     verbose: bool = True
 ) -> Dict:
     """
-    Perform leak-free cross-validation by fitting preprocessor inside each fold.
-
-    Uses sklearn's GroupKFold for proper subject-level splitting.
+    Perform leak-free cross-validation by fitting preprocessor inside each fold. Uses sklearn's GroupKFold for proper subject-level splitting.
 
     Args:
         df_raw (pd.DataFrame): Raw connectivity DataFrame
@@ -131,7 +126,7 @@ def cross_validate_no_leakage(
 
         # Create pipeline with scaler and cloned model
         pipeline = Pipeline([
-            # ('scaler', StandardScaler()),
+            ('scaler', StandardScaler()),
             ('classifier', clone(model_instance))
         ])
 

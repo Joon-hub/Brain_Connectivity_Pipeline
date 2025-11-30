@@ -13,7 +13,7 @@ output_dirs:
 preprocessing:
   diagonal_strategy: "zero"                          # Options: "zero", "random", "region_mean", "network_mean", "sample_from_matrix","sample_from_row"
   include_diagonal: true                             # Should be false if diagonal was imputed
-  apply_fisher_z: false                               # Apply Fisher Z transformation to correlation values (RECOMMENDED)
+  apply_fisher_z: true                               # Apply Fisher Z transformation to correlation values (RECOMMENDED)
 
 # Model training settings
 model:

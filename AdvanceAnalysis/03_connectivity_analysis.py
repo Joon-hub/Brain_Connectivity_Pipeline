@@ -20,7 +20,7 @@ import seaborn as sns
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 from data import load_connectivity_data, extract_connection_columns
-from old_code.features_251125 import extract_regions, reconstruct_connectivity_matrix
+from features import extract_regions, reconstruct_matrices_from_dataframe
 from utils import load_config, set_random_seeds, print_section
 
 plt.style.use('seaborn-v0_8-paper')
@@ -125,7 +125,7 @@ def compute_group_connectivity(df, connection_columns, region_list, region_to_id
 
     for idx in range(n_subjects):
         values = df.iloc[idx][connection_columns].values.astype(float)
-        mat = reconstruct_connectivity_matrix(values, connection_columns, region_to_idx, n_regions)
+        mat = reconstruct_matrices_from_dataframe(values, connection_columns, region_to_idx, n_regions)
         group_mat += mat
 
     group_mat /= n_subjects
@@ -301,7 +301,7 @@ Most Changed Pair:
 # =============================================================================
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='config.yaml')
+    parser.add_argument('--config', type=str, default='configs/config.yaml')
     parser.add_argument('--sample', action='store_true')
     args = parser.parse_args()
 

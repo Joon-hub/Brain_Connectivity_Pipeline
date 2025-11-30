@@ -8,7 +8,6 @@ from typing import Tuple, Dict, List, Optional
 from sklearn.base import BaseEstimator, TransformerMixin
 
 # ==============================
-# UTILITY FUNCTIONS
 # Helper function to extract unique brain regions from connection column names
 # ==============================
 
@@ -17,18 +16,12 @@ def extract_regions(connection_columns: List[str]) -> Tuple[List[str], Dict[str,
     Extract unique brain regions from connection column names.
 
     Parameters:
-    ----------
-    connection_columns : List[str]
-        List of connection column names in the format 'RegionA~RegionB'.
+    connection_columns
 
     Returns:
-    -------
-    regions : List[str]
-        Ordered list of unique brain regions.
-    region_to_idx : Dict[str, int]
-        Mapping from region name to its index.
-    n_regions : int
-        Total number of unique regions.
+    regions : Ordered list of unique brain regions.
+    region_to_idx : Mapping from region name to its index.
+    n_regions : Total number of unique regions.
     """
     unique_regions = []
     seen = set() # To maintain order of first appearance
@@ -59,20 +52,13 @@ def reconstruct_matrices_from_dataframe(
     Reconstruct connectivity matrices from flattened DataFrame.
 
     Parameters:
-    ----------
-    df : pd.DataFrame
-        DataFrame containing flattened connectivity data.
-    connection_columns : List[str]
-        List of connection column names in the format 'RegionA~RegionB'.
-    region_to_idx : Dict[str, int]
-        Mapping from region name to its index.
-    n_regions : int
-        Total number of unique regions.
+    df : DataFrame containing flattened connectivity data.
+    connection_columns : List of connection column names in the format 'RegionA~RegionB'.
+    region_to_idx : Mapping from region name to its index.
+    n_regions : Total number of unique regions.
 
     Returns:
-    -------
-    connectivity_matrix : np.ndarray
-        3D array (n_subjects x n_regions x n_regions).
+    connectivity_matrix : 3D array (n_subjects x n_regions x n_regions).
     """
     n_subjects = df.shape[0]
     matrices = np.zeros((n_subjects, n_regions, n_regions))
@@ -197,13 +183,14 @@ def impute_diagonal_zero(matrix: np.ndarray) -> np.ndarray:
     return result
 
 def impute_diagonal_random(matrices: np.ndarray) -> np.ndarray:
-    """ Impute diagonal with random values (Stochastic). """
+    """ Impute diagonal with random values (Stochastic - TRUE randomness per call)"""
     result = matrices.copy()
     n_subjects = result.shape[0]
     n_regions = result.shape[1]
 
     for s in range(n_subjects):
-        random_values = np.random.uniform(-1, 1, n_regions) # Uniform distribution between low and high 
+        # Generate fresh random values on EVERY call (no fixed seed)
+        random_values = np.random.uniform(-1, 1, n_regions)
         np.fill_diagonal(result[s], random_values)
     return result
 
@@ -290,7 +277,7 @@ def impute_diagonal_sample_from_row(
         matrices: np.ndarray
 ):
     """
-    Impute diagonal by sampling from each row (Stochastic).   
+    Impute diagonal by sampling from each row (Stochastic - TRUE randomness per call).
     """
     result = matrices.copy()
     n_subjects = result.shape[0]
@@ -307,9 +294,9 @@ def impute_diagonal_sample_from_row(
            candidates = matrix[r][off_diag_mask[r]]        # Extract off-diagonal values
            candidates = candidates[~np.isnan(candidates)]  # Remove NaNs
 
-           # Sample one value 
+           # Sample one value (NEW random sample every call, no fixed seed)
            if len(candidates) > 0:
-               val = np.random.choice(candidates)     # Randomly sample from candidates
+               val = np.random.choice(candidates)
            else:
                val = 0.0  
            
@@ -321,7 +308,7 @@ def impute_diagonal_sample_from_matrix(
         matrices: np.ndarray
 ):
     """
-    Impute diagonal by sampling from entire matrix (Stochastic).   
+    Impute diagonal by sampling from entire matrix (Stochastic - TRUE randomness per call).
     """
     result = matrices.copy()
     n_subjects = result.shape[0]
@@ -338,9 +325,9 @@ def impute_diagonal_sample_from_matrix(
         candidates = candidates[~np.isnan(candidates)]   # Remove NaNs
 
         for r in range(n_regions):
-            # Sample one value 
+            # Sample one value (NEW random sample every call, no fixed seed)
             if len(candidates) > 0:
-                val = np.random.choice(candidates)     # Randomly sample from candidates
+                val = np.random.choice(candidates)
             else:
                 val = 0.0  
            
@@ -357,11 +344,8 @@ def impute_diagonal(
     Impute diagonal values in connectivity matrices using specified method.
 
     Parameters:
-    ----------
-    matrices : np.ndarray
-        3D array (n_subjects x n_regions x n_regions).
-    region_list : List[str]
-        List of region names corresponding to matrix indices.
+    matrices : 3D array (n_subjects x n_regions x n_regions).
+    region_list : List of region names corresponding to matrix indices.
     method : str
         Imputation method. Options:
         -- Deterministic --
@@ -369,15 +353,12 @@ def impute_diagonal(
         - 'region_mean': Fill diagonal with region-wise mean connectivity.
         - 'network_mean': Fill diagonal with network-wise mean connectivity.
 
-        -- Stochastic --
+        -- Stochastic (TRUE randomness - different values per call) --
         - 'random': Fill diagonal with random values.
         - 'sample_row': Sample diagonal values from each row.
         - 'sample_matrix': Sample diagonal values from entire matrix.
 
-    Returns:
-    -------
-    imputed_matrices : np.ndarray
-        Matrices with imputed diagonal values.
+    Returns: imputed_matrices : Matrices with imputed diagonal values.
     """
     # Deterministic Methods
     if Strategy == 'zero':
@@ -389,7 +370,7 @@ def impute_diagonal(
             raise ValueError("region_list must be provided for network_mean imputation.")
         return impute_diagonal_network_mean(matrices, region_list)
     
-    # Stochastic Methods
+    # Stochastic Methods (TRUE randomness - no fixed seed)
     elif Strategy == 'random':
         return impute_diagonal_random(matrices)
     elif Strategy == 'sample_row':
@@ -408,7 +389,7 @@ def extract_features_for_classification(
      Extract per-region connectivity patterns for classification.
     
     Args:
-        matrices (np.ndarray): 3D array of shape (n_subjects, n_regions, n_regions).
+        matrices: 3D array (n_subjects, n_regions, n_regions).
         include_diagonal (bool): Whether to include diagonal elements in the features.
 
     Returns:
@@ -502,7 +483,9 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
             region_list (List[str]): List of region names.
             include_diagonal (bool): Include diagonal in features.
             apply_fisher_z (bool): Apply Fisher Z-transformation.
-            random_state (int): Random seed (for reproducibility testing only).
+            random_state (int): Random seed (ONLY for deterministic strategies and reproducibility testing).
+                                NOTE: Stochastic strategies (random, sample_row, sample_matrix) 
+                                      IGNORE this parameter to ensure true randomness.
             enable_diagnostics (bool): Enable diagnostic logging.
         """
         # Store parameters
@@ -566,6 +549,8 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
         ---------------
         1. Reconstruct connectivity matrices from flattened DataFrame.
         2. Impute diagonal values using specified strategy.
+           NOTE: For stochastic strategies (random, sample_row, sample_matrix),
+                 NEW random values are generated on EVERY transform() call.
         3. Extract per-region connectivity patterns for classification.
         4. Apply Fisher Z-transformation to connectivity values.
         """
@@ -573,6 +558,9 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
         
         if self.enable_diagnostics:
             print(f"\n[Preprocessor Transform call count: {self._transform_count}]")
+            if self.diagonal_strategy in ['random', 'sample_row', 'sample_matrix']:
+                print(f"  -> Using STOCHASTIC imputation: '{self.diagonal_strategy}'")
+                print(f"     (Diagonal values will be DIFFERENT on each transform call)")
         
         # Step 1: Reconstruct connectivity matrices
         matrices = reconstruct_matrices_from_dataframe(
@@ -586,6 +574,7 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
             print(f"  -> Reconstructed {matrices.shape[0]} connectivity matrices of size {matrices.shape[1]}x{matrices.shape[2]}.")
         
         # Step 2: Impute diagonal values
+        # CRITICAL: For stochastic strategies, this generates NEW random values every time
         matrices = impute_diagonal(
             matrices,
             self.diagonal_strategy,
