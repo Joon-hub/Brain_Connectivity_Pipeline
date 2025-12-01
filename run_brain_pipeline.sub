@@ -1,6 +1,6 @@
 universe = vanilla
 executable = sh_files/run_brain_pipeline.sh 
-arguments = --experiment-name Exp_LogReg_Diagonalzero_NoReg --stage 1
+arguments = --experiment-name Exp_LogReg_SampleFromMatrix_NoReg --stage 1
 getenv = True
 initialdir = /home/sjoon/projects/brain_connectivity_classifier/
 

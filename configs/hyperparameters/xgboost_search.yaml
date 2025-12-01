@@ -1,0 +1,57 @@
+# Hyperparameter Search Space for XGBoost
+# ========================================
+# Example configuration for extending to XGBoost model
+
+param_distributions:
+  # Number of boosting rounds (trees)
+  n_estimators:
+    type: "choice"
+    values: [100, 300, 500, 700]
+  
+  # Maximum tree depth
+  max_depth:
+    type: "choice"
+    values: [3, 5, 7, 9]
+  
+  # Learning rate
+  learning_rate:
+    type: "loguniform"
+    low: 0.001
+    high: 0.3
+  
+  # L2 regularization
+  reg_lambda:
+    type: "loguniform"
+    low: 0.01
+    high: 10.0
+  
+  # L1 regularization
+  reg_alpha:
+    type: "loguniform"
+    low: 0.0
+    high: 5.0
+  
+  # Minimum child weight
+  min_child_weight:
+    type: "choice"
+    values: [1, 3, 5, 7]
+  
+  # Subsample ratio
+  subsample:
+    type: "choice"
+    values: [0.6, 0.7, 0.8, 0.9, 1.0]
+  
+  # Column subsample
+  colsample_bytree:
+    type: "choice"
+    values: [0.6, 0.7, 0.8, 0.9, 1.0]
+
+# Search settings
+n_iter: 30              # More iterations for larger search space
+cv_folds: 3
+random_seed: 42
+
+# Usage:
+# python src/hyperparameter_search.py \
+#     --model xgboost \
+#     --search-config configs/hyperparameters/xgboost_search.yaml

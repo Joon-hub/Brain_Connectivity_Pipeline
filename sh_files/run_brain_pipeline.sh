@@ -49,7 +49,7 @@ if [[ "$STAGE" == "all" || "$STAGE" == "1" ]]; then
         --n-splits 3 \
         --model logistic_regression \
         --experiment-name "$EXPERIMENT_NAME" \
-        --diagonal zero \
+        --diagonal sample_matrix \
         $ADDITIONAL_ARGS
 fi
 

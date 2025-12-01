@@ -216,7 +216,7 @@ Examples:
     parser.add_argument('--diagnose', action='store_true',
                         help='Run diagonal imputation diagnostics')
     parser.add_argument('--diagonal', type=str,
-                        choices=['zero', 'random', 'region_mean', 'network_mean', 'sample_from_matrix'],
+                        choices=['zero', 'region_mean', 'network_mean','random', 'sample_matrix', 'sample_row'],
                         help='Override diagonal imputation strategy')
     parser.add_argument('--no-fisher-z', action='store_true',
                         help='Disable Fisher Z transformation')
