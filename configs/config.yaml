@@ -11,8 +11,8 @@ output_dirs:
 
 # Feature extraction & preprocessing
 preprocessing:
-  diagonal_strategy: "zero"                          # Options: "zero", "random", "region_mean", "network_mean", "sample_from_matrix","sample_from_row"
-  include_diagonal: true                             # Should be false if diagonal was imputed
+  diagonal_strategy: "zero"                          # Options: "zero", "random", "region_mean", "network_mean", "sample_matrix","sample_row"
+  include_diagonal: true                             
   apply_fisher_z: true                               # Apply Fisher Z transformation to correlation values (RECOMMENDED)
 
 # Model training settings
@@ -22,10 +22,10 @@ model:
 
 # Evaluation & Visualization
 visualization:
-  dpi: 300                                           # Resolution for saved figures
+  dpi: 300                                           
   high_error_threshold: 0.30                         # Regions with error ≥ this = "hard to predict"
   low_error_threshold: 0.10                          # Regions with error ≤ this = "easy to predict"
-  colormap_error: "RdBu_r"                           # Matplotlib colormap for error maps
+  colormap_error: "RdBu_r"                           
   colormap_diff: "PRGn"                              # For rest vs. task difference plots
 
 # Sample mode settings

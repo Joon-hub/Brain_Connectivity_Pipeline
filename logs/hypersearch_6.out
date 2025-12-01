@@ -1,0 +1,50 @@
+==========================================
+Hyperparameter Search - Iteration 6
+==========================================
+Start: Mon Dec  1 06:45:42 PM CET 2025 | Host: cpu29
+
+✓ Using masterthesis_venv2
+
+Validating Python packages...
+✓ All packages found
+
+Running hyperparameter search...
+
+======================================================================
+HYPERPARAMETER SEARCH - RANDOM SEARCH
+======================================================================
+Model: logistic_regression
+Diagonal: sample_matrix
+Iterations: 50
+CV Folds: 3
+Parallel jobs: 4
+======================================================================
+
+Loading data from: data/raw/PIOP2_restingstate.csv
+✓ Schema valid: 224 subjects, 26796 connections
+Loaded 224 subjects
+
+Loading search space from: configs/hyperparameters/logistic_regression_search.yaml
+Loaded parameters: ['classifier__C', 'classifier__max_iter', 'classifier__solver']
+Parameter distributions:
+  classifier__C: <scipy.stats._distn_infrastructure.rv_continuous_frozen object at 0x14b015acf010>
+  classifier__max_iter: [500, 1000, 2000, 5000]
+  classifier__solver: ['lbfgs', 'saga']
+
+Connection columns: 26796
+
+Fitting preprocessor...
+
+Data shapes (after fix):
+  X: (51968, 232)
+  y: (51968,)
+  subject_ids_expanded: (51968,)
+  Unique subjects: 224
+
+Starting RandomizedSearchCV:
+  Iterations: 50
+  CV folds: 3
+  Parallel jobs: 4
+
+Fitting RandomizedSearchCV...
+Fitting 3 folds for each of 50 candidates, totalling 150 fits

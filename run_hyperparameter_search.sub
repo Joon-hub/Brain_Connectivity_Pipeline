@@ -1,27 +1,20 @@
 # HTCondor Submit File for Hyperparameter Search
-# ================================================
-
 universe = vanilla
 executable = sh_files/run_hyperparameter_search.sh
-arguments = $(iteration)
+arguments = $(Process)
 
-# Environment and working directory
 getenv = True
 initialdir = /home/sjoon/projects/brain_connectivity_classifier/
 
-# File transfer
 should_transfer_files = IF_NEEDED
 when_to_transfer_output = ON_EXIT
 
-# Resource requests
 request_cpus = 4
 request_memory = 12GB
 request_disk = 15GB
 
-# Logging
-output = logs/hypersearch_$(iteration).out
-error = logs/hypersearch_$(iteration).err
-log = logs/hypersearch_$(iteration).log
+output = logs/hypersearch_$(Process).out
+error = logs/hypersearch_$(Process).err
+log = logs/hypersearch_$(Process).log
 
-# Queue 20 jobs with iteration numbers 1-3
-queue iteration from 1 to 3
+queue 20

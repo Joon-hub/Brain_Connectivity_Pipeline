@@ -1,0 +1,30 @@
+001 (10164023.013.000) 2025-12-01 20:09:34 Job executing on host: <10.0.9.44:9618?addrs=10.0.9.44-9618&alias=cpu44.htc.inm7.de&noUDP&sock=startd_4087_eba8>
+...
+006 (10164023.013.000) 2025-12-01 20:09:43 Image size of job updated: 2
+	6  -  MemoryUsage of job (MB)
+	5544  -  ResidentSetSize of job (KB)
+...
+006 (10164023.013.000) 2025-12-01 20:14:43 Image size of job updated: 458072
+	80  -  MemoryUsage of job (MB)
+	81144  -  ResidentSetSize of job (KB)
+...
+006 (10164023.013.000) 2025-12-01 20:19:44 Image size of job updated: 529792
+	80  -  MemoryUsage of job (MB)
+	81144  -  ResidentSetSize of job (KB)
+...
+006 (10164023.013.000) 2025-12-01 20:24:45 Image size of job updated: 529792
+	116  -  MemoryUsage of job (MB)
+	118772  -  ResidentSetSize of job (KB)
+...
+006 (10164023.013.000) 2025-12-01 20:29:45 Image size of job updated: 2824372
+	673  -  MemoryUsage of job (MB)
+	688268  -  ResidentSetSize of job (KB)
+...
+006 (10164023.013.000) 2025-12-01 20:34:45 Image size of job updated: 5016168
+	2746  -  MemoryUsage of job (MB)
+	2811732  -  ResidentSetSize of job (KB)
+...
+006 (10164023.013.000) 2025-12-01 20:39:47 Image size of job updated: 5520824
+	3149  -  MemoryUsage of job (MB)
+	3224244  -  ResidentSetSize of job (KB)
+...

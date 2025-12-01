@@ -1,0 +1,15 @@
+{
+  "model_name": "best_from_search",
+  "model_type": "LogisticRegression",
+  "diagonal_strategy": "sample_matrix",
+  "apply_fisher_z": true,
+  "include_diagonal": true,
+  "n_splits": 3,
+  "random_state": 42,
+  "n_regions": 232,
+  "fit_timestamp": "2025-12-01T17:56:20.272238",
+  "cv_val_mean": 0.8643543543543544,
+  "cv_val_std": 0.004490883329597116,
+  "cv_train_mean": 0.9768974517215665,
+  "cv_train_std": 0.0012999891018951307
+}

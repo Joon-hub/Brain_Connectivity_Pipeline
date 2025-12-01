@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
-Simple Random Search for Hyperparameter Optimization
-====================================================
-This script performs random search hyperparameter optimization using
-sklearn's RandomizedSearchCV with your existing pipeline.
+Random Search for Hyperparameter Optimization using Sklearn RandomizedSearchCV
+==============================================================================
 
 Usage:
     # Test locally with sample data
@@ -303,6 +301,9 @@ Examples:
     # Load search space
     print(f"Loading search space from: {args.search_config}")
     param_distributions, search_config = load_search_space(args.search_config)
+    
+    # Print loaded parameters
+    print(f"Loaded parameters: {list(param_distributions.keys())}")
     
     print("Parameter distributions:")
     for param, dist in param_distributions.items():

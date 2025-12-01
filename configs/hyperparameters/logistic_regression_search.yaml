@@ -7,7 +7,7 @@ param_distributions:
   classifier__C:
     type: "loguniform"
     low: 0.0001
-    high: 10000
+    high: 0.05
   
   # Maximum number of iterations for convergence
   classifier__max_iter:
@@ -20,8 +20,8 @@ param_distributions:
     values: ["lbfgs", "saga"]
 
 # Search settings
-n_iter: 2              # Number of random combinations to try
-cv_folds: 2             # CV folds for each combination
+n_iter: 50              # Number of random combinations to try
+cv_folds: 3             # CV folds for each combination
 random_seed: 42         # Random seed for reproducibility
 
 # Notes:

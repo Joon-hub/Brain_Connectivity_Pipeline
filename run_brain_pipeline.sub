@@ -1,6 +1,6 @@
 universe = vanilla
 executable = sh_files/run_brain_pipeline.sh 
-arguments = --experiment-name Exp_LogReg_SampleFromMatrix_NoReg --stage 1
+arguments = --experiment-name Exp_LogReg_SampleFromMatrix_bestparam --stage 1 --model best_from_search
 getenv = True
 initialdir = /home/sjoon/projects/brain_connectivity_classifier/
 
@@ -16,3 +16,4 @@ request_memory = 12GB
 request_disk = 20GB
 
 queue 1
+

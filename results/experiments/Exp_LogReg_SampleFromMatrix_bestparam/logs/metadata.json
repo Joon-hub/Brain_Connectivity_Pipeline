@@ -1,0 +1,17 @@
+{
+  "start_time": "2025-12-01T17:56:18.030394",
+  "model": "best_from_search",
+  "diagonal_strategy": "sample_matrix",
+  "n_train_subjects": 224,
+  "n_regions": 232,
+  "cv_train_mean": 0.9768974517215665,
+  "cv_train_std": 0.0012999891018951307,
+  "cv_val_mean": 0.8643543543543544,
+  "cv_val_std": 0.004490883329597116,
+  "train_accuracy": 0.9062307573891626,
+  "n_test_subjects": 200,
+  "test_accuracy": 0.8366594827586207,
+  "end_time": "2025-12-01T17:58:02.666556",
+  "duration_seconds": 104.65392327308655,
+  "n_figures_generated": 5
+}
