@@ -1,6 +1,6 @@
 class_path: sklearn.linear_model.LogisticRegression
 params:
-  C: 0.09915644566638401
-  max_iter: 500
-  solver: lbfgs
+  C: 0.0343304473310619
+  max_iter: 1000
+  solver: saga
   multi_class: multinomial

@@ -1,0 +1,44 @@
+
+RESULTS SUMMARY
+======================================================================
+
+Experiment: logistic_regression_sample_matrix
+Model: LogisticRegression
+
+Data:
+  Training subjects: 224
+  Brain regions: 232
+  Chance level: 0.0043
+
+Configuration:
+  Diagonal strategy: sample_matrix
+  CV folds: 3
+  Fisher Z transform: Enabled
+  Random seed: 42
+
+Cross-Validation Results (LEAK-FREE):
+  Validation accuracy: 0.8281 ± 0.0033
+  Training accuracy: 1.0000 ± 0.0000
+  Full Training Accuracy: 0.9319 (overfitted)
+  Improvement over chance: 192.1x
+
+Task Data (Gender Stroop):
+  Test subjects: 200
+  Test accuracy: 0.8016
+  CV validation → Task drop: 0.0265
+
+======================================================================
+
+Output Locations:
+  Experiment: results/experiments/logreg_cv_baseline
+  Models: results/experiments/logreg_cv_baseline/models
+  Metrics: results/experiments/logreg_cv_baseline/metrics
+  Figures: results/experiments/logreg_cv_baseline/figures
+  Predictions: results/experiments/logreg_cv_baseline/predictions
+
+Execution Time: 30.9m
+Completed: 2025-12-02 10:26:05
+
+======================================================================
+
+Pipeline completed successfully.

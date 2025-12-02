@@ -1,0 +1,12 @@
+{
+  "best_params": {
+    "classifier__C": 0.04138851334163269,
+    "classifier__max_iter": 1000,
+    "classifier__solver": "saga"
+  },
+  "best_score": 0.8687975044009527,
+  "best_index": 25,
+  "model": "logistic_regression",
+  "diagonal_strategy": "sample_matrix",
+  "timestamp": "20251201_222419"
+}

@@ -1,0 +1,17 @@
+{
+  "start_time": "2025-12-02T09:55:14.132850",
+  "model": "logistic_regression",
+  "diagonal_strategy": "sample_matrix",
+  "n_train_subjects": 224,
+  "n_regions": 232,
+  "cv_train_mean": 0.9999616215382242,
+  "cv_train_std": 3.5822560354661425e-05,
+  "cv_val_mean": 0.8281316661489075,
+  "cv_val_std": 0.003297493469036683,
+  "train_accuracy": 0.9319196428571429,
+  "n_test_subjects": 200,
+  "test_accuracy": 0.8016379310344828,
+  "end_time": "2025-12-02T10:26:05.452296",
+  "duration_seconds": 1851.327430009842,
+  "n_figures_generated": 5
+}

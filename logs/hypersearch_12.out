@@ -48,3 +48,176 @@ Starting RandomizedSearchCV:
 
 Fitting RandomizedSearchCV...
 Fitting 3 folds for each of 50 candidates, totalling 150 fits
+[CV] END classifier__C=0.0010253509690168502, classifier__max_iter=500, classifier__solver=lbfgs; total time= 1.9min
+[CV] END classifier__C=0.009454306819536176, classifier__max_iter=500, classifier__solver=lbfgs; total time= 3.1min
+[CV] END classifier__C=0.00011364672700011186, classifier__max_iter=1000, classifier__solver=saga; total time= 2.9min
+[CV] END classifier__C=0.017649715848175724, classifier__max_iter=1000, classifier__solver=saga; total time=19.5min
+[CV] END classifier__C=0.0006144543785587475, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  46.0s
+[CV] END classifier__C=0.0017018418817029183, classifier__max_iter=2000, classifier__solver=saga; total time= 8.0min
+[CV] END classifier__C=0.0017018418817029183, classifier__max_iter=2000, classifier__solver=saga; total time=11.3min
+[CV] END classifier__C=0.0006639623079859465, classifier__max_iter=500, classifier__solver=saga; total time= 4.6min
+[CV] END classifier__C=0.0006639623079859465, classifier__max_iter=500, classifier__solver=saga; total time= 4.8min
+[CV] END classifier__C=0.0006639623079859465, classifier__max_iter=500, classifier__solver=saga; total time= 4.8min
+[CV] END classifier__C=0.007026263205443053, classifier__max_iter=2000, classifier__solver=saga; total time=14.0min
+[CV] END classifier__C=0.0004993895014755662, classifier__max_iter=5000, classifier__solver=saga; total time= 4.2min
+[CV] END classifier__C=0.0006939031266619748, classifier__max_iter=1000, classifier__solver=saga; total time= 6.3min
+[CV] END classifier__C=0.0343304473310619, classifier__max_iter=1000, classifier__solver=saga; total time=16.1min
+[CV] END classifier__C=0.004108791545324082, classifier__max_iter=5000, classifier__solver=lbfgs; total time= 1.3min
+[CV] END classifier__C=0.004108791545324082, classifier__max_iter=5000, classifier__solver=lbfgs; total time= 1.5min
+[CV] END classifier__C=0.00017331598058558715, classifier__max_iter=2000, classifier__solver=saga; total time= 2.4min
+[CV] END classifier__C=0.00017331598058558715, classifier__max_iter=2000, classifier__solver=saga; total time= 3.5min
+[CV] END classifier__C=0.017247957710046027, classifier__max_iter=1000, classifier__solver=lbfgs; total time= 1.7min
+[CV] END classifier__C=0.017247957710046027, classifier__max_iter=1000, classifier__solver=lbfgs; total time= 1.8min
+[CV] END classifier__C=0.00024007683448156383, classifier__max_iter=2000, classifier__solver=lbfgs; total time=  25.9s
+[CV] END classifier__C=0.00024007683448156383, classifier__max_iter=2000, classifier__solver=lbfgs; total time=  27.2s
+[CV] END classifier__C=0.00015893148858258123, classifier__max_iter=2000, classifier__solver=lbfgs; total time=  25.1s
+[CV] END classifier__C=0.00015893148858258123, classifier__max_iter=2000, classifier__solver=lbfgs; total time=  19.5s
+[CV] END classifier__C=0.012141307774357374, classifier__max_iter=5000, classifier__solver=saga; total time=18.4min
+[CV] END classifier__C=0.012068006375483968, classifier__max_iter=500, classifier__solver=saga; total time=15.7min
+[CV] END classifier__C=0.021354541789291304, classifier__max_iter=5000, classifier__solver=saga; total time=17.9min
+[CV] END classifier__C=0.009315049998499168, classifier__max_iter=5000, classifier__solver=saga; total time=19.6min
+[CV] END classifier__C=0.0001171130955922945, classifier__max_iter=500, classifier__solver=lbfgs; total time=  11.7s
+[CV] END classifier__C=0.0001171130955922945, classifier__max_iter=500, classifier__solver=lbfgs; total time=   9.4s
+[CV] END classifier__C=0.0001171130955922945, classifier__max_iter=500, classifier__solver=lbfgs; total time=  11.3s
+[CV] END classifier__C=0.0010253509690168502, classifier__max_iter=500, classifier__solver=lbfgs; total time= 2.0min
+[CV] END classifier__C=0.0002636875533972306, classifier__max_iter=2000, classifier__solver=lbfgs; total time=  39.7s
+[CV] END classifier__C=0.0002636875533972306, classifier__max_iter=2000, classifier__solver=lbfgs; total time=  42.3s
+[CV] END classifier__C=0.0001434715951720141, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  33.1s
+[CV] END classifier__C=0.004191711516695206, classifier__max_iter=5000, classifier__solver=lbfgs; total time= 2.7min
+[CV] END classifier__C=0.00011364672700011186, classifier__max_iter=1000, classifier__solver=saga; total time= 1.9min
+[CV] END classifier__C=0.017649715848175724, classifier__max_iter=1000, classifier__solver=saga; total time=18.5min
+[CV] END classifier__C=0.0006144543785587475, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  38.6s
+[CV] END classifier__C=0.0006144543785587475, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  39.8s
+[CV] END classifier__C=0.0017018418817029183, classifier__max_iter=2000, classifier__solver=saga; total time= 8.2min
+[CV] END classifier__C=0.0003458705214751812, classifier__max_iter=2000, classifier__solver=saga; total time= 3.3min
+[CV] END classifier__C=0.003971084710792475, classifier__max_iter=2000, classifier__solver=lbfgs; total time= 1.2min
+[CV] END classifier__C=0.003971084710792475, classifier__max_iter=2000, classifier__solver=lbfgs; total time= 1.3min
+[CV] END classifier__C=0.003971084710792475, classifier__max_iter=2000, classifier__solver=lbfgs; total time= 1.6min
+[CV] END classifier__C=0.004362599362560562, classifier__max_iter=500, classifier__solver=lbfgs; total time= 1.8min
+[CV] END classifier__C=0.00014982086432155476, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  23.7s
+[CV] END classifier__C=0.00014982086432155476, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  17.9s
+[CV] END classifier__C=0.04038423798071561, classifier__max_iter=1000, classifier__solver=saga; total time=17.3min
+[CV] END classifier__C=0.007026263205443053, classifier__max_iter=2000, classifier__solver=saga; total time=14.5min
+[CV] END classifier__C=0.0006939031266619748, classifier__max_iter=1000, classifier__solver=saga; total time= 6.5min
+[CV] END classifier__C=0.04138851334163269, classifier__max_iter=1000, classifier__solver=saga; total time=17.3min
+[CV] END classifier__C=0.0343304473310619, classifier__max_iter=1000, classifier__solver=saga; total time=22.7min
+[CV] END classifier__C=0.012141307774357374, classifier__max_iter=5000, classifier__solver=saga; total time=17.3min
+[CV] END classifier__C=0.0009278723835524701, classifier__max_iter=500, classifier__solver=saga; total time= 5.8min
+[CV] END classifier__C=0.0009278723835524701, classifier__max_iter=500, classifier__solver=saga; total time= 5.8min
+[CV] END classifier__C=0.0007817787178411383, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  34.6s
+[CV] END classifier__C=0.0007817787178411383, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  36.0s
+[CV] END classifier__C=0.0007817787178411383, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  42.6s
+[CV] END classifier__C=0.0006907675985896194, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  32.3s
+[CV] END classifier__C=0.0006907675985896194, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  38.1s
+[CV] END classifier__C=0.0006907675985896194, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  41.4s
+[CV] END classifier__C=0.009315049998499168, classifier__max_iter=5000, classifier__solver=saga; total time=17.3min
+[CV] END classifier__C=0.01130670408097989, classifier__max_iter=1000, classifier__solver=lbfgs; total time= 1.8min
+[CV] END classifier__C=0.012045290903541863, classifier__max_iter=2000, classifier__solver=lbfgs; total time= 1.8min
+[CV] END classifier__C=0.002575373524861562, classifier__max_iter=2000, classifier__solver=saga; total time=10.3min
+[CV] END classifier__C=0.009454306819536176, classifier__max_iter=500, classifier__solver=lbfgs; total time= 2.7min
+[CV] END classifier__C=0.0002636875533972306, classifier__max_iter=2000, classifier__solver=lbfgs; total time=  40.2s
+[CV] END classifier__C=0.0001434715951720141, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  27.0s
+[CV] END classifier__C=0.0001434715951720141, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  31.7s
+[CV] END classifier__C=0.004191711516695206, classifier__max_iter=5000, classifier__solver=lbfgs; total time= 2.5min
+[CV] END classifier__C=0.00011364672700011186, classifier__max_iter=1000, classifier__solver=saga; total time= 1.8min
+[CV] END classifier__C=0.00030955664602423704, classifier__max_iter=500, classifier__solver=lbfgs; total time=  21.1s
+[CV] END classifier__C=0.00030955664602423704, classifier__max_iter=500, classifier__solver=lbfgs; total time=  18.3s
+[CV] END classifier__C=0.00030955664602423704, classifier__max_iter=500, classifier__solver=lbfgs; total time=  19.3s
+[CV] END classifier__C=0.0006624310605949989, classifier__max_iter=1000, classifier__solver=lbfgs; total time=  34.1s
+[CV] END classifier__C=0.0006624310605949989, classifier__max_iter=1000, classifier__solver=lbfgs; total time=  32.4s
+[CV] END classifier__C=0.0006624310605949989, classifier__max_iter=1000, classifier__solver=lbfgs; total time=  32.5s
+[CV] END classifier__C=0.0014648955132800737, classifier__max_iter=500, classifier__solver=lbfgs; total time=  50.6s
+[CV] END classifier__C=0.0014648955132800737, classifier__max_iter=500, classifier__solver=lbfgs; total time=  54.8s
+[CV] END classifier__C=0.0014648955132800737, classifier__max_iter=500, classifier__solver=lbfgs; total time= 1.1min
+[CV] END classifier__C=0.0044809759182149545, classifier__max_iter=1000, classifier__solver=saga; total time=12.0min
+[CV] END classifier__C=0.0044809759182149545, classifier__max_iter=1000, classifier__solver=saga; total time=13.2min
+[CV] END classifier__C=0.0003458705214751812, classifier__max_iter=2000, classifier__solver=saga; total time= 6.2min
+[CV] END classifier__C=0.00014982086432155476, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  34.4s
+[CV] END classifier__C=0.04038423798071561, classifier__max_iter=1000, classifier__solver=saga; total time=16.7min
+[CV] END classifier__C=0.007026263205443053, classifier__max_iter=2000, classifier__solver=saga; total time=15.3min
+[CV] END classifier__C=0.0006939031266619748, classifier__max_iter=1000, classifier__solver=saga; total time= 6.0min
+[CV] END classifier__C=0.04138851334163269, classifier__max_iter=1000, classifier__solver=saga; total time=16.6min
+[CV] END classifier__C=0.0343304473310619, classifier__max_iter=1000, classifier__solver=saga; total time=24.4min
+[CV] END classifier__C=0.00010349134435467596, classifier__max_iter=2000, classifier__solver=lbfgs; total time=   9.3s
+[CV] END classifier__C=0.00010349134435467596, classifier__max_iter=2000, classifier__solver=lbfgs; total time=  10.1s
+[CV] END classifier__C=0.00010349134435467596, classifier__max_iter=2000, classifier__solver=lbfgs; total time=   9.3s
+[CV] END classifier__C=0.00808698743602126, classifier__max_iter=2000, classifier__solver=lbfgs; total time= 1.1min
+[CV] END classifier__C=0.00808698743602126, classifier__max_iter=2000, classifier__solver=lbfgs; total time= 1.2min
+[CV] END classifier__C=0.00808698743602126, classifier__max_iter=2000, classifier__solver=lbfgs; total time= 1.2min
+[CV] END classifier__C=0.012068006375483968, classifier__max_iter=500, classifier__solver=saga; total time=14.9min
+[CV] END classifier__C=0.0009278723835524701, classifier__max_iter=500, classifier__solver=saga; total time= 6.0min
+[CV] END classifier__C=0.021354541789291304, classifier__max_iter=5000, classifier__solver=saga; total time=19.1min
+[CV] END classifier__C=0.024806219351771016, classifier__max_iter=500, classifier__solver=lbfgs; total time= 1.0min
+[CV] END classifier__C=0.024806219351771016, classifier__max_iter=500, classifier__solver=lbfgs; total time= 1.2min
+[CV] END classifier__C=0.024806219351771016, classifier__max_iter=500, classifier__solver=lbfgs; total time= 1.0min
+[CV] END classifier__C=0.00021027192106506238, classifier__max_iter=1000, classifier__solver=lbfgs; total time=  20.2s
+[CV] END classifier__C=0.00021027192106506238, classifier__max_iter=1000, classifier__solver=lbfgs; total time=  17.3s
+[CV] END classifier__C=0.00021027192106506238, classifier__max_iter=1000, classifier__solver=lbfgs; total time=  18.2s
+[CV] END classifier__C=0.01130670408097989, classifier__max_iter=1000, classifier__solver=lbfgs; total time= 1.2min
+[CV] END classifier__C=0.01130670408097989, classifier__max_iter=1000, classifier__solver=lbfgs; total time= 1.7min
+[CV] END classifier__C=0.012045290903541863, classifier__max_iter=2000, classifier__solver=lbfgs; total time= 1.8min
+[CV] END classifier__C=0.012045290903541863, classifier__max_iter=2000, classifier__solver=lbfgs; total time= 1.4min
+[CV] END classifier__C=0.002575373524861562, classifier__max_iter=2000, classifier__solver=saga; total time=10.3min
+[CV] END classifier__C=0.0010253509690168502, classifier__max_iter=500, classifier__solver=lbfgs; total time= 1.8min
+[CV] END classifier__C=0.009454306819536176, classifier__max_iter=500, classifier__solver=lbfgs; total time= 3.1min
+[CV] END classifier__C=0.004191711516695206, classifier__max_iter=5000, classifier__solver=lbfgs; total time= 1.9min
+[CV] END classifier__C=0.017649715848175724, classifier__max_iter=1000, classifier__solver=saga; total time=17.6min
+[CV] END classifier__C=0.0044809759182149545, classifier__max_iter=1000, classifier__solver=saga; total time=13.6min
+[CV] END classifier__C=0.0003458705214751812, classifier__max_iter=2000, classifier__solver=saga; total time= 4.6min
+[CV] END classifier__C=0.004362599362560562, classifier__max_iter=500, classifier__solver=lbfgs; total time= 1.8min
+[CV] END classifier__C=0.004362599362560562, classifier__max_iter=500, classifier__solver=lbfgs; total time= 1.8min
+[CV] END classifier__C=0.04038423798071561, classifier__max_iter=1000, classifier__solver=saga; total time=18.8min
+[CV] END classifier__C=0.0002134899990195199, classifier__max_iter=500, classifier__solver=saga; total time= 2.5min
+[CV] END classifier__C=0.0002134899990195199, classifier__max_iter=500, classifier__solver=saga; total time= 2.5min
+[CV] END classifier__C=0.0002134899990195199, classifier__max_iter=500, classifier__solver=saga; total time= 2.5min
+[CV] END classifier__C=0.0001238264969702355, classifier__max_iter=1000, classifier__solver=lbfgs; total time=  10.5s
+[CV] END classifier__C=0.0001238264969702355, classifier__max_iter=1000, classifier__solver=lbfgs; total time=  10.5s
+[CV] END classifier__C=0.0001238264969702355, classifier__max_iter=1000, classifier__solver=lbfgs; total time=  10.9s
+[CV] END classifier__C=0.0004993895014755662, classifier__max_iter=5000, classifier__solver=saga; total time= 4.0min
+[CV] END classifier__C=0.0004993895014755662, classifier__max_iter=5000, classifier__solver=saga; total time= 4.1min
+[CV] END classifier__C=0.002989197738459902, classifier__max_iter=1000, classifier__solver=lbfgs; total time= 1.2min
+[CV] END classifier__C=0.002989197738459902, classifier__max_iter=1000, classifier__solver=lbfgs; total time= 1.1min
+[CV] END classifier__C=0.002989197738459902, classifier__max_iter=1000, classifier__solver=lbfgs; total time= 1.1min
+[CV] END classifier__C=0.04138851334163269, classifier__max_iter=1000, classifier__solver=saga; total time=19.7min
+[CV] END classifier__C=0.004108791545324082, classifier__max_iter=5000, classifier__solver=lbfgs; total time= 1.5min
+[CV] END classifier__C=0.00017331598058558715, classifier__max_iter=2000, classifier__solver=saga; total time= 2.3min
+[CV] END classifier__C=0.00013245461546001884, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  10.9s
+[CV] END classifier__C=0.00013245461546001884, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  12.0s
+[CV] END classifier__C=0.00013245461546001884, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  11.5s
+[CV] END classifier__C=0.0011195109511439837, classifier__max_iter=1000, classifier__solver=lbfgs; total time=  49.5s
+[CV] END classifier__C=0.0011195109511439837, classifier__max_iter=1000, classifier__solver=lbfgs; total time=  47.9s
+[CV] END classifier__C=0.0011195109511439837, classifier__max_iter=1000, classifier__solver=lbfgs; total time=  54.2s
+[CV] END classifier__C=0.017247957710046027, classifier__max_iter=1000, classifier__solver=lbfgs; total time= 1.7min
+[CV] END classifier__C=0.0005731044951044767, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  42.3s
+[CV] END classifier__C=0.0005731044951044767, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  44.0s
+[CV] END classifier__C=0.0005731044951044767, classifier__max_iter=5000, classifier__solver=lbfgs; total time=  44.9s
+[CV] END classifier__C=0.00024007683448156383, classifier__max_iter=2000, classifier__solver=lbfgs; total time=  23.2s
+[CV] END classifier__C=0.00015893148858258123, classifier__max_iter=2000, classifier__solver=lbfgs; total time=  22.4s
+[CV] END classifier__C=0.012141307774357374, classifier__max_iter=5000, classifier__solver=saga; total time=16.8min
+[CV] END classifier__C=0.012068006375483968, classifier__max_iter=500, classifier__solver=saga; total time=16.7min
+[CV] END classifier__C=0.021354541789291304, classifier__max_iter=5000, classifier__solver=saga; total time=17.3min
+[CV] END classifier__C=0.009315049998499168, classifier__max_iter=5000, classifier__solver=saga; total time=20.6min
+[CV] END classifier__C=0.002575373524861562, classifier__max_iter=2000, classifier__solver=saga; total time= 9.0min
+
+✓ Saved CV results: results/hyperparameter_search/iteration_012/cv_results_logistic_regression_sample_matrix_20251201_222110.csv
+✓ Saved best params: results/hyperparameter_search/iteration_012/best_params_logistic_regression_sample_matrix_20251201_222110.json
+
+======================================================================
+HYPERPARAMETER SEARCH COMPLETE
+======================================================================
+
+Best Parameters:
+  classifier__C: 0.04038423798071561
+  classifier__max_iter: 1000
+  classifier__solver: saga
+
+Best CV Score: 0.8682
+
+Results saved to: results/hyperparameter_search/iteration_012
+======================================================================
+
+
+==========================================
+Iteration 12 completed: Exit 0
+End: Mon Dec  1 10:21:10 PM CET 2025
+==========================================
