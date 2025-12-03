@@ -1,5 +1,5 @@
 {
-  "start_time": "2025-12-02T09:48:46.999995",
+  "start_time": "2025-12-02T19:07:00.568315",
   "model": "best_from_search",
   "diagonal_strategy": "sample_matrix",
   "n_train_subjects": 224,
@@ -11,7 +11,7 @@
   "train_accuracy": 0.869073275862069,
   "n_test_subjects": 200,
   "test_accuracy": 0.8026293103448275,
-  "end_time": "2025-12-02T10:22:24.415698",
-  "duration_seconds": 2024.647254705429,
+  "end_time": "2025-12-02T19:41:57.968777",
+  "duration_seconds": 2097.421378850937,
   "n_figures_generated": 5
 }

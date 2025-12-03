@@ -36,8 +36,8 @@ Output Locations:
   Figures: results/experiments/Exp_LogReg_SampleFromMatrix_bestparam/figures
   Predictions: results/experiments/Exp_LogReg_SampleFromMatrix_bestparam/predictions
 
-Execution Time: 33.7m
-Completed: 2025-12-02 10:22:24
+Execution Time: 35.0m
+Completed: 2025-12-02 19:41:57
 
 ======================================================================
 
