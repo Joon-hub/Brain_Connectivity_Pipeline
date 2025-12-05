@@ -1,0 +1,12 @@
+========================================================================
+  ALPHA TUNING - SINGLE JOB
+========================================================================
+Alpha value: 0.001
+Start: 2025-12-05 17:25:51 | Host: cpu43
+
+✓ Activated virtual environment: masterthesis_venv2
+
+✓ Output directory: results/alpha_tuning/alpha_0_001
+
+Running precision_alpha_tuning.py with alpha = 0.001 ...
+

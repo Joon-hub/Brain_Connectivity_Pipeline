@@ -335,6 +335,70 @@ def impute_diagonal_sample_from_matrix(
 
     return result   
 
+def impute_daigonal_precision(
+        matrices: np.ndarray,
+        region_list: Optional[List[str]] = None,
+        regularization: str = 'tikhonov',
+        alpha: float = 0.1,
+        normalize: bool = True,
+) -> np.ndarray:
+    """
+    Impute diagonal using precision matrix (inverse covariance).
+
+    NEUROSCIENCE BASIS:
+    - Diagonal of precision matrix ≈ strength of anatomical self-connections
+    - Stronger in sensory/motor regions
+    - Captures direct dependencies (partial correlations)
+
+    Args:
+        matrices: (n_subjects, n_regions, n_regions) correlation matrices with diag = 1.0
+        region_list: Optional list of region names (unused here but kept for API consistency)
+        regularization: 'tikhonov' (recommended), 'none'
+        alpha: Regularization strength (Tikhonov); typical [0.01–0.5]
+        normalize: Scale precision diagonal to reasonable range
+
+    Returns:
+        matrices_imputed: Same shape, with diagonal replaced by precision diagonal
+    """
+    results = matrices.copy()
+    n_subjects, n_regions, _ = matrices.shape
+
+    for s in range(n_subjects):
+        corr = matrices[s].copy()
+
+        # Ensure valid correlation matrix 
+        np.fill_diagonal(corr,1.0) 
+        corr = (corr + corr.T)/2.0 # enforce perfect symmetry
+
+        # Apply regularization
+        if regularization == 'tikhonov': # ridge regularization (L2)
+            regularized = corr + alpha * np.eye(n_regions)
+        elif regularization == 'none':
+            regularized = corr
+        else: 
+            raise ValueError(f"Invalid regularization: {regularization}")
+        
+        # Invert to get precision matrix
+        precision = np.linalg.inv(regularized)
+        precision_diagonal = np.diag(precision)
+
+        # Normalise to avoid extreme values 
+        if normalize:
+            max_abs = np.max(np.abs(precision_diagonal)) 
+            
+            # Scale to [-1,1] based on max_abs value
+            if max_abs > 1.0:
+                precision_diagonal = precision_diagonal / max_abs
+        
+        # Replace diagonal
+        np.fill_diagonal(results[s], precision_diagonal)
+
+    return results
+
+
+    
+
+
 def impute_diagonal(
         matrices: np.ndarray,
         Strategy: str,
@@ -377,6 +441,15 @@ def impute_diagonal(
         return impute_diagonal_sample_from_row(matrices)
     elif Strategy == 'sample_matrix':
         return impute_diagonal_sample_from_matrix(matrices)
+    
+    # New Stratergy
+    elif Strategy == 'daigonal_precision':
+        return impute_daigonal_precision(
+            matrices,
+            region_list=region_list,
+            regularization='tikhonov',
+            alpha=0.1,  # Moderate regularization
+            normalize=True)
     else:
         raise ValueError(f"Unknown imputation method: {Strategy}")
     
@@ -454,6 +527,7 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
         - 'random'
         - 'sample_row'
         - 'sample_matrix'
+        - 'daigonal_precision'
     include_diagonal_in_features : bool
         Whether to include diagonal elements in the extracted features.
     Returns:

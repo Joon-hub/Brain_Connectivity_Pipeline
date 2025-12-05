@@ -1,0 +1,37 @@
+# HTCondor Submit File for Alpha Tuning (15 parallel jobs)
+universe = vanilla
+executable = CONDOR/scripts/precision_alpha_tuning.sh
+arguments = $(alpha)
+
+getenv = True
+initialdir = /home/sjoon/projects/brain_connectivity_classifier/
+
+should_transfer_files = IF_NEEDED
+when_to_transfer_output = ON_EXIT
+
+request_cpus = 4
+request_memory = 12GB
+request_disk = 15GB
+
+output = logs/alpha_$(alpha).out
+error = logs/alpha_$(alpha).err
+log = logs/alpha_$(alpha).log
+
+# 15 alpha values to test in parallel
+queue alpha from (
+    0.001
+    0.005
+    0.01
+    0.02
+    0.03
+    0.05
+    0.07
+    0.1
+    0.15
+    0.2
+    0.3
+    0.5
+    0.7
+    1.0
+    1.5
+)

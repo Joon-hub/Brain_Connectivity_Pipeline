@@ -2,5 +2,4 @@
 /reports/__pycache__/
 *.pyc
 /masterthesis_venv2/
-/logs/
 /results/experiments/hyperparameter_search/

@@ -1,0 +1,717 @@
+
+======================================================================
+  Brain Connectivity Classification Pipeline
+======================================================================
+Experiment:  Exp_LogReg_SampleFromMatrix_bestparam
+Stage:       all
+Model:       best_from_search
+
+===
+  STAGE 1: Model Training
+===
+Aggregating hyperparameter results...
+======================================================================
+HYPERPARAMETER SEARCH AGGREGATION
+======================================================================
+
+Found 20 iteration directories:
+
+Processing: iteration_000
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_213411.json
+  ✓ Loaded: score=0.8684
+
+Processing: iteration_001
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_214343.json
+  ✓ Loaded: score=0.8671
+
+Processing: iteration_002
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_222452.json
+  ✓ Loaded: score=0.8712
+
+Processing: iteration_003
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_222153.json
+  ✓ Loaded: score=0.8681
+
+Processing: iteration_004
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_214226.json
+  ✓ Loaded: score=0.8670
+
+Processing: iteration_005
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_222322.json
+  ✓ Loaded: score=0.8680
+
+Processing: iteration_006
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_213855.json
+  ✓ Loaded: score=0.8702
+
+Processing: iteration_007
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_222433.json
+  ✓ Loaded: score=0.8683
+
+Processing: iteration_008
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_222419.json
+  ✓ Loaded: score=0.8688
+
+Processing: iteration_009
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_222255.json
+  ✓ Loaded: score=0.8686
+
+Processing: iteration_010
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_222330.json
+  ✓ Loaded: score=0.8675
+
+Processing: iteration_011
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_221939.json
+  ✓ Loaded: score=0.8679
+
+Processing: iteration_012
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_222110.json
+  ✓ Loaded: score=0.8682
+
+Processing: iteration_013
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251201_225355.json
+  ✓ Loaded: score=0.8679
+
+Processing: iteration_014
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251202_001205.json
+  ✓ Loaded: score=0.8704
+
+Processing: iteration_015
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251202_001929.json
+  ✓ Loaded: score=0.8696
+
+Processing: iteration_016
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251202_003300.json
+  ✓ Loaded: score=0.8671
+
+Processing: iteration_017
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251202_004108.json
+  ✓ Loaded: score=0.8672
+
+Processing: iteration_018
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251202_004024.json
+  ✓ Loaded: score=0.8702
+
+Processing: iteration_019
+  ✓ Found: best_params_logistic_regression_sample_matrix_20251202_015737.json
+  ✓ Loaded: score=0.8689
+
+======================================================================
+Successfully aggregated 20 iterations
+Saved summary to: results/hyperparameter_search/summary_all_iterations.csv
+======================================================================
+
+Top 3 configurations:
+ iteration  best_score        C  max_iter solver
+         2    0.871237 0.034330      1000   saga
+        14    0.870385 0.034330      1000   saga
+         6    0.870220 0.040384      1000   saga
+
+======================================================================
+✓ Exported best parameters to: configs/models/best_from_search.yaml
+======================================================================
+
+Best Configuration:
+  Iteration: 2
+  Score:     0.8712
+
+  Parameters:
+    C: 0.0343304473310619
+    max_iter: 1000
+    solver: saga
+    multi_class: multinomial
+======================================================================
+
+======================================================================
+NEXT STEPS
+======================================================================
+
+To use optimized parameters:
+  python run.py --model best_from_search --experiment-name OptimizedRun
+
+Or in pipeline:
+  ./sh_files/run_brain_pipeline.sh --experiment-name OptimizedRun --use-best-params
+======================================================================
+
+
+
+======================================================================
+  BRAIN CONNECTIVITY CLASSIFICATION - PHASE 2
+======================================================================
+
+Mode: FULL DATA
+Config: configs/config.yaml
+Model: best_from_search
+Diagnostics: Disabled
+Experiment Tracking: ENABLED
+Start: 2025-12-02 19:07:00
+
+Experiment 'Exp_LogReg_SampleFromMatrix_bestparam' already exists. Overwriting...
+Created experiment: Exp_LogReg_SampleFromMatrix_bestparam
+  Location: results/experiments/Exp_LogReg_SampleFromMatrix_bestparam
+Configuration:
+  Model: best_from_search
+  Diagonal strategy: sample_matrix
+  CV folds: 3
+  Random seed: 42
+  Fisher Z transform: Enabled
+
+======================================================================
+  STEP 1: Load Training Data (PIOP-2 Resting State)
+======================================================================
+
+Loaded 224 subjects from PIOP2_restingstate.csv
+  Subjects: 224
+  Connections: 26796
+
+======================================================================
+  STEP 2: Load Model & Create Classifier
+======================================================================
+
+Loaded LogisticRegression ← best_from_search.yaml
+   Params: {'C': 0.0343304473310619, 'max_iter': 1000, 'solver': 'saga', 'multi_class': 'multinomial'}
+Loaded model: LogisticRegression
+Created classifier
+  Preprocessor: BrainConnectivityPreprocessor
+  Model: LogisticRegression
+  Cross-validation: 3-fold GroupKFold
+
+======================================================================
+  STEP 3: Train with Leak-Free Cross-Validation
+======================================================================
+
+Preprocessing happens inside each CV fold (no leakage)
+Fisher Z applied before scaling
+
+
+============================================================
+Leak-Free Cross-Validation with 3 Folds
+============================================================
+
+Total number of subjects: 224
+Total number of samples: 224
+
+Preprocessing: sample_matrix
+
+Fold 1/3:
+  Training subjects: 149, Validation subjects: 75
+  Training Accuracy: 0.9513
+  Validation Accuracy: 0.8736
+
+Fold 2/3:
+  Training subjects: 149, Validation subjects: 75
+  Training Accuracy: 0.9555
+  Validation Accuracy: 0.8636
+
+Fold 3/3:
+  Training subjects: 150, Validation subjects: 74
+  Training Accuracy: 0.9546
+  Validation Accuracy: 0.8662
+
+============================================================
+Cross-Validation Results:
+  Mean Training Accuracy: 0.9538 ± 0.0018
+  Mean Validation Accuracy: 0.8678 ± 0.0042
+============================================================
+
+
+Training final model on all training data...
+============================================================
+Final Model Results:
+  Training Accuracy: 0.8693
+  Trained on 51968 samples.
+
+============================================================
+
+
+============================================================
+Cross-Validation Summary:
+  Training Accuracy:   0.9538 ± 0.0018
+  Validation Accuracy: 0.8678 ± 0.0042
+============================================================
+
+✓ Saved: cv_fold_results.csv
+✓ Saved: error_map_cv_validation.csv
+✓ Saved confusion matrix: confusion_matrix_cv_validation.csv
+
+======================================================================
+  STEP 3.5: Evaluate on Training Data (for reference)
+======================================================================
+
+Training accuracy: 0.8691
+Note: Overfitted; use CV validation for unbiased estimate
+✓ Saved: error_map_train.csv
+✓ Saved confusion matrix: confusion_matrix_train.csv
+
+======================================================================
+  STEP 4: Save Trained Model & Region List
+======================================================================
+
+✓ Model saved to results/experiments/Exp_LogReg_SampleFromMatrix_bestparam/models
+  - Pipeline: pipeline_best_from_search_sample_matrix.pkl
+  - Preprocessor: preprocessor_sample_matrix.pkl
+  - Metadata: metadata_best_from_search_sample_matrix.json
+Model saved to: results/experiments/Exp_LogReg_SampleFromMatrix_bestparam/models
+Region list saved to data/processed: data/processed/region_list.csv
+
+======================================================================
+  STEP 5: Evaluate on Task Data (PIOP-1 Gender Stroop)
+======================================================================
+
+Loaded 200 subjects from PIOP1_gstroop.csv
+  Test subjects: 200
+
+Test Results:
+  Test Accuracy: 0.8026
+  CV Validation → Test drop: 0.0651
+✓ Saved: error_map_test.csv
+✓ Saved confusion matrix: confusion_matrix_test.csv
+✓ Saved: comparison_cv_validation_vs_task.csv
+✓ Saved: comparison_train_vs_task.csv
+
+======================================================================
+  STEP 6: Generate Visualizations
+======================================================================
+
+Figure saved: error_map_cv_validation.png
+Figure saved: error_map_train.png
+Figure saved: error_map_task.png
+Figure saved: comparison_cv_validation_vs_task.png
+Figure saved: comparison_train_vs_task.png
+
+Total figures: 5
+Saved metadata to: metadata.json
+
+======================================================================
+  PIPELINE COMPLETE!
+======================================================================
+
+
+RESULTS SUMMARY
+======================================================================
+
+Experiment: best_from_search_sample_matrix
+Model: LogisticRegression
+
+Data:
+  Training subjects: 224
+  Brain regions: 232
+  Chance level: 0.0043
+
+Configuration:
+  Diagonal strategy: sample_matrix
+  CV folds: 3
+  Fisher Z transform: Enabled
+  Random seed: 42
+
+Cross-Validation Results (LEAK-FREE):
+  Validation accuracy: 0.8678 ± 0.0042
+  Training accuracy: 0.9538 ± 0.0018
+  Full Training Accuracy: 0.8691 (overfitted)
+  Improvement over chance: 201.3x
+
+Task Data (Gender Stroop):
+  Test subjects: 200
+  Test accuracy: 0.8026
+  CV validation → Task drop: 0.0651
+
+======================================================================
+
+Output Locations:
+  Experiment: results/experiments/Exp_LogReg_SampleFromMatrix_bestparam
+  Models: results/experiments/Exp_LogReg_SampleFromMatrix_bestparam/models
+  Metrics: results/experiments/Exp_LogReg_SampleFromMatrix_bestparam/metrics
+  Figures: results/experiments/Exp_LogReg_SampleFromMatrix_bestparam/figures
+  Predictions: results/experiments/Exp_LogReg_SampleFromMatrix_bestparam/predictions
+
+Execution Time: 35.0m
+Completed: 2025-12-02 19:41:57
+
+======================================================================
+
+Pipeline completed successfully.
+
+
+✓ Training complete
+
+====
+  STAGE 2: Bridge to Analysis
+====
+
+============================================================
+BRIDGE TO ADVANCE ANALYSIS
+============================================================
+
+OK: Using experiment: Exp_LogReg_SampleFromMatrix_bestparam (results/experiments/Exp_LogReg_SampleFromMatrix_bestparam)
+
+Required files in experiment: 3/3
+  found:
+    predictions/train_predictions.csv
+    predictions/cv_validation_predictions.csv
+    predictions/test_predictions.csv
+Copying files...
+  predictions_train.csv: train_predictions.csv → predictions_train.csv
+  predictions_cv_validation.csv: cv_validation_predictions.csv → predictions_cv_validation.csv
+  predictions_task.csv: test_predictions.csv → predictions_task.csv
+
+============================================================
+BRIDGE SUMMARY
+============================================================
+
+Experiment: Exp_LogReg_SampleFromMatrix_bestparam
+Source:    results/experiments/Exp_LogReg_SampleFromMatrix_bestparam
+Target:    data/processed
+
+Copied OK: 3
+Failed:    0
+
+OK: All required files present in data/processed
+  predictions_train.csv               (   989,797 bytes)
+  predictions_cv_validation.csv       (   990,174 bytes)
+  predictions_task.csv                (   744,495 bytes)
+
+Run:
+  ./sh_files/DAG_AdvanceAnalysis.sh
+
+✓ Bridge complete
+
+===
+  STAGE 3: Advanced Analysis
+===
+Step 1: Atlas Performance Analysis
+Starting script1...
+
+======================================================================
+           ATLAS PERFORMANCE ANALYSIS - IMPROVED 2x2 LAYOUT           
+======================================================================
+Loaded configuration from configs/config.yaml
+Random seeds set to 42
+
+======================================================================
+                             Loading Data                             
+======================================================================
+✓ Schema valid: 224 subjects, 26796 connections
+✓ Schema valid: 200 subjects, 26796 connections
+
+======================================================================
+                    Extracting Region Information                     
+======================================================================
+Regions: 232
+Rest samples in data: 224
+Task samples in data: 200
+
+======================================================================
+                     Loading Existing Predictions                     
+======================================================================
+Loaded rest predictions: 51968 samples
+Loaded task predictions: 46400 samples
+Rest accuracy: 0.8691
+Task accuracy: 0.8026
+
+======================================================================
+                        Running Atlas Analyses                        
+======================================================================
+
+======================================================================
+N7 CORTICAL (7 Networks)
+======================================================================
+
+N7_cortical:
+  Networks: 8
+  Rest:  50624 samples, 0.9279 accuracy
+  Task:  45200 samples, 0.8879 accuracy
+  Saved: confusion_N7_cortical.png
+
+======================================================================
+N17 CORTICAL (17 Networks)
+======================================================================
+
+N17_cortical:
+  Networks: 18
+  Rest:  51968 samples, 0.9149 accuracy
+  Task:  46400 samples, 0.8680 accuracy
+  Saved: confusion_N17_cortical.png
+
+======================================================================
+TIAN SCALE I (8 Subcortical Regions)
+======================================================================
+
+TianI_subcortical:
+  Networks: 8
+  Rest:  7168 samples, 0.8075 accuracy
+  Task:  6400 samples, 0.7059 accuracy
+  Saved: confusion_TianI_subcortical.png
+
+======================================================================
+TIAN SCALE II (16 Subcortical Regions)
+======================================================================
+
+TianII_subcortical:
+  Networks: 16
+  Rest:  7168 samples, 0.7695 accuracy
+  Task:  6400 samples, 0.6567 accuracy
+  Saved: confusion_TianII_subcortical.png
+
+======================================================================
+COMBINED N7 + TIAN I
+======================================================================
+
+N7 + Tian I Combined:
+  Networks: 16 (8 cortical + 8 subcortical)
+  Rest:  57792 samples, 0.9130 accuracy
+  Task:  51600 samples, 0.8654 accuracy
+  Saved: confusion_N7_TianI_combined.png
+
+======================================================================
+                          ANALYSIS COMPLETE!                          
+======================================================================
+
+Summary:
+======================================================================
+
+N7 Cortical:
+  Rest: 0.9279 | Task: 0.8879
+
+N17 Cortical:
+  Rest: 0.9149 | Task: 0.8680
+
+Tiani Subcortical:
+  Rest: 0.8075 | Task: 0.7059
+
+Tianii Subcortical:
+  Rest: 0.7695 | Task: 0.6567
+
+N7 + Tian I Combined:
+  Rest: 0.9130 | Task: 0.8654
+
+Generated Files (IMPROVED VERSION):
+====================================
+Tables:  reports/tables/atlas_analysis
+Figures: reports/figures/atlas_analysis
+
+Finished script1.
+✓ Done: Atlas Performance Analysis
+
+Step 2: Atlas Comparison
+Starting script2...
+============================================================
+ATLAS COMPARISON
+============================================================
+
+Loading error rates...
+  ✓ error_rates_N7_cortical_rest.csv
+  ✓ error_rates_N7_cortical_task.csv
+  ✓ error_rates_N17_cortical_rest.csv
+  ✓ error_rates_N17_cortical_task.csv
+  ✓ error_rates_TianI_subcortical_rest.csv
+  ✓ error_rates_TianI_subcortical_task.csv
+  ✓ error_rates_TianII_subcortical_rest.csv
+  ✓ error_rates_TianII_subcortical_task.csv
+  ✓ error_rates_N7_TianI_combined_rest.csv
+  ✓ error_rates_N7_TianI_combined_task.csv
+✓ Loaded 10 datasets
+
+  GENERATING HYBRID VIOLIN/BOX PLOTS
+✓ Saved Figure 1 (Resolution Analysis): fig1_resolution_violin.png
+✓ Saved Figure 2 (System Comparison): fig2_systems_violin.png
+✓ Saved Figure 3 (Task Effects): fig3_task_violin.png
+  GENERATING BAR CHART & DISTRIBUTIONS
+✓ Saved Figure 3a (Task Effects Bar Chart): fig3a_task_effects_bar.png
+✓ Saved Figure 4 (Distribution Overview): fig4_distribution_overview_orig.png
+
+ Saved statistics table: rest_vs_task_comparison_orig.csv
+
+============================================================
+DONE. figures saved to 'reports/figures/atlas_comparison'
+============================================================
+Finished script2.
+✓ Done: Atlas Comparison
+
+Step 3: Region Level Analysis
+Starting script5...
+
+======================================================================
+                          CONFUSION MATRICES                          
+======================================================================
+Design Philosophy:
+  • Research question focused
+  • Readable summary statistics
+  • Flexible, adaptive layout
+  • Publication-ready quality
+
+Loaded configuration from configs/config.yaml
+Random seeds set to 42
+
+======================================================================
+                             Loading Data                             
+======================================================================
+✓ Schema valid: 224 subjects, 26796 connections
+✓ Schema valid: 200 subjects, 26796 connections
+
+======================================================================
+                          Extracting Regions                          
+======================================================================
+Total Regions: 232
+
+======================================================================
+                         Loading Predictions                          
+======================================================================
+ All predictions loaded successfully
+
+======================================================================
+                    Generating Confusion Matrices                     
+======================================================================
+
+ Training Dataset...
+  ✓ Saved: confusion_training.png
+    Overall Accuracy: 0.8691 (86.91%)
+    Mean Region Accuracy: 0.8691 ± 0.1111
+
+ Validation Dataset...
+  ✓ Saved: confusion_validation.png
+    Overall Accuracy: 0.8678 (86.78%)
+    Mean Region Accuracy: 0.8678 ± 0.0916
+
+ Task Dataset...
+  ✓ Saved: confusion_task.png
+    Overall Accuracy: 0.8026 (80.26%)
+    Mean Region Accuracy: 0.8026 ± 0.1389
+
+======================================================================
+                      Generating Difference Maps                      
+======================================================================
+
+ Training → Task Generalization...
+  ✓ Saved: difference_training_vs_task.png
+    Overall Change: -0.0664 (-6.64%)
+    Mean Region Change: -0.0664 ± 0.0703
+
+ Validation → Task Generalization...
+  ✓ Saved: difference_validation_vs_task.png
+    Overall Change: -0.0652 (-6.52%)
+    Mean Region Change: -0.0652 ± 0.0750
+
+======================================================================
+                          ANALYSIS COMPLETE!                          
+======================================================================
+
+    Output Directory: reports/figures/region_level_analysis
+
+Generated Visualizations:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ confusion_training.png
+ confusion_validation.png
+ confusion_task.png
+ difference_training_vs_task.png
+ difference_validation_vs_task.png
+
+Finished script5.
+✓ Done: Region Level Analysis
+
+Step 4: Generate Summary Report
+Starting script4...
+============================================================
+SUMMARY REPORT GENERATOR - FULL REGION NAMES
+============================================================
+
+Loading results...
+  ✓ error_rates_N7_cortical_rest.csv
+  ✓ error_rates_N7_cortical_task.csv
+  ✓ error_rates_N17_cortical_rest.csv
+  ✓ error_rates_N17_cortical_task.csv
+  ✓ error_rates_TianI_subcortical_rest.csv
+  ✓ error_rates_TianI_subcortical_task.csv
+  ✓ error_rates_TianII_subcortical_rest.csv
+  ✓ error_rates_TianII_subcortical_task.csv
+  ✓ error_rates_N7_TianI_combined_rest.csv
+  ✓ error_rates_N7_TianI_combined_task.csv
+  ✓ n7_rest.csv
+  ✓ n7_task.csv
+  ✓ n7_change.csv
+  ✓ n7_all_changes.csv
+
+  Searching for confusion matrices...
+  ✓ Loaded 232 region names from region_list.csv
+  → Sample regions: ['LH_VisCent_ExStr_2', 'LH_VisCent_ExStr_1', 'LH_VisCent_Striate_1']
+  Checking reports/tables/confusion_matrix...
+  ✓ rest_sample_from_matrix_normalized.csv (232x232)
+  → Sample labels: ['LH_VisCent_ExStr_2', 'LH_VisCent_ExStr_1', 'LH_VisCent_Striate_1']
+  ✓ task_sample_from_matrix_normalized.csv (232x232)
+  → Sample labels: ['LH_VisCent_ExStr_2', 'LH_VisCent_ExStr_1', 'LH_VisCent_Striate_1']
+  Checking reports/tables...
+  Checking data/processed...
+
+✓ Loaded successfully
+  - Error rates: 10 files
+  - Comparisons: 0 files
+  - Connectivity: 4 files
+  - Confusion matrices: 2 files
+
+============================================================
+CREATING OUTPUTS
+============================================================
+
+1. Summary statistics...
+   ✓ Saved 10 statistics
+
+2. Key findings...
+   ✓ Saved 1 findings
+
+3. Summary figure with FULL REGION NAMES...
+
+============================================================
+GENERATING IMPROVED SUMMARY PLOT
+============================================================
+
+Panel A: Cortical vs Subcortical
+  ✓ Plotted 4 systems
+
+Panel B: Rest vs Task Scatter
+  ✓ Plotted 8 networks
+
+Panel C: Network Performance
+  ✓ Plotted 8 networks
+
+Panel D: Top Region Confusions (Full Names)
+  → Confusion matrix shape: (232, 232)
+  → Sample regions: ['LH_VisCent_ExStr_2', 'LH_VisCent_ExStr_1', 'LH_VisCent_Striate_1']
+  ℹ No cortical confusions found, trying all regions...
+  ✓ Plotted 15 region confusion pairs
+
+Panel E: Task-Induced Changes
+  ✓ Plotted 8 network changes
+
+Panel F: Key Findings
+  ✓ Summary text added
+
+✓ Saved: reports/summary/master_summary.png
+============================================================
+
+4. Interpretation guide...
+
+============================================================
+✅ COMPLETE!
+============================================================
+
+Output Files:
+  • reports/summary/summary_statistics.csv
+  • reports/summary/key_findings.csv
+  • reports/summary/master_summary.png  
+  • reports/summary/interpretation_guide.txt
+
+Finished script4.
+✓ Done: Generate Summary Report
+
+✓ Analysis complete
+
+======================================================================
+  PIPELINE COMPLETE
+======================================================================
+
+Experiment: Exp_LogReg_SampleFromMatrix_bestparam
+
+Results saved to:
+  - results/experiments/Exp_LogReg_SampleFromMatrix_bestparam/
+  - reports/figures/
+  - reports/tables/
+
