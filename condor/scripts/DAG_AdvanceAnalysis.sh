@@ -33,7 +33,7 @@ echo "==========================================================================
 echo "STEP 0: BRIDGE - Prepare data/processed/"
 echo "============================================================================"
 
-python AdvanceAnalysis/bridge_to_analysis.py --experiment "$EXPERIMENT_NAME" --force
+python analysis/bridge_to_analysis.py --experiment "$EXPERIMENT_NAME" --force
 echo "Data copied from current experiment to data/processed/"
 echo ""
 

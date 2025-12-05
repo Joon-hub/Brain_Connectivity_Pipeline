@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from src.models import load_model_from_config
 from src.features import BrainConnectivityPreprocessor
-from src.brain_region_classifier import BrainRegionClassifier
+from brain_region_classifier import BrainRegionClassifier
 from src.evaluate import (
     calculate_error_map,
     save_results_csv,
