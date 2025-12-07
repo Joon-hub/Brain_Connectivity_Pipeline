@@ -1,2 +1,0 @@
-usage: precision_alpha_tuning.py [-h] --alpha ALPHA --fold FOLD
-precision_alpha_tuning.py: error: the following arguments are required: --fold

@@ -195,28 +195,36 @@ def impute_diagonal_random(matrices: np.ndarray) -> np.ndarray:
     return result
 
 def impute_diagonal_region_mean(matrices: np.ndarray) -> np.ndarray:
-    """ 
-    Impute diagonal with region-wise mean connectivity (Deterministic, subject-specific). 
-    Each subject gets their own row means as diagonal values.
     """
+    Calculate the mean of off-diagonal values by row and impute them to the diagonal.
+    
+    Parameters:
+    -----------
+    matrix : numpy.ndarray
+        A 2D square matrix (e.g., connectivity matrix)
+    
+    Returns:
+    --------
+    numpy.ndarray
+        Matrix with diagonal values replaced by row-wise mean of off-diagonal values
+    """
+    # Create a copy to avoid modifying the original matrix
     result = matrices.copy()
-    n_subjects = result.shape[0]
-    n_regions = result.shape[1]
-
-    # create mask for off-diagonal elements
-    off_diag_mask = ~np.eye(n_regions, dtype=bool)
-
-    for s in range(n_subjects):
-        matrix = result[s]
-
-        # compute row means excluding diagonal
-        row_means = np.zeros(n_regions)                     # Initialize array to hold row means
-        for r in range(n_regions):                          # Iterate over each row
-            row_vals = matrix[r][off_diag_mask[r]]          # Extract off-diagonal values
-            row_means[r] = np.mean(row_vals) if len(row_vals) > 0 else 0.0
-
-        np.fill_diagonal(result[s], row_means)
-
+    
+    # Get the number of rows/columns
+    n = matrices.shape[0]
+    
+    # Create a mask for off-diagonal elements
+    mask = ~np.eye(n, dtype=bool)
+    
+    # Calculate mean of off-diagonal values for each row
+    for i in range(n):
+        # Extract off-diagonal values for row i
+        off_diagonal_values = matrices[i, mask[i]]
+        
+        # Calculate mean and assign to diagonal
+        result[i, i] = np.mean(off_diagonal_values)
+    
     return result
 
 def impute_diagonal_network_mean(
@@ -335,7 +343,7 @@ def impute_diagonal_sample_from_matrix(
 
     return result   
 
-def impute_daigonal_precision(
+def impute_diagonal_precision(
         matrices: np.ndarray,
         region_list: Optional[List[str]] = None,
         regularization: str = 'tikhonov',
@@ -395,14 +403,11 @@ def impute_daigonal_precision(
 
     return results
 
-
-    
-
-
 def impute_diagonal(
         matrices: np.ndarray,
         Strategy: str,
-        region_list: Optional[List[str]] = None
+        region_list: Optional[List[str]] = None, 
+        precision_alpha: float = 0.1
 ) -> np.ndarray:
     """
     Impute diagonal values in connectivity matrices using specified method.
@@ -421,6 +426,9 @@ def impute_diagonal(
         - 'random': Fill diagonal with random values.
         - 'sample_row': Sample diagonal values from each row.
         - 'sample_matrix': Sample diagonal values from entire matrix.
+
+        -- New Stratergy --
+        - 'diagonal_precision': Fill diagonal with precision matrix
 
     Returns: imputed_matrices : Matrices with imputed diagonal values.
     """
@@ -443,8 +451,8 @@ def impute_diagonal(
         return impute_diagonal_sample_from_matrix(matrices)
     
     # New Stratergy
-    elif Strategy == 'daigonal_precision':
-        return impute_daigonal_precision(
+    elif Strategy == 'diagonal_precision':
+        return impute_diagonal_precision(
             matrices,
             region_list=region_list,
             regularization='tikhonov',
@@ -453,7 +461,6 @@ def impute_diagonal(
     else:
         raise ValueError(f"Unknown imputation method: {Strategy}")
     
-
 def extract_features_for_classification(
         matrices : np.ndarray,
         include_diagonal: bool = False
@@ -527,7 +534,7 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
         - 'random'
         - 'sample_row'
         - 'sample_matrix'
-        - 'daigonal_precision'
+        - 'diagonal_precision'
     include_diagonal_in_features : bool
         Whether to include diagonal elements in the extracted features.
     Returns:
@@ -548,7 +555,8 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
         include_diagonal: bool = False,
         apply_fisher_z: bool = True,
         random_state: int = 42,
-        enable_diagnostics: bool = False
+        enable_diagnostics: bool = False,
+        precision_alpha: float = 0.1
     ):
         """
         Args:
@@ -570,6 +578,7 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
         self.apply_fisher_z = apply_fisher_z
         self.random_state = random_state
         self.enable_diagnostics = enable_diagnostics
+        self.precision_alpha = precision_alpha
 
         # will be set during fit
         self.region_list_ = None
@@ -652,7 +661,8 @@ class BrainConnectivityPreprocessor(BaseEstimator, TransformerMixin):
         matrices = impute_diagonal(
             matrices,
             self.diagonal_strategy,
-            self.region_list_
+            self.region_list_,
+            precision_alpha=self.precision_alpha
         )
         if self.enable_diagnostics:
             print(f"  -> Applied diagonal imputation using strategy: '{self.diagonal_strategy}'.")
