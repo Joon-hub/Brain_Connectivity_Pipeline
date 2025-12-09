@@ -1,30 +1,31 @@
-# Hyperparameter Search Space for Logistic Regression
-# =====================================================
+# Hyperparameter Search Space for Logistic Regression (Nested CV)
+# =================================================================
 
 param_distributions:
   # Regularization strength (inverse)
   # Smaller values = stronger regularization
   classifier__C:
-    type: "loguniform"
-    low: 0.0001
-    high: 0.05
+    type: "choice"
+    values: [0.0001,0.0003,0.01,0.03,0.1,0.3,1.0]
   
   # Maximum number of iterations for convergence
   classifier__max_iter:
     type: "choice"
-    values: [500, 1000, 2000, 5000]
+    values: [100, 300, 500, 1000]
   
   # Optimization algorithm
   classifier__solver:
     type: "choice"
-    values: ["lbfgs", "saga"]
+    values: ["lbfgs"]
 
-# Search settings
-n_iter: 50              # Number of random combinations to try
-cv_folds: 3             # CV folds for each combination
+# Nested Cross-Validation Settings
+n_iter: 20              # Number of random combinations to try per inner CV
+outer_cv: 5             # Number of outer CV folds (for unbiased performance estimation)
+inner_cv: 5             # Number of inner CV folds (for hyperparameter tuning)
 random_seed: 42         # Random seed for reproducibility
 
-# Notes:
-# - loguniform: samples uniformly in log space (good for C parameter)
-# - choice: randomly selects from given values
-# - uniform: samples uniformly in linear space (not used here)
+
+# Parameter Distributions:
+#   - loguniform: samples uniformly in log space (good for C parameter)
+#   - choice: randomly selects from given values
+#   - uniform: samples uniformly in linear space (not used here)

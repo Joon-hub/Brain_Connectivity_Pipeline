@@ -37,17 +37,39 @@ done
 # Validate required arguments
 [ -z "$EXPERIMENT_NAME" ] && echo "ERROR: --experiment-name is required" && exit 1
 
+# === ACTIVATE VIRTUAL ENVIRONMENT ===
+echo "Activating virtual environment..."
+if [ -d "masterthesis_venv2/bin" ]; then
+    source masterthesis_venv2/bin/activate
+    echo "✓ Using masterthesis_venv2"
+elif [ -d "brain_connectivity_classifier/bin" ]; then
+    source brain_connectivity_classifier/bin/activate
+    echo "✓ Using brain_connectivity_classifier"
+else
+    echo "ERROR: No virtual environment found!"
+    echo "Expected: masterthesis_venv2/ or brain_connectivity_classifier/"
+    exit 1
+fi
+echo ""
+
+# Verify Python is available
+python --version || { echo "ERROR: Python not available after venv activation"; exit 1; }
+echo ""
+
 # If using best params, check and aggregate
 if [ "$USE_BEST_PARAMS" = true ]; then
-    echo -e "\n======================================================================\n  Using Optimized Hyperparameters\n======================================================================\n"
+    echo "======================================================================"
+    echo "  Using Optimized Hyperparameters"
+    echo "======================================================================"
     
     if [ ! -d "results/hyperparameter_search" ] || [ -z "$(ls -A results/hyperparameter_search/iteration_* 2>/dev/null)" ]; then
-        echo -e "ERROR: No hyperparameter search results found!\n\nRun hyperparameter search first:\n  condor_submit run_hyperparameter_search.sub"
+        echo "ERROR: No hyperparameter search results found!"
+        echo "Run: condor_submit run_hyperparameter_search.sub"
         exit 1
     fi
     
     echo "Aggregating search results..."
-    python src/aggregate_search_results.py || { echo "ERROR: Failed to aggregate results"; exit 1; }
+    python scripts/aggregate_search_results.py || { echo "ERROR: Aggregation failed"; exit 1; }
     MODEL="best_from_search"
     echo ""
 fi
@@ -69,34 +91,38 @@ run_step() { echo "Step $1: $2"; "./sh_files/$3"; echo -e "✓ Done: $2\n"; }
 
 # STAGE 1: Training
 if [[ "$STAGE" == "all" || "$STAGE" == "1" ]]; then
-    echo -e "===\n  STAGE 1: Model Training\n==="
+    echo "======================================================================"
+    echo "  STAGE 1: Model Training"
+    echo "======================================================================"
     
-    [ -d "results/hyperparameter_search" ] && echo "Aggregating hyperparameter results..." && python src/aggregate_search_results.py && echo ""
-    
-    python run.py --config configs/config.yaml --n-splits 3 --model "$MODEL" --experiment-name "$EXPERIMENT_NAME" --diagonal sample_matrix $ADDITIONAL_ARGS
+    python scripts/run.py --config configs/config.yaml --n-splits 3 --model "$MODEL" --experiment-name "$EXPERIMENT_NAME" --diagonal network_mean $ADDITIONAL_ARGS
     echo -e "\n✓ Training complete\n"
 fi
 
 # STAGE 2: Bridge
 if [[ "$STAGE" == "all" || "$STAGE" == "2" ]]; then
-    echo -e "====\n  STAGE 2: Bridge to Analysis\n===="
-    python AdvanceAnalysis/bridge_to_analysis.py --experiment "$EXPERIMENT_NAME" --force
+    echo "======================================================================"
+    echo "  STAGE 2: Bridge to Analysis"
+    echo "======================================================================"
+    python analysis/bridge_to_analysis.py --experiment "$EXPERIMENT_NAME" --force
     echo -e "\n✓ Bridge complete\n"
 fi
 
 # STAGE 3: Analysis
 if [[ "$STAGE" == "all" || "$STAGE" == "3" ]]; then
-    echo -e "===\n  STAGE 3: Advanced Analysis\n==="
+    echo "======================================================================"
+    echo "  STAGE 3: Advanced Analysis"
+    echo "======================================================================"
     run_step 1 "Atlas Performance Analysis" "01_atlas_performance_analysis.sh"
     run_step 2 "Atlas Comparison"           "02_atlas_comparison.sh"
     run_step 3 "Region Level Analysis"      "03_region_level_analysis.sh"
     run_step 4 "Generate Summary Report"    "04_generate_summary_report.sh"
     echo "✓ Analysis complete"
-    echo ""
 fi
 
 # Final summary
 cat << EOF
+
 ======================================================================
   PIPELINE COMPLETE
 ======================================================================

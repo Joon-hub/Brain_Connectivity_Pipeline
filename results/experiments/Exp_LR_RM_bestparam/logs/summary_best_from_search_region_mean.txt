@@ -1,0 +1,44 @@
+
+RESULTS SUMMARY
+======================================================================
+
+Experiment: best_from_search_region_mean
+Model: LogisticRegression
+
+Data:
+  Training subjects: 224
+  Brain regions: 232
+  Chance level: 0.0043
+
+Configuration:
+  Diagonal strategy: region_mean
+  CV folds: 3
+  Fisher Z transform: Enabled
+  Random seed: 42
+
+Cross-Validation Results (LEAK-FREE):
+  Validation accuracy: 0.9152 ± 0.0041
+  Training accuracy: 0.9783 ± 0.0009
+  Full Training Accuracy: 0.9006 (overfitted)
+  Improvement over chance: 212.3x
+
+Task Data (Gender Stroop):
+  Test subjects: 200
+  Test accuracy: 0.8363
+  CV validation → Task drop: 0.0789
+
+======================================================================
+
+Output Locations:
+  Experiment: results/experiments/Exp_LR_RM_bestparam
+  Models: results/experiments/Exp_LR_RM_bestparam/models
+  Metrics: results/experiments/Exp_LR_RM_bestparam/metrics
+  Figures: results/experiments/Exp_LR_RM_bestparam/figures
+  Predictions: results/experiments/Exp_LR_RM_bestparam/predictions
+
+Execution Time: 35.5m
+Completed: 2025-12-08 10:34:47
+
+======================================================================
+
+Pipeline completed successfully.

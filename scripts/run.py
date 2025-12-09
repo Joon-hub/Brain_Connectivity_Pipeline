@@ -20,11 +20,11 @@ from datetime import datetime
 from sklearn.metrics import accuracy_score, confusion_matrix
 import yaml
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.models import load_model_from_config
 from src.features import BrainConnectivityPreprocessor
-from brain_region_classifier import BrainRegionClassifier
+from src.brain_region_classifier import BrainRegionClassifier
 from src.evaluate import (
     calculate_error_map,
     save_results_csv,

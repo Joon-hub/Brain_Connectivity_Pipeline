@@ -1,0 +1,406 @@
+==========================================
+Hyperparameter Search - Iteration 12
+==========================================
+Start: Tue Dec  9 02:39:03 AM CET 2025 | Host: cpu11
+
+✓ Using masterthesis_venv2
+
+Validating Python packages...
+✓ All packages found
+
+==========================================
+Resource Configuration
+==========================================
+CPUs:   32
+Memory: 503GB (515854MB total system)
+Disk:   93GB (95450MB available)
+==========================================
+
+Running hyperparameter search...
+
+======================================================================
+NESTED CROSS-VALIDATION - HYPERPARAMETER OPTIMIZATION
+======================================================================
+Model: logistic_regression
+Diagonal: region_mean
+Outer CV: 5
+Inner CV: 3
+Iterations per search: 20
+Parallel jobs: 32
+======================================================================
+
+Loading data from: data/raw/PIOP2_restingstate.csv
+✓ Schema valid: 224 subjects, 26796 connections
+Loaded 224 subjects
+
+Loading search space from: configs/hyperparameters/logistic_regression_search.yaml
+Parameter distributions:
+  classifier__C: [0.0001, 0.0003, 0.01, 0.03, 0.1, 0.3, 1.0]
+  classifier__max_iter: [100, 300, 500, 1000]
+  classifier__solver: ['lbfgs']
+
+Connection columns: 26796
+
+Fitting preprocessor...
+
+Data shapes:
+  X: (51968, 232)
+  y: (51968,)
+  subject_ids_expanded: (51968,)
+  Unique subjects: 224
+
+======================================================================
+STARTING NESTED CROSS-VALIDATION
+======================================================================
+Outer CV folds: 5
+Inner CV folds: 3
+Hyperparameter search iterations: 20
+======================================================================
+
+
+======================================================================
+OUTER FOLD 1/5
+======================================================================
+Train samples: 41528, Test samples: 10440
+Train subjects: 179, Test subjects: 45
+
+Starting inner CV (hyperparameter search)...
+Fitting 3 folds for each of 20 candidates, totalling 60 fits
+[CV] END classifier__C=1.0, classifier__max_iter=300, classifier__solver=lbfgs; total time=50.5min
+[CV] END classifier__C=0.0003, classifier__max_iter=300, classifier__solver=lbfgs; total time=25.8min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=75.4min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=80.6min
+[CV] END classifier__C=1.0, classifier__max_iter=300, classifier__solver=lbfgs; total time=52.3min
+[CV] END classifier__C=0.0001, classifier__max_iter=500, classifier__solver=lbfgs; total time=16.7min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=13.4min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=82.1min
+[CV] END classifier__C=1.0, classifier__max_iter=300, classifier__solver=lbfgs; total time=53.8min
+[CV] END classifier__C=0.0001, classifier__max_iter=500, classifier__solver=lbfgs; total time=15.1min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=13.9min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=85.6min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=85.3min
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=86.5min
+[CV] END classifier__C=0.03, classifier__max_iter=1000, classifier__solver=lbfgs; total time=72.8min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=13.3min
+[CV] END classifier__C=0.03, classifier__max_iter=1000, classifier__solver=lbfgs; total time=86.5min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=89.8min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=90.5min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=89.9min
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=90.1min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=90.5min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=91.9min
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=92.1min
+[CV] END classifier__C=0.0001, classifier__max_iter=100, classifier__solver=lbfgs; total time=14.6min
+[CV] END classifier__C=0.03, classifier__max_iter=1000, classifier__solver=lbfgs; total time=78.6min
+
+Best parameters from inner CV:
+  classifier__solver: lbfgs
+  classifier__max_iter: 300
+  classifier__C: 0.1
+Best inner CV score: 0.9128
+
+>>> OUTER FOLD 1 TEST SCORE: 0.9249
+
+======================================================================
+OUTER FOLD 2/5
+======================================================================
+Train samples: 41528, Test samples: 10440
+Train subjects: 179, Test subjects: 45
+
+Starting inner CV (hyperparameter search)...
+Fitting 3 folds for each of 20 candidates, totalling 60 fits
+[CV] END classifier__C=0.0001, classifier__max_iter=100, classifier__solver=lbfgs; total time=14.5min
+[CV] END classifier__C=0.0001, classifier__max_iter=300, classifier__solver=lbfgs; total time=14.4min
+[CV] END classifier__C=0.0001, classifier__max_iter=300, classifier__solver=lbfgs; total time=16.2min
+[CV] END classifier__C=0.0003, classifier__max_iter=100, classifier__solver=lbfgs; total time=27.2min
+[CV] END classifier__C=1.0, classifier__max_iter=100, classifier__solver=lbfgs; total time=23.6min
+[CV] END classifier__C=0.3, classifier__max_iter=300, classifier__solver=lbfgs; total time=55.5min
+[CV] END classifier__C=0.0003, classifier__max_iter=300, classifier__solver=lbfgs; total time=28.7min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=93.8min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=86.2min
+[CV] END classifier__C=0.1, classifier__max_iter=300, classifier__solver=lbfgs; total time=54.1min
+[CV] END classifier__C=0.0001, classifier__max_iter=500, classifier__solver=lbfgs; total time=15.8min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=12.8min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=82.0min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=81.6min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=82.3min
+[CV] END classifier__C=0.03, classifier__max_iter=1000, classifier__solver=lbfgs; total time=85.3min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=73.8min
+[CV] END classifier__C=1.0, classifier__max_iter=500, classifier__solver=lbfgs; total time=25.2min
+[CV] END classifier__C=0.3, classifier__max_iter=300, classifier__solver=lbfgs; total time=56.3min
+[CV] END classifier__C=0.0001, classifier__max_iter=500, classifier__solver=lbfgs; total time=16.4min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=13.7min
+[CV] END classifier__C=0.3, classifier__max_iter=500, classifier__solver=lbfgs; total time=54.4min
+[CV] END classifier__C=0.0001, classifier__max_iter=500, classifier__solver=lbfgs; total time=17.0min
+[CV] END classifier__C=1.0, classifier__max_iter=500, classifier__solver=lbfgs; total time=23.9min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=88.5min
+[CV] END classifier__C=0.1, classifier__max_iter=300, classifier__solver=lbfgs; total time=58.7min
+[CV] END classifier__C=0.3, classifier__max_iter=1000, classifier__solver=lbfgs; total time=37.7min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=88.6min
+[CV] END classifier__C=0.0001, classifier__max_iter=100, classifier__solver=lbfgs; total time=15.5min
+[CV] END classifier__C=0.0001, classifier__max_iter=300, classifier__solver=lbfgs; total time=15.3min
+[CV] END classifier__C=0.0003, classifier__max_iter=100, classifier__solver=lbfgs; total time=24.8min
+[CV] END classifier__C=0.1, classifier__max_iter=100, classifier__solver=lbfgs; total time=40.0min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=88.8min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=87.5min
+[CV] END classifier__C=0.1, classifier__max_iter=300, classifier__solver=lbfgs; total time=58.4min
+[CV] END classifier__C=0.3, classifier__max_iter=1000, classifier__solver=lbfgs; total time=37.5min
+[CV] END classifier__C=1.0, classifier__max_iter=300, classifier__solver=lbfgs; total time=58.1min
+[CV] END classifier__C=0.0001, classifier__max_iter=500, classifier__solver=lbfgs; total time=15.2min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=14.9min
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=89.0min
+[CV] END classifier__C=0.3, classifier__max_iter=500, classifier__solver=lbfgs; total time=59.0min
+[CV] END classifier__C=0.3, classifier__max_iter=1000, classifier__solver=lbfgs; total time=36.9min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=91.1min
+[CV] END classifier__C=0.3, classifier__max_iter=300, classifier__solver=lbfgs; total time=45.9min
+[CV] END classifier__C=0.0003, classifier__max_iter=100, classifier__solver=lbfgs; total time=27.3min
+[CV] END classifier__C=1.0, classifier__max_iter=500, classifier__solver=lbfgs; total time=25.4min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=91.4min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=81.0min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=88.8min
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=91.0min
+[CV] END classifier__C=0.1, classifier__max_iter=300, classifier__solver=lbfgs; total time=48.0min
+[CV] END classifier__C=0.0003, classifier__max_iter=300, classifier__solver=lbfgs; total time=26.4min
+[CV] END classifier__C=1.0, classifier__max_iter=100, classifier__solver=lbfgs; total time=23.7min
+[CV] END classifier__C=0.0001, classifier__max_iter=100, classifier__solver=lbfgs; total time=11.4min
+[CV] END classifier__C=0.03, classifier__max_iter=1000, classifier__solver=lbfgs; total time=82.8min
+
+Best parameters from inner CV:
+  classifier__solver: lbfgs
+  classifier__max_iter: 300
+  classifier__C: 0.1
+Best inner CV score: 0.9106
+
+>>> OUTER FOLD 2 TEST SCORE: 0.9284
+
+======================================================================
+OUTER FOLD 3/5
+======================================================================
+Train samples: 41528, Test samples: 10440
+Train subjects: 179, Test subjects: 45
+
+Starting inner CV (hyperparameter search)...
+Fitting 3 folds for each of 20 candidates, totalling 60 fits
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=81.9min
+[CV] END classifier__C=1.0, classifier__max_iter=100, classifier__solver=lbfgs; total time=16.7min
+[CV] END classifier__C=0.3, classifier__max_iter=300, classifier__solver=lbfgs; total time=49.7min
+[CV] END classifier__C=0.0003, classifier__max_iter=300, classifier__solver=lbfgs; total time=29.2min
+[CV] END classifier__C=0.03, classifier__max_iter=1000, classifier__solver=lbfgs; total time=76.7min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=82.1min
+[CV] END classifier__C=0.03, classifier__max_iter=1000, classifier__solver=lbfgs; total time=67.9min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=13.4min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=79.4min
+[CV] END classifier__C=0.3, classifier__max_iter=500, classifier__solver=lbfgs; total time=51.6min
+[CV] END classifier__C=0.0001, classifier__max_iter=500, classifier__solver=lbfgs; total time=16.3min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=13.9min
+[CV] END classifier__C=0.3, classifier__max_iter=300, classifier__solver=lbfgs; total time=56.3min
+[CV] END classifier__C=0.1, classifier__max_iter=100, classifier__solver=lbfgs; total time=40.5min
+[CV] END classifier__C=1.0, classifier__max_iter=300, classifier__solver=lbfgs; total time=65.7min
+[CV] END classifier__C=0.3, classifier__max_iter=1000, classifier__solver=lbfgs; total time=34.1min
+[CV] END classifier__C=1.0, classifier__max_iter=300, classifier__solver=lbfgs; total time=55.1min
+[CV] END classifier__C=0.0001, classifier__max_iter=500, classifier__solver=lbfgs; total time=14.3min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=15.6min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=81.7min
+[CV] END classifier__C=0.3, classifier__max_iter=500, classifier__solver=lbfgs; total time=56.0min
+[CV] END classifier__C=0.1, classifier__max_iter=100, classifier__solver=lbfgs; total time=36.3min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=87.9min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=84.7min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=84.6min
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=88.8min
+[CV] END classifier__C=0.03, classifier__max_iter=1000, classifier__solver=lbfgs; total time=73.9min
+[CV] END classifier__C=1.0, classifier__max_iter=500, classifier__solver=lbfgs; total time=24.2min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=90.1min
+[CV] END classifier__C=0.1, classifier__max_iter=300, classifier__solver=lbfgs; total time=61.0min
+[CV] END classifier__C=0.3, classifier__max_iter=1000, classifier__solver=lbfgs; total time=34.0min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=92.0min
+[CV] END classifier__C=0.1, classifier__max_iter=300, classifier__solver=lbfgs; total time=56.5min
+[CV] END classifier__C=0.1, classifier__max_iter=100, classifier__solver=lbfgs; total time=37.3min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=92.0min
+[CV] END classifier__C=0.0001, classifier__max_iter=100, classifier__solver=lbfgs; total time=13.9min
+[CV] END classifier__C=0.0001, classifier__max_iter=300, classifier__solver=lbfgs; total time=14.6min
+[CV] END classifier__C=0.0001, classifier__max_iter=300, classifier__solver=lbfgs; total time=14.8min
+[CV] END classifier__C=0.0003, classifier__max_iter=100, classifier__solver=lbfgs; total time=25.4min
+[CV] END classifier__C=1.0, classifier__max_iter=500, classifier__solver=lbfgs; total time=24.3min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=92.4min
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=91.3min
+[CV] END classifier__C=0.3, classifier__max_iter=500, classifier__solver=lbfgs; total time=50.5min
+[CV] END classifier__C=0.0003, classifier__max_iter=300, classifier__solver=lbfgs; total time=26.2min
+[CV] END classifier__C=1.0, classifier__max_iter=100, classifier__solver=lbfgs; total time=21.7min
+[CV] END classifier__C=0.3, classifier__max_iter=300, classifier__solver=lbfgs; total time=51.7min
+[CV] END classifier__C=0.0003, classifier__max_iter=300, classifier__solver=lbfgs; total time=26.5min
+[CV] END classifier__C=1.0, classifier__max_iter=100, classifier__solver=lbfgs; total time=21.1min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=94.1min
+
+Best parameters from inner CV:
+  classifier__solver: lbfgs
+  classifier__max_iter: 300
+  classifier__C: 0.1
+Best inner CV score: 0.9129
+
+>>> OUTER FOLD 3 TEST SCORE: 0.9227
+
+======================================================================
+OUTER FOLD 4/5
+======================================================================
+Train samples: 41528, Test samples: 10440
+Train subjects: 179, Test subjects: 45
+
+Starting inner CV (hyperparameter search)...
+Fitting 3 folds for each of 20 candidates, totalling 60 fits
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=80.7min
+[CV] END classifier__C=0.1, classifier__max_iter=300, classifier__solver=lbfgs; total time=55.1min
+[CV] END classifier__C=0.3, classifier__max_iter=1000, classifier__solver=lbfgs; total time=36.0min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=84.1min
+[CV] END classifier__C=0.0001, classifier__max_iter=100, classifier__solver=lbfgs; total time=16.3min
+[CV] END classifier__C=0.0001, classifier__max_iter=300, classifier__solver=lbfgs; total time=16.2min
+[CV] END classifier__C=0.0003, classifier__max_iter=100, classifier__solver=lbfgs; total time=26.6min
+[CV] END classifier__C=0.3, classifier__max_iter=1000, classifier__solver=lbfgs; total time=32.6min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=84.4min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=79.0min
+[CV] END classifier__C=0.0001, classifier__max_iter=100, classifier__solver=lbfgs; total time=16.8min
+[CV] END classifier__C=0.0001, classifier__max_iter=300, classifier__solver=lbfgs; total time=15.3min
+[CV] END classifier__C=0.0003, classifier__max_iter=100, classifier__solver=lbfgs; total time=27.2min
+[CV] END classifier__C=0.3, classifier__max_iter=1000, classifier__solver=lbfgs; total time=33.7min
+[CV] END classifier__C=1.0, classifier__max_iter=300, classifier__solver=lbfgs; total time=44.8min
+[CV] END classifier__C=0.0003, classifier__max_iter=100, classifier__solver=lbfgs; total time=26.8min
+[CV] END classifier__C=1.0, classifier__max_iter=500, classifier__solver=lbfgs; total time=26.8min
+[CV] END classifier__C=0.3, classifier__max_iter=300, classifier__solver=lbfgs; total time=55.3min
+[CV] END classifier__C=0.0001, classifier__max_iter=500, classifier__solver=lbfgs; total time=15.0min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=14.3min
+[CV] END classifier__C=0.0001, classifier__max_iter=100, classifier__solver=lbfgs; total time=13.0min
+[CV] END classifier__C=0.03, classifier__max_iter=1000, classifier__solver=lbfgs; total time=81.8min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=86.5min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=81.6min
+[CV] END classifier__C=0.3, classifier__max_iter=500, classifier__solver=lbfgs; total time=67.0min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=14.4min
+[CV] END classifier__C=0.03, classifier__max_iter=1000, classifier__solver=lbfgs; total time=83.5min
+[CV] END classifier__C=0.3, classifier__max_iter=500, classifier__solver=lbfgs; total time=58.7min
+[CV] END classifier__C=0.1, classifier__max_iter=100, classifier__solver=lbfgs; total time=36.4min
+[CV] END classifier__C=1.0, classifier__max_iter=300, classifier__solver=lbfgs; total time=48.7min
+[CV] END classifier__C=0.0003, classifier__max_iter=300, classifier__solver=lbfgs; total time=27.4min
+[CV] END classifier__C=1.0, classifier__max_iter=100, classifier__solver=lbfgs; total time=22.5min
+[CV] END classifier__C=0.0001, classifier__max_iter=100, classifier__solver=lbfgs; total time=15.0min
+[CV] END classifier__C=0.0001, classifier__max_iter=300, classifier__solver=lbfgs; total time=14.5min
+[CV] END classifier__C=0.0001, classifier__max_iter=300, classifier__solver=lbfgs; total time=16.2min
+[CV] END classifier__C=0.0003, classifier__max_iter=100, classifier__solver=lbfgs; total time=23.5min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=16.1min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=84.3min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=87.6min
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=94.7min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=89.2min
+[CV] END classifier__C=0.0001, classifier__max_iter=100, classifier__solver=lbfgs; total time=14.7min
+[CV] END classifier__C=0.0001, classifier__max_iter=300, classifier__solver=lbfgs; total time=15.2min
+[CV] END classifier__C=0.0001, classifier__max_iter=300, classifier__solver=lbfgs; total time=14.9min
+[CV] END classifier__C=0.0003, classifier__max_iter=300, classifier__solver=lbfgs; total time=21.9min
+[CV] END classifier__C=1.0, classifier__max_iter=500, classifier__solver=lbfgs; total time=27.6min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=89.3min
+[CV] END classifier__C=0.1, classifier__max_iter=300, classifier__solver=lbfgs; total time=57.4min
+[CV] END classifier__C=0.3, classifier__max_iter=1000, classifier__solver=lbfgs; total time=39.0min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=90.8min
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=87.3min
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=89.0min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=89.9min
+[CV] END classifier__C=0.3, classifier__max_iter=500, classifier__solver=lbfgs; total time=48.7min
+[CV] END classifier__C=0.0003, classifier__max_iter=100, classifier__solver=lbfgs; total time=28.4min
+[CV] END classifier__C=1.0, classifier__max_iter=500, classifier__solver=lbfgs; total time=22.4min
+[CV] END classifier__C=0.3, classifier__max_iter=300, classifier__solver=lbfgs; total time=47.0min
+[CV] END classifier__C=0.0003, classifier__max_iter=100, classifier__solver=lbfgs; total time=30.5min
+[CV] END classifier__C=1.0, classifier__max_iter=100, classifier__solver=lbfgs; total time=21.4min
+[CV] END classifier__C=0.0001, classifier__max_iter=100, classifier__solver=lbfgs; total time=12.5min
+[CV] END classifier__C=0.03, classifier__max_iter=1000, classifier__solver=lbfgs; total time=81.3min
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=92.5min
+
+Best parameters from inner CV:
+  classifier__solver: lbfgs
+  classifier__max_iter: 300
+  classifier__C: 0.1
+Best inner CV score: 0.9115
+
+>>> OUTER FOLD 4 TEST SCORE: 0.9250
+
+======================================================================
+OUTER FOLD 5/5
+======================================================================
+Train samples: 41760, Test samples: 10208
+Train subjects: 180, Test subjects: 44
+
+Starting inner CV (hyperparameter search)...
+Fitting 3 folds for each of 20 candidates, totalling 60 fits
+[CV] END classifier__C=1.0, classifier__max_iter=300, classifier__solver=lbfgs; total time=40.3min
+[CV] END classifier__C=0.0003, classifier__max_iter=100, classifier__solver=lbfgs; total time=25.9min
+[CV] END classifier__C=0.3, classifier__max_iter=1000, classifier__solver=lbfgs; total time=30.2min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=83.4min
+[CV] END classifier__C=0.0001, classifier__max_iter=100, classifier__solver=lbfgs; total time= 9.3min
+[CV] END classifier__C=0.0001, classifier__max_iter=300, classifier__solver=lbfgs; total time=14.8min
+[CV] END classifier__C=0.0001, classifier__max_iter=300, classifier__solver=lbfgs; total time=14.1min
+[CV] END classifier__C=0.0003, classifier__max_iter=100, classifier__solver=lbfgs; total time=25.3min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=15.2min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=77.5min
+[CV] END classifier__C=0.1, classifier__max_iter=300, classifier__solver=lbfgs; total time=51.5min
+[CV] END classifier__C=0.0001, classifier__max_iter=500, classifier__solver=lbfgs; total time=14.2min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=15.3min
+[CV] END classifier__C=0.3, classifier__max_iter=500, classifier__solver=lbfgs; total time=56.7min
+[CV] END classifier__C=0.1, classifier__max_iter=100, classifier__solver=lbfgs; total time=35.8min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=85.5min
+[CV] END classifier__C=0.03, classifier__max_iter=1000, classifier__solver=lbfgs; total time=83.3min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=73.2min
+[CV] END classifier__C=1.0, classifier__max_iter=500, classifier__solver=lbfgs; total time=23.5min
+[CV] END classifier__C=0.3, classifier__max_iter=300, classifier__solver=lbfgs; total time=60.2min
+[CV] END classifier__C=0.0001, classifier__max_iter=500, classifier__solver=lbfgs; total time=14.2min
+[CV] END classifier__C=1.0, classifier__max_iter=500, classifier__solver=lbfgs; total time=24.5min
+[CV] END classifier__C=1.0, classifier__max_iter=300, classifier__solver=lbfgs; total time=53.2min
+[CV] END classifier__C=0.0001, classifier__max_iter=500, classifier__solver=lbfgs; total time=16.4min
+[CV] END classifier__C=0.0001, classifier__max_iter=1000, classifier__solver=lbfgs; total time=15.3min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=84.2min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=84.0min
+[CV] END classifier__C=0.01, classifier__max_iter=300, classifier__solver=lbfgs; total time=85.0min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=83.0min
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=89.0min
+[CV] END classifier__C=0.1, classifier__max_iter=300, classifier__solver=lbfgs; total time=55.2min
+[CV] END classifier__C=0.0001, classifier__max_iter=500, classifier__solver=lbfgs; total time=16.5min
+[CV] END classifier__C=1.0, classifier__max_iter=500, classifier__solver=lbfgs; total time=24.5min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=90.9min
+[CV] END classifier__C=0.03, classifier__max_iter=300, classifier__solver=lbfgs; total time=89.9min
+[CV] END classifier__C=0.03, classifier__max_iter=100, classifier__solver=lbfgs; total time=88.7min
+[CV] END classifier__C=0.01, classifier__max_iter=1000, classifier__solver=lbfgs; total time=88.7min
+[CV] END classifier__C=0.3, classifier__max_iter=500, classifier__solver=lbfgs; total time=54.8min
+[CV] END classifier__C=0.1, classifier__max_iter=100, classifier__solver=lbfgs; total time=39.0min
+[CV] END classifier__C=1.0, classifier__max_iter=300, classifier__solver=lbfgs; total time=70.5min
+[CV] END classifier__C=0.3, classifier__max_iter=1000, classifier__solver=lbfgs; total time=29.7min
+[CV] END classifier__C=0.01, classifier__max_iter=100, classifier__solver=lbfgs; total time=96.3min
+
+Best parameters from inner CV:
+  classifier__solver: lbfgs
+  classifier__max_iter: 300
+  classifier__C: 0.1
+Best inner CV score: 0.9146
+
+>>> OUTER FOLD 5 TEST SCORE: 0.9230
+
+======================================================================
+NESTED CV COMPLETE
+======================================================================
+
+Outer CV Scores per fold:
+  Fold 1: 0.9249
+  Fold 2: 0.9284
+  Fold 3: 0.9227
+  Fold 4: 0.9250
+  Fold 5: 0.9230
+
+Mean Outer CV Score: 0.9248 (+/- 0.0020)
+======================================================================
+
+
+======================================================================
+TRAINING FINAL MODEL ON ALL DATA
+======================================================================
+
+Fitting preprocessor...
+
+Data shapes:
+  X: (51968, 232)
+  y: (51968,)
+  subject_ids_expanded: (51968,)
+  Unique subjects: 224
+Fitting 3 folds for each of 20 candidates, totalling 60 fits

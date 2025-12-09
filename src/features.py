@@ -195,36 +195,28 @@ def impute_diagonal_random(matrices: np.ndarray) -> np.ndarray:
     return result
 
 def impute_diagonal_region_mean(matrices: np.ndarray) -> np.ndarray:
+    """ 
+    Impute diagonal with region-wise mean connectivity (Deterministic, subject-specific). 
+    Each subject gets their own row means as diagonal values.
     """
-    Calculate the mean of off-diagonal values by row and impute them to the diagonal.
-    
-    Parameters:
-    -----------
-    matrix : numpy.ndarray
-        A 2D square matrix (e.g., connectivity matrix)
-    
-    Returns:
-    --------
-    numpy.ndarray
-        Matrix with diagonal values replaced by row-wise mean of off-diagonal values
-    """
-    # Create a copy to avoid modifying the original matrix
     result = matrices.copy()
-    
-    # Get the number of rows/columns
-    n = matrices.shape[0]
-    
-    # Create a mask for off-diagonal elements
-    mask = ~np.eye(n, dtype=bool)
-    
-    # Calculate mean of off-diagonal values for each row
-    for i in range(n):
-        # Extract off-diagonal values for row i
-        off_diagonal_values = matrices[i, mask[i]]
-        
-        # Calculate mean and assign to diagonal
-        result[i, i] = np.mean(off_diagonal_values)
-    
+    n_subjects = result.shape[0]
+    n_regions = result.shape[1]
+
+    # create mask for off-diagonal elements
+    off_diag_mask = ~np.eye(n_regions, dtype=bool)
+
+    for s in range(n_subjects):
+        matrix = result[s]
+
+        # compute row means excluding diagonal
+        row_means = np.zeros(n_regions)
+        for r in range(n_regions):
+            row_vals = matrix[r][off_diag_mask[r]]  # Use mask indexing correctly
+            row_means[r] = np.mean(row_vals) if len(row_vals) > 0 else 0.0
+
+        np.fill_diagonal(result[s], row_means)
+
     return result
 
 def impute_diagonal_network_mean(

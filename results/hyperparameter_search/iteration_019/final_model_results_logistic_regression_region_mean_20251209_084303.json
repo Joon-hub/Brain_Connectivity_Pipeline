@@ -1,0 +1,11 @@
+{
+  "best_params": {
+    "classifier__solver": "lbfgs",
+    "classifier__max_iter": 300,
+    "classifier__C": 0.1
+  },
+  "best_cv_score": 0.9189129646888268,
+  "model": "logistic_regression",
+  "diagonal_strategy": "region_mean",
+  "timestamp": "20251209_084303"
+}
