@@ -21,16 +21,16 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.models import load_model_from_config
-from src.features import BrainConnectivityPreprocessor, extract_regions
-from src.brain_region_classifier import BrainRegionClassifier
-from src.evaluate import (
+from CoreModules.models import load_model_from_config
+from CoreModules.features import BrainConnectivityPreprocessor, extract_regions
+from Classifiers.multinomial_classifier import BrainRegionClassifier
+from Evaluation.metrics import (
     calculate_error_map,
     save_results_csv,
     save_confusion_matrix,
     compare_error_maps,
 )
-from src.visualize import plot_error_map, plot_rest_vs_task_comparison
+from Visualization.plot import plot_error_map, plot_rest_vs_task_comparison
 
 
 def load_config(config_path: str) -> dict:
@@ -259,7 +259,7 @@ def main() -> int:
         print(f"Loaded model: {type(model_instance).__name__}")
     except Exception as e:
         print(f"Error loading model '{args.model}': {e}")
-        from src.models import list_available_models
+        from CoreModules.models import list_available_models
         print("\nAvailable models in configs/models/:")
         for m in list_available_models("configs/models"):
             print(f"  - {m}")

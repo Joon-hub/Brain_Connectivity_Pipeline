@@ -39,6 +39,7 @@ echo ""
 python scripts/hemisphere/01_prepare_hemisphere_data.py \
     --input-dir data/raw \
     --output-dir data/processed/hemispheres
+    
 
 EXIT_CODE=$?
 

@@ -14,9 +14,9 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
-from data import load_connectivity_data, extract_connection_columns
-from features import extract_regions
-from utils import load_config, set_random_seeds, print_section
+from CoreModules.data import load_connectivity_data, extract_connection_columns
+from CoreModules.features import extract_regions
+from CoreModules.utils import load_config, set_random_seeds, print_section
 
 
 # NETWORK MAPPING

@@ -30,19 +30,19 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 # Import your existing modules
-from src.hemisphere_data.hemisphere_utils import (
+from Hemi_utilities.hemisphere_utils import (
     load_region_info,
     get_hemisphere_indices,
     load_hemisphere_data_from_csv
 )
-from src.preprocessing.connectivity_preprocessor import ConnectivityPreprocessor
-from src.evaluation.hemisphere_metrics import (
+from CoreModules.preprocessing import ConnectivityPreprocessor
+from Evaluation.hemisphere_metrics import (
     compute_classification_metrics,
     compute_per_region_metrics,
     compute_network_level_metrics,
     create_confusion_matrix
 )
-from src.visualization.hemisphere_viz import (
+from Visualization.hemisphere_viz import (
     plot_confusion_matrix,
     plot_per_region_accuracy,
     plot_network_accuracy

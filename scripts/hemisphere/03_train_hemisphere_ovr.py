@@ -42,10 +42,10 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 # Import project modules
-from src.hemisphere_data.hemisphere_utils import load_hemisphere_data, prepare_classification_data
-from src.preprocessing.connectivity_preprocessor import ConnectivityPreprocessor
-from src.evaluation.hemisphere_metrics import compute_classification_metrics
-from src.visualization.hemisphere_viz import plot_per_region_accuracy
+from Hemi_utilities.hemisphere_utils import load_hemisphere_data, prepare_classification_data
+from CoreModules.preprocessing import ConnectivityPreprocessor
+from Evaluation.hemisphere_metrics import compute_classification_metrics
+from Visualization.hemisphere_viz import plot_per_region_accuracy
 
 
 def setup_logging(output_dir: Path, hemisphere: str) -> logging.Logger:

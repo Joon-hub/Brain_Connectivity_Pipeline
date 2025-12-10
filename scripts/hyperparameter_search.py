@@ -27,8 +27,8 @@ from typing import Dict, Tuple
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.features import BrainConnectivityPreprocessor
-from src.data import load_connectivity_data, extract_connection_columns
+from CoreModules.features import BrainConnectivityPreprocessor
+from CoreModules.data import load_connectivity_data, extract_connection_columns
 
 
 def load_search_space(config_path):

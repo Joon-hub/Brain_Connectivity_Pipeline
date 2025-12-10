@@ -1,6 +1,6 @@
 # Job configuration
 universe        = vanilla
-executable      = CONDOR/scripts/run_brain_pipeline.sh
+executable      = CONDOR/scripts/run_main_pipeline.sh
 arguments       = --experiment-name Exp_LR_RM_bestparam --use-best-params --stage 1 --n-splits 3
 
 # Environment setup
