@@ -1,0 +1,519 @@
+# hemisphere_config.yaml
+# Configuration file for hemisphere-specific brain region classification analysis
+# Author: Joon
+# Date: 2024
+
+# =============================================================================
+# DATA CONFIGURATION
+# =============================================================================
+data:
+  # Input directories
+  input_dir: "data/processed/hemispheres"
+  raw_data_dir: "data/raw"
+  
+  # Output directories
+  output_dir: "data/results/hemisphere_analysis"
+  
+  # Region information file
+  region_info_file: "data/processed/region_info.csv"
+  
+  # Dataset selection
+  dataset: "rest"  # Options: 'rest' (PIOP2), 'task' (PIOP1)
+  
+  # Hemisphere selection
+  hemisphere_split_method: "atlas_based"  # Use atlas naming conventions (LH_/RH_ prefix)
+  
+  # Include bilateral regions (e.g., brainstem, cerebellum)
+  include_bilateral: false
+  
+  # Data format
+  data_format: "csv"  # Options: 'csv', 'npy'
+  return_matrices: true  # Convert upper triangle to full matrices
+
+
+# =============================================================================
+# PREPROCESSING CONFIGURATION
+# =============================================================================
+preprocessing:
+  # Fisher Z-transformation
+  apply_fisher_z: true
+  
+  # Clipping for Fisher Z
+  clip_values: true
+  clip_range: [-5.0, 5.0]
+  
+  # Diagonal imputation strategy
+  # Options: 'zero', 'region_mean', 'network_mean', 'global_mean', 'keep'
+  diagonal_strategy: "region_mean"
+  
+  # Standardization
+  standardize: true
+  
+  # Feature selection (if needed)
+  feature_selection: null  # Options: null, 'variance_threshold', 'mutual_info'
+  variance_threshold: 0.01  # Only used if feature_selection = 'variance_threshold'
+
+
+# =============================================================================
+# CROSS-VALIDATION CONFIGURATION
+# =============================================================================
+cross_validation:
+  # Number of folds
+  n_folds: 5
+  
+  # Cross-validation strategy
+  cv_strategy: "GroupKFold"  # Ensures no subject leakage
+  
+  # Random state for reproducibility
+  random_state: 42
+  
+  # Shuffle (for GroupKFold, this is handled internally)
+  shuffle: false
+
+
+# =============================================================================
+# MODEL CONFIGURATION - MULTINOMIAL LOGISTIC REGRESSION
+# =============================================================================
+multinomial:
+  # Model type
+  model_type: "LogisticRegression"
+  
+  # Multi-class strategy
+  multi_class: "multinomial"
+  
+  # Solver
+  solver: "lbfgs"  # Options: 'lbfgs', 'sag', 'saga', 'newton-cg'
+  
+  # Regularization parameter
+  # If null, will use hyperparameter optimization
+  C: 1.0
+  
+  # Regularization type (L2 for lbfgs)
+  penalty: "l2"
+  
+  # Maximum iterations
+  max_iter: 1000
+  
+  # Convergence tolerance
+  tol: 0.0001
+  
+  # Class weighting
+  class_weight: null  # Options: null, 'balanced'
+  
+  # Parallel jobs
+  n_jobs: -1  # Use all available cores
+  
+  # Verbose output during training
+  verbose: 0
+  
+  # Warm start (use previous solution as initialization)
+  warm_start: false
+
+
+# =============================================================================
+# MODEL CONFIGURATION - ONE-VS-REST (OvR)
+# =============================================================================
+ovr:
+  # Base model configuration (similar to multinomial)
+  model_type: "LogisticRegression"
+  solver: "lbfgs"
+  
+  # Regularization parameter
+  C: 1.0
+  
+  # Maximum iterations
+  max_iter: 1000
+  
+  # Class weighting (important for OvR due to 1 vs 115 imbalance)
+  class_weight: "balanced"  # Options: null, 'balanced'
+  
+  # Parallel jobs
+  n_jobs: -1
+  
+  # Verbose output
+  verbose: 0
+  
+  # Decision function aggregation
+  aggregation_method: "max_decision"  # Options: 'max_decision', 'calibrated_proba'
+
+
+# =============================================================================
+# MODEL CONFIGURATION - ONE-VS-ONE (OvO)
+# =============================================================================
+ovo:
+  # Pair selection strategy
+  # Options: 'error_driven', 'network_focused', 'spatial', 'all_pairs', 'custom'
+  selection_strategy: "error_driven"
+  
+  # Maximum number of pairs to analyze
+  max_pairs: 200
+  
+  # Confusion threshold for error_driven strategy
+  # Only analyze pairs with confusion rate >= threshold
+  confusion_threshold: 0.05
+  
+  # For spatial strategy: maximum distance in mm
+  spatial_distance_threshold: 30.0
+  
+  # Custom pairs file (for 'custom' strategy)
+  custom_pairs_file: null  # Path to CSV with columns: region_id_1, region_id_2
+  
+  # Base model configuration
+  model_type: "LogisticRegression"
+  solver: "lbfgs"
+  C: 1.0
+  max_iter: 1000
+  
+  # Class weighting (usually not needed for OvO as classes are balanced)
+  class_weight: null
+  
+  # Parallel processing
+  n_jobs: -1
+  verbose: 0
+
+
+# =============================================================================
+# HYPERPARAMETER OPTIMIZATION CONFIGURATION
+# =============================================================================
+hyperparameter_optimization:
+  # Enable hyperparameter optimization
+  enabled: false
+  
+  # Optimization method
+  method: "GridSearchCV"  # Options: 'GridSearchCV', 'RandomizedSearchCV', 'BayesianOptimization'
+  
+  # Parameters to optimize
+  param_grid:
+    C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+    max_iter: [1000]
+  
+  # Scoring metric
+  scoring: "accuracy"  # Options: 'accuracy', 'balanced_accuracy', 'f1_weighted'
+  
+  # Number of CV folds for hyperparameter search
+  cv_folds: 3
+  
+  # Number of jobs for parallel search
+  n_jobs: -1
+  
+  # Verbose output
+  verbose: 1
+  
+  # For RandomizedSearchCV
+  n_iter: 20  # Number of parameter settings sampled
+  
+  # Refit best model
+  refit: true
+
+
+# =============================================================================
+# EVALUATION CONFIGURATION
+# =============================================================================
+evaluation:
+  # Metrics to compute
+  metrics:
+    - "accuracy"
+    - "balanced_accuracy"
+    - "precision"
+    - "recall"
+    - "f1_score"
+    - "cohen_kappa"
+    - "matthews_corrcoef"
+    - "top_5_accuracy"
+    - "top_10_accuracy"
+  
+  # Confusion matrix normalization
+  confusion_matrix_normalize: false  # Options: false, 'true', 'pred', 'all'
+  
+  # Per-region metrics
+  compute_per_region: true
+  
+  # Network-level metrics
+  compute_network_level: true
+  
+  # Error distribution analysis
+  analyze_error_distribution: true
+  
+  # Save predictions
+  save_predictions: true
+  
+  # Save probabilities
+  save_probabilities: true
+  
+  # Save models
+  save_models: false  # Set to true to save trained models (large files)
+
+
+# =============================================================================
+# VISUALIZATION CONFIGURATION
+# =============================================================================
+visualization:
+  # Figure format
+  format: "png"  # Options: 'png', 'pdf', 'svg'
+  
+  # DPI for raster images
+  dpi: 300
+  
+  # Figure sizes (width, height) in inches
+  figure_sizes:
+    confusion_matrix: [12, 10]
+    per_region_accuracy: [14, 8]
+    network_accuracy: [10, 6]
+    comparison_plot: [10, 6]
+    summary_figure: [16, 12]
+  
+  # Color schemes
+  color_schemes:
+    confusion_matrix: "Blues"
+    per_region: "steelblue"
+    network: "Set3"
+    comparison: ["steelblue", "coral"]
+  
+  # Show network boundaries in confusion matrix
+  show_network_boundaries: true
+  
+  # Font sizes
+  font_sizes:
+    title: 13
+    axis_label: 11
+    tick_label: 9
+    legend: 9
+  
+  # Grid settings
+  show_grid: true
+  grid_alpha: 0.3
+  grid_linestyle: "--"
+
+
+# =============================================================================
+# COMPARISON CONFIGURATION
+# =============================================================================
+comparison:
+  # Strategies to compare
+  strategies:
+    - "multinomial"
+    - "ovr"
+    # - "ovo"  # Uncomment to include OvO if available
+  
+  # Statistical tests
+  statistical_tests:
+    - "paired_ttest"      # Paired t-test for per-region comparison
+    - "pearson_correlation"  # Correlation between strategies
+    - "mcnemar"           # McNemar test for error pattern differences
+  
+  # Significance level
+  alpha: 0.05
+  
+  # Multiple comparison correction
+  correction_method: "fdr_bh"  # Options: null, 'bonferroni', 'fdr_bh'
+  
+  # Generate summary report
+  generate_report: true
+  
+  # Report format
+  report_format: "txt"  # Options: 'txt', 'pdf', 'html'
+
+
+# =============================================================================
+# HEMISPHERE COMPARISON CONFIGURATION
+# =============================================================================
+hemisphere_comparison:
+  # Compare left vs right hemispheres
+  enabled: true
+  
+  # Statistical tests for hemisphere comparison
+  tests:
+    - "independent_ttest"  # Compare overall accuracy
+    - "paired_ttest"       # Compare per-region accuracy
+    - "pearsonr"           # Correlation of per-region accuracy
+  
+  # Significance level
+  alpha: 0.05
+
+
+# =============================================================================
+# COMPUTATIONAL CONFIGURATION
+# =============================================================================
+computation:
+  # Use GPU if available (for compatible models)
+  use_gpu: false
+  
+  # Number of parallel jobs
+  n_jobs: -1  # -1 uses all available cores
+  
+  # Memory management
+  memory_efficient: true  # Use memory-efficient data structures
+  
+  # Batch size for processing (if applicable)
+  batch_size: null
+  
+  # HTCondor configuration (if using cluster)
+  htcondor:
+    enabled: false
+    submit_file: "configs/htcondor_submit.sub"
+    request_cpus: 4
+    request_memory: "8GB"
+    request_disk: "10GB"
+
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+logging:
+  # Logging level
+  level: "INFO"  # Options: 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+  
+  # Log format
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # Log to file
+  log_to_file: true
+  
+  # Log file location
+  log_dir: "logs"
+  
+  # Log file naming
+  log_filename_template: "{script_name}_{hemisphere}_{timestamp}.log"
+  
+  # Console output
+  log_to_console: true
+
+
+# =============================================================================
+# OUTPUT CONFIGURATION
+# =============================================================================
+output:
+  # Directory structure
+  create_subdirectories: true
+  subdirectory_structure:
+    - "multinomial"
+    - "ovr"
+    - "ovo"
+    - "comparison"
+  
+  # File naming conventions
+  use_timestamps: false
+  timestamp_format: "%Y%m%d_%H%M%S"
+  
+  # Compression for large files
+  compress_predictions: false
+  compression_format: "gzip"  # Options: 'gzip', 'bz2', 'xz'
+  
+  # Save intermediate results
+  save_intermediate: true
+  
+  # Clean up temporary files
+  cleanup_temp_files: true
+
+
+# =============================================================================
+# REPRODUCIBILITY CONFIGURATION
+# =============================================================================
+reproducibility:
+  # Random seed
+  random_state: 42
+  
+  # Set numpy random seed
+  numpy_seed: 42
+  
+  # Set python random seed
+  python_seed: 42
+  
+  # Deterministic algorithms (may be slower)
+  use_deterministic: true
+  
+  # Save environment information
+  save_environment_info: true
+  environment_info_file: "environment_info.txt"
+
+
+# =============================================================================
+# ADVANCED CONFIGURATION
+# =============================================================================
+advanced:
+  # Feature engineering
+  feature_engineering:
+    enabled: false
+    methods: []  # Options: 'pca', 'ica', 'polynomial'
+  
+  # Ensemble methods
+  ensemble:
+    enabled: false
+    methods: []  # Options: 'voting', 'stacking', 'bagging'
+  
+  # Calibration
+  probability_calibration:
+    enabled: false
+    method: "sigmoid"  # Options: 'sigmoid', 'isotonic'
+  
+  # Sample weighting
+  sample_weighting:
+    enabled: false
+    method: null  # Custom weighting scheme
+
+
+# =============================================================================
+# VALIDATION CONFIGURATION
+# =============================================================================
+validation:
+  # Data validation checks
+  check_data_integrity: true
+  
+  # Check for NaN values
+  check_nan: true
+  
+  # Check for infinite values
+  check_inf: true
+  
+  # Check for data leakage
+  check_leakage: true
+  
+  # Validate CV splits
+  validate_cv_splits: true
+  
+  # Check class balance
+  check_class_balance: true
+  warn_imbalance_threshold: 0.1  # Warn if class proportion < threshold
+
+
+# =============================================================================
+# EXPERIMENTAL FEATURES
+# =============================================================================
+experimental:
+  # Enable experimental features (use with caution)
+  enabled: false
+  
+  # Deep learning models
+  use_deep_learning: false
+  
+  # Graph neural networks
+  use_gnn: false
+  
+  # Transfer learning
+  use_transfer_learning: false
+
+
+# =============================================================================
+# NOTES
+# =============================================================================
+# Configuration notes:
+# - All paths are relative to project root unless specified as absolute
+# - null values indicate defaults will be used
+# - Boolean flags: true/false (lowercase)
+# - Lists use YAML list syntax with dashes
+# - Comments use # symbol
+# - Indentation must be consistent (2 or 4 spaces)
+#
+# Usage:
+#   python scripts/hemisphere/02_train_hemisphere_multinomial.py \
+#       --config configs/hemisphere_config.yaml \
+#       --hemisphere left
+#
+# To override specific parameters from command line:
+#   python scripts/hemisphere/02_train_hemisphere_multinomial.py \
+#       --config configs/hemisphere_config.yaml \
+#       --hemisphere left \
+#       --regularization_C 10.0 \
+#       --diagonal_strategy network_mean
+#
+# =============================================================================

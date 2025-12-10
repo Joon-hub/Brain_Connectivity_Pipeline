@@ -3,3 +3,4 @@
 *.pyc
 /masterthesis_venv2/
 /results/experiments/hyperparameter_search/
+logs/

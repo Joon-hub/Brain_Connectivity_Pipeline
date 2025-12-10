@@ -16,16 +16,16 @@ Configuration:
   Fisher Z transform: Enabled
   Random seed: 42
 
-Cross-Validation Results (LEAK-FREE):
-  Validation accuracy: 0.9152 ± 0.0041
-  Training accuracy: 0.9783 ± 0.0009
-  Full Training Accuracy: 0.9006 (overfitted)
-  Improvement over chance: 212.3x
+Cross-Validation Results:
+  Validation accuracy: 0.9126 ± 0.0063
+  Training accuracy: 0.9993 ± 0.0002
+  Full Training Accuracy: 0.9862 (overfitted)
+  Improvement over chance: 211.7x
 
 Task Data (Gender Stroop):
   Test subjects: 200
-  Test accuracy: 0.8363
-  CV validation → Task drop: 0.0789
+  Test accuracy: 0.8962
+  CV validation → Task drop: 0.0164
 
 ======================================================================
 
@@ -36,9 +36,7 @@ Output Locations:
   Figures: results/experiments/Exp_LR_RM_bestparam/figures
   Predictions: results/experiments/Exp_LR_RM_bestparam/predictions
 
-Execution Time: 35.5m
-Completed: 2025-12-08 10:34:47
+Execution Time: 1.6m
+Completed: 2025-12-09 14:54:03
 
 ======================================================================
-
-Pipeline completed successfully.

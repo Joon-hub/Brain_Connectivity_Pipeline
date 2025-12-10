@@ -1,137 +1,84 @@
 #!/bin/bash
 set -e
 
+# Default values
 EXPERIMENT_NAME=""
-STAGE="all"
-MODEL="logistic_regression"
 USE_BEST_PARAMS=false
-ADDITIONAL_ARGS=""
+STAGE="all"
+N_SPLITS=5
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --experiment-name) EXPERIMENT_NAME="$2"; shift 2 ;;
-        --stage) STAGE="$2"; shift 2 ;;
-        --model) MODEL="$2"; shift 2 ;;
         --use-best-params) USE_BEST_PARAMS=true; shift ;;
-        -h|--help)
+        --stage) STAGE="$2"; shift 2 ;;
+        --n-splits) N_SPLITS="$2"; shift 2 ;;
+        --help)
             cat << EOF
 Usage: $0 --experiment-name NAME [OPTIONS]
 
-Options:
-  --experiment-name NAME    Experiment name (required)
-  --stage [all|1|2|3]      Pipeline stage (default: all)
-  --model NAME             Model config (default: logistic_regression)
-  --use-best-params        Use hyperparameter search results
+Required:
+  --experiment-name NAME    Name for this experiment
 
-Stages:
-  1 - Training (run.py)
-  2 - Bridge to analysis
-  3 - Advanced analysis
+Optional:
+  --use-best-params         Use optimized hyperparameters
+  --stage [all|1|2|3]       Which stage to run (default: all)
+  --n-splits N              CV splits (default: 5)
+
+Stages: 1=Train | 2=Prepare | 3=Analyze
 EOF
             exit 0 ;;
-        *) ADDITIONAL_ARGS="$ADDITIONAL_ARGS $1"; shift ;;
+        *) echo "Unknown option: $1 (use --help)"; exit 1 ;;
     esac
 done
 
-# Validate required arguments
-[ -z "$EXPERIMENT_NAME" ] && echo "ERROR: --experiment-name is required" && exit 1
+# Validate inputs
+[ -z "$EXPERIMENT_NAME" ] && { echo "ERROR: --experiment-name required"; exit 1; }
+[[ ! "$STAGE" =~ ^(all|1|2|3)$ ]] && { echo "ERROR: Invalid stage '$STAGE'"; exit 1; }
 
-# === ACTIVATE VIRTUAL ENVIRONMENT ===
-echo "Activating virtual environment..."
-if [ -d "masterthesis_venv2/bin" ]; then
-    source masterthesis_venv2/bin/activate
-    echo "✓ Using masterthesis_venv2"
-elif [ -d "brain_connectivity_classifier/bin" ]; then
-    source brain_connectivity_classifier/bin/activate
-    echo "✓ Using brain_connectivity_classifier"
-else
-    echo "ERROR: No virtual environment found!"
-    echo "Expected: masterthesis_venv2/ or brain_connectivity_classifier/"
-    exit 1
-fi
-echo ""
+# Activate environment
+source masterthesis_venv2/bin/activate || { echo "ERROR: Virtual environment not found!"; exit 1; }
 
-# Verify Python is available
-python --version || { echo "ERROR: Python not available after venv activation"; exit 1; }
-echo ""
-
-# If using best params, check and aggregate
+# Determine model
+MODEL="logistic_regression"
 if [ "$USE_BEST_PARAMS" = true ]; then
-    echo "======================================================================"
-    echo "  Using Optimized Hyperparameters"
-    echo "======================================================================"
-    
-    if [ ! -d "results/hyperparameter_search" ] || [ -z "$(ls -A results/hyperparameter_search/iteration_* 2>/dev/null)" ]; then
-        echo "ERROR: No hyperparameter search results found!"
-        echo "Run: condor_submit run_hyperparameter_search.sub"
-        exit 1
-    fi
-    
-    echo "Aggregating search results..."
-    python scripts/aggregate_search_results.py || { echo "ERROR: Aggregation failed"; exit 1; }
+    [ ! -d "results/hyperparameter_search/iteration_001" ] && { echo "ERROR: No search results found!"; exit 1; }
+    python scripts/aggregate_search_results.py
     MODEL="best_from_search"
-    echo ""
 fi
 
-# Print configuration
-cat << EOF
+echo "========================================================================"
+echo "Experiment: $EXPERIMENT_NAME | Model: $MODEL | Stage: $STAGE | CV: $N_SPLITS"
+echo "========================================================================"
 
-======================================================================
-  Brain Connectivity Classification Pipeline
-======================================================================
-Experiment:  $EXPERIMENT_NAME
-Stage:       $STAGE
-Model:       $MODEL
-
-EOF
-
-# Helper function for analysis steps
-run_step() { echo "Step $1: $2"; "./sh_files/$3"; echo -e "✓ Done: $2\n"; }
-
-# STAGE 1: Training
+# Stage 1: Train
 if [[ "$STAGE" == "all" || "$STAGE" == "1" ]]; then
-    echo "======================================================================"
-    echo "  STAGE 1: Model Training"
-    echo "======================================================================"
-    
-    python scripts/run.py --config configs/config.yaml --n-splits 3 --model "$MODEL" --experiment-name "$EXPERIMENT_NAME" --diagonal network_mean $ADDITIONAL_ARGS
-    echo -e "\n✓ Training complete\n"
+    echo "STAGE 1: Training..."
+    python scripts/run.py \
+        --config configs/config.yaml \
+        --experiment-name "$EXPERIMENT_NAME" \
+        --model "$MODEL" \
+        --diagonal region_mean \
+        --n-splits "$N_SPLITS"
+    echo "✓ Training complete"
 fi
 
-# STAGE 2: Bridge
+# Stage 2: Prepare
 if [[ "$STAGE" == "all" || "$STAGE" == "2" ]]; then
-    echo "======================================================================"
-    echo "  STAGE 2: Bridge to Analysis"
-    echo "======================================================================"
+    echo "STAGE 2: Preparing data..."
     python analysis/bridge_to_analysis.py --experiment "$EXPERIMENT_NAME" --force
-    echo -e "\n✓ Bridge complete\n"
+    echo "✓ Data preparation complete"
 fi
 
-# STAGE 3: Analysis
+# Stage 3: Analyze
 if [[ "$STAGE" == "all" || "$STAGE" == "3" ]]; then
-    echo "======================================================================"
-    echo "  STAGE 3: Advanced Analysis"
-    echo "======================================================================"
-    run_step 1 "Atlas Performance Analysis" "01_atlas_performance_analysis.sh"
-    run_step 2 "Atlas Comparison"           "02_atlas_comparison.sh"
-    run_step 3 "Region Level Analysis"      "03_region_level_analysis.sh"
-    run_step 4 "Generate Summary Report"    "04_generate_summary_report.sh"
-    echo "✓ Analysis complete"
+    echo "STAGE 3: Running analysis..."
+    for script in ./sh_files/0{1..4}_*.sh; do
+        $script && echo "✓ $(basename $script) done"
+    done
 fi
 
-# Final summary
-cat << EOF
-
-======================================================================
-  PIPELINE COMPLETE
-======================================================================
-
-Experiment: $EXPERIMENT_NAME
-
-Results saved to:
-  - results/experiments/$EXPERIMENT_NAME/
-  - reports/figures/
-  - reports/tables/
-
-EOF
+echo "========================================================================"
+echo "PIPELINE COMPLETE! Results in: results/experiments/$EXPERIMENT_NAME/"
+echo "========================================================================"

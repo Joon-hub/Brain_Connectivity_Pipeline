@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-Brain Connectivity Classification Pipeline (Phase 2 - Integrated)
+Brain Connectivity Classification Pipeline
 
 Usage:
     python run.py --config configs/config.yaml
     python run.py --config configs/config.yaml --model logistic_regression
-    python run.py --config configs/config.yaml --sample
-    python run.py --config configs/config.yaml --diagonal random --n_splits 5
+    python run.py --config configs/config.yaml --diagonal random --n-splits 5
 """
 
 import sys
@@ -17,13 +16,13 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.models import load_model_from_config
-from src.features import BrainConnectivityPreprocessor
+from src.features import BrainConnectivityPreprocessor, extract_regions
 from src.brain_region_classifier import BrainRegionClassifier
 from src.evaluate import (
     calculate_error_map,
@@ -69,16 +68,16 @@ def create_sample_dataset(input_path: str, output_path: str, n_subjects: int = 1
 
 
 def print_section(title: str):
-    bar = '=' * 70
-    print(f"\n{bar}\n  {title}\n{bar}\n")
+    print(f"\n{'='*70}\n  {title}\n{'='*70}\n")
 
 
 def format_time(seconds: float) -> str:
     if seconds < 60:
         return f"{seconds:.1f}s"
-    if seconds < 3600:
+    elif seconds < 3600:
         return f"{seconds/60:.1f}m"
-    return f"{seconds/3600:.1f}h"
+    else:
+        return f"{seconds/3600:.1f}h"
 
 
 class ExperimentLogger:
@@ -88,18 +87,20 @@ class ExperimentLogger:
         self.metadata = {}
 
     def create_experiment(self, name: str, config: dict) -> Path:
-        exp_name = name
-        self.experiment_dir = self.base_dir / exp_name
+        self.experiment_dir = self.base_dir / name
         if self.experiment_dir.exists():
-            print(f"Experiment '{exp_name}' already exists. Overwriting...")
+            print(f"Experiment '{name}' already exists. Overwriting...")
             import shutil
             shutil.rmtree(self.experiment_dir)
+        
         for sub in ['config', 'models', 'predictions', 'metrics', 'figures', 'logs']:
             (self.experiment_dir / sub).mkdir(parents=True, exist_ok=True)
+        
         cfg_path = self.experiment_dir / 'config' / 'run_config.yaml'
         with open(cfg_path, 'w') as f:
             yaml.dump(config, f, default_flow_style=False, indent=2)
-        print(f"Created experiment: {exp_name}")
+        
+        print(f"Created experiment: {name}")
         print(f"  Location: {self.experiment_dir}")
         return self.experiment_dir
 
@@ -127,84 +128,11 @@ class ExperimentLogger:
         }
 
 
-def run_diagonal_diagnostics(
-    df_train: pd.DataFrame,
-    connection_columns: list,
-    diagonal_strategy: str,
-    random_state: int,
-    include_diagonal: bool = True,
-):
-    print_section("DIAGNOSTIC: Testing Diagonal Imputation Randomness")
-    print(f"Strategy: {diagonal_strategy}")
-    print("Testing on first 5 subjects...\n")
-
-    preprocessor = BrainConnectivityPreprocessor(
-        connection_columns=connection_columns,
-        diagonal_strategy=diagonal_strategy,
-        apply_fisher_z=False,
-        random_state=random_state,
-        include_diagonal=include_diagonal,
-        enable_diagnostics=True,
-    )
-
-    df_sample = df_train.head(5)
-    preprocessor.fit(df_sample)
-
-    print("Calling transform() 3 times on same data:")
-    print("-" * 60)
-    X1 = preprocessor.transform(df_sample)
-    X2 = preprocessor.transform(df_sample)
-    X3 = preprocessor.transform(df_sample)
-    print("-" * 60)
-    print("\nChecking if transforms produce different results:")
-
-    for subj_idx in range(min(3, len(df_sample))):
-        base_idx = subj_idx * preprocessor.n_regions_
-        f1 = X1[base_idx, :5]
-        f2 = X2[base_idx, :5]
-        f3 = X3[base_idx, :5]
-        print(f"\nSubject {subj_idx}, Region 0, Features 0-4:")
-        print(f"  Transform 1: {f1}")
-        print(f"  Transform 2: {f2}")
-        print(f"  Transform 3: {f3}")
-        print(f"  Transform 1 == Transform 2? {np.allclose(f1, f2)}")
-        print(f"  Transform 2 == Transform 3? {np.allclose(f2, f3)}")
-
-    all_same = np.allclose(X1, X2) and np.allclose(X2, X3)
-
-    print("\n" + "=" * 60)
-    print("DIAGNOSTIC RESULT:")
-    print("=" * 60)
-
-    if diagonal_strategy in ['zero', 'region_mean', 'network_mean']:
-        if all_same:
-            print("PASS: Deterministic strategy produces identical results")
-        else:
-            print("FAIL: Deterministic strategy produces different results")
-    elif diagonal_strategy in ['random', 'sample_from_row', 'sample_from_matrix']:
-        if not all_same:
-            print("PASS: Stochastic strategy produces different results")
-        else:
-            print("FAIL: Stochastic strategy produces identical results")
-    print("=" * 60 + "\n")
-
-
 def main() -> int:
     start_time = time.time()
 
-    parser = argparse.ArgumentParser(
-        description='Brain Connectivity Classification Pipeline (Phase 2 - Integrated)',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  python run.py --config configs/config.yaml
-  python run.py --config configs/config.yaml --model xgboost
-  python run.py --config configs/config.yaml --sample
-  python run.py --config configs/config.yaml --diagonal random
-  python run.py --config configs/config.yaml --diagnose
-        """,
-    )
-
+    # Parse arguments
+    parser = argparse.ArgumentParser(description='Brain Connectivity Classification Pipeline')
     parser.add_argument('--config', type=str, default='configs/config.yaml',
                         help='Path to configuration file')
     parser.add_argument('--model', type=str, default='logistic_regression',
@@ -213,8 +141,6 @@ Examples:
                         help='Override model parameters, e.g. C=10.0 max_iter=2000')
     parser.add_argument('--sample', action='store_true',
                         help='Run on sample data')
-    parser.add_argument('--diagnose', action='store_true',
-                        help='Run diagonal imputation diagnostics')
     parser.add_argument('--diagonal', type=str,
                         choices=['zero', 'region_mean', 'network_mean','random', 'sample_matrix', 'sample_row'],
                         help='Override diagonal imputation strategy')
@@ -228,22 +154,22 @@ Examples:
                         help='Custom experiment name')
     parser.add_argument('--no-tracking', action='store_true',
                         help='Disable experiment tracking')
-
     args = parser.parse_args()
 
-    print_section("BRAIN CONNECTIVITY CLASSIFICATION - PHASE 2")
+    # Print header
+    print_section("BRAIN CONNECTIVITY CLASSIFICATION")
     print(f"Mode: {'SAMPLE DATA' if args.sample else 'FULL DATA'}")
     print(f"Config: {args.config}")
     print(f"Model: {args.model}")
-    print(f"Diagnostics: {'ENABLED' if args.diagnose else 'Disabled'}")
     print(f"Experiment Tracking: {'DISABLED' if args.no_tracking else 'ENABLED'}")
     print(f"Start: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
 
+    # Load config
     config = load_config(args.config)
-
     random_seed = args.seed if args.seed is not None else config.get('model', {}).get('random_seed', 42)
     set_random_seeds(random_seed)
 
+    # Get parameters
     diagonal_strategy = args.diagonal or config.get('preprocessing', {}).get('diagonal_strategy', 'zero')
     apply_fisher_z = not args.no_fisher_z and config.get('preprocessing', {}).get('apply_fisher_z', True)
     include_diagonal = config.get('preprocessing', {}).get('include_diagonal', True)
@@ -252,6 +178,7 @@ Examples:
     piop2_file = config['data']['piop2_file']
     piop1_file = config['data']['piop1_file']
 
+    # Parse model parameter overrides
     model_param_overrides = {}
     if args.model_params:
         for param in args.model_params:
@@ -266,6 +193,7 @@ Examples:
             except ValueError:
                 print(f"Warning: Invalid parameter format '{param}', skipping")
 
+    # Setup experiment tracking
     if not args.no_tracking:
         exp_name = args.experiment_name or f"{args.model}_{diagonal_strategy}"
         logger = ExperimentLogger()
@@ -290,19 +218,17 @@ Examples:
             d.mkdir(parents=True, exist_ok=True)
         logger = None
 
+    # Print configuration
     print("Configuration:")
     print(f"  Model: {args.model}")
     print(f"  Diagonal strategy: {diagonal_strategy}")
-    if diagonal_strategy in ['zero', 'region_mean', 'network_mean']:
-        print("    Deterministic strategy")
-    elif diagonal_strategy in ['random', 'sample_from_matrix']:
-        print("    Stochastic strategy")
     print(f"  CV folds: {n_splits}")
     print(f"  Random seed: {random_seed}")
     print(f"  Fisher Z transform: {'Enabled' if apply_fisher_z else 'Disabled'}")
     if model_param_overrides:
         print(f"  Model parameter overrides: {model_param_overrides}")
 
+    # Load training data
     print_section("STEP 1: Load Training Data (PIOP-2 Resting State)")
     if args.sample:
         sample_path = "data/sample/sample_piop2.csv"
@@ -313,29 +239,16 @@ Examples:
 
     df_train = load_connectivity_data(piop2_file)
     connection_columns = extract_connection_columns(df_train)
-
     print(f"  Subjects: {len(df_train)}")
     print(f"  Connections: {len(connection_columns)}")
 
-    from src.features import extract_regions
     region_list, region_to_idx, n_regions = extract_regions(connection_columns)
 
     if logger:
         logger.log_metadata('n_train_subjects', len(df_train))
         logger.log_metadata('n_regions', n_regions)
 
-    if args.diagnose:
-        run_diagonal_diagnostics(
-            df_train,
-            connection_columns,
-            diagonal_strategy,
-            random_seed,
-            include_diagonal,
-        )
-        if input("\nContinue with full pipeline? (y/n): ").lower() != 'y':
-            print("Exiting...")
-            return 0
-
+    # Load model
     print_section("STEP 2: Load Model & Create Classifier")
     try:
         model_instance = load_model_from_config(
@@ -352,6 +265,7 @@ Examples:
             print(f"  - {m}")
         return 1
 
+    # Create classifier
     classifier = BrainRegionClassifier(
         preprocessor_class=BrainConnectivityPreprocessor,
         model_instance=model_instance,
@@ -362,58 +276,74 @@ Examples:
         apply_fisher_z=apply_fisher_z,
         n_splits=n_splits,
         random_state=random_seed,
-        enable_diagnostics=args.diagnose,
     )
 
     print("Created classifier")
-    print("  Preprocessor: BrainConnectivityPreprocessor")
     print(f"  Model: {type(model_instance).__name__}")
     print(f"  Cross-validation: {n_splits}-fold GroupKFold")
 
-    print_section("STEP 3: Train with Leak-Free Cross-Validation")
-    print("Preprocessing happens inside each CV fold (no leakage)")
-    if apply_fisher_z:
-        print("Fisher Z applied before scaling\n")
-
+    # Train with cross-validation
+    print_section("STEP 3: Train with Cross-Validation")
     classifier.fit(df_train, verbose=True)
     cv_results = classifier.get_cv_results()
 
-    print("\n" + "=" * 60)
-    print("Cross-Validation Summary:")
-    print(f"  Training Accuracy:   {cv_results['train_mean']:.4f} ± {cv_results['train_std']:.4f}")
-    print(f"  Validation Accuracy: {cv_results['val_mean']:.4f} ± {cv_results['val_std']:.4f}")
-    print("=" * 60 + "\n")
+    # Print CV results
+    if cv_results['n_splits'] > 1:
+        print("\n" + "="*70)
+        print("CROSS-VALIDATION RESULTS")
+        print("="*70)
+        print(f"  Training Accuracy:   {cv_results['train_mean']:.4f} ± {cv_results['train_std']:.4f}")
+        print(f"  Validation Accuracy: {cv_results['val_mean']:.4f} ± {cv_results['val_std']:.4f}")
+        print(f"  Number of Folds:     {cv_results['n_splits']}")
+        
+        if 'fold_results' in cv_results and cv_results['fold_results']:
+            print("\n  Individual Fold Results:")
+            for fold_result in cv_results['fold_results']:
+                print(f"    Fold {fold_result['fold']}: "
+                      f"Train={fold_result['train_accuracy']:.4f}, "
+                      f"Val={fold_result['val_accuracy']:.4f}")
+        print("="*70 + "\n")
+    else:
+        print("\n" + "="*70)
+        print("NO CROSS-VALIDATION PERFORMED")
+        print("="*70)
+        print("  Model trained directly on all data (n_splits=1)")
+        print("="*70 + "\n")
 
+    # Save CV results
     y_pred_cv_val, y_true_cv_val, subjects_cv_val = classifier.get_cv_validation_predictions()
     error_map_cv_val = calculate_error_map(y_true_cv_val, y_pred_cv_val, n_regions)
 
-    cv_results_df = pd.DataFrame(cv_results['fold_results'])
-    save_results_csv(cv_results_df, output_dirs['metrics'] / 'cv_fold_results.csv')
+    if cv_results['fold_results']:
+        cv_results_df = pd.DataFrame(cv_results['fold_results'])
+        save_results_csv(cv_results_df, output_dirs['metrics'] / 'cv_fold_results.csv')
 
-    cv_preds_df = pd.DataFrame({
-        'subject_id': subjects_cv_val,
-        'true_region': y_true_cv_val,
-        'predicted_region': y_pred_cv_val,
-    })
-    cv_preds_df.to_csv(output_dirs['predictions'] / 'cv_validation_predictions.csv', index=False)
+    if len(y_pred_cv_val) > 0:
+        cv_preds_df = pd.DataFrame({
+            'subject_id': subjects_cv_val,
+            'true_region': y_true_cv_val,
+            'predicted_region': y_pred_cv_val,
+        })
+        cv_preds_df.to_csv(output_dirs['predictions'] / 'cv_validation_predictions.csv', index=False)
 
-    error_map_df = pd.DataFrame({'region': region_list, 'error_rate': error_map_cv_val})
-    save_results_csv(error_map_df, output_dirs['metrics'] / 'error_map_cv_validation.csv')
+        error_map_df = pd.DataFrame({'region': region_list, 'error_rate': error_map_cv_val})
+        save_results_csv(error_map_df, output_dirs['metrics'] / 'error_map_cv_validation.csv')
 
-    save_confusion_matrix(
-        y_true_cv_val,
-        y_pred_cv_val,
-        region_list,
-        output_dirs['metrics'] / 'confusion_matrix_cv_validation.csv',
-    )
+        save_confusion_matrix(
+            y_true_cv_val,
+            y_pred_cv_val,
+            region_list,
+            output_dirs['metrics'] / 'confusion_matrix_cv_validation.csv',
+        )
 
-    if logger:
+    if logger and cv_results['n_splits'] > 1:
         logger.log_metadata('cv_train_mean', float(cv_results['train_mean']))
         logger.log_metadata('cv_train_std', float(cv_results['train_std']))
         logger.log_metadata('cv_val_mean', float(cv_results['val_mean']))
         logger.log_metadata('cv_val_std', float(cv_results['val_std']))
 
-    print_section("STEP 3.5: Evaluate on Training Data (for reference)")
+    # Evaluate on training data
+    print_section("STEP 4: Evaluate on Training Data")
     y_pred_train, y_true_train, subjects_train = classifier.predict(df_train)
     train_acc = accuracy_score(y_true_train, y_pred_train)
     print(f"Training accuracy: {train_acc:.4f}")
@@ -441,7 +371,8 @@ Examples:
     if logger:
         logger.log_metadata('train_accuracy', float(train_acc))
 
-    print_section("STEP 4: Save Trained Model & Region List")
+    # Save model
+    print_section("STEP 5: Save Model & Region List")
     classifier.save(str(output_dirs['models']))
     print(f"Model saved to: {output_dirs['models']}")
 
@@ -450,9 +381,10 @@ Examples:
     processed_dir.mkdir(parents=True, exist_ok=True)
     region_list_processed_path = processed_dir / 'region_list.csv'
     region_list_df.to_csv(region_list_processed_path, index=False)
-    print(f"Region list saved to data/processed: {region_list_processed_path}")
+    print(f"Region list saved: {region_list_processed_path}")
 
-    print_section("STEP 5: Evaluate on Task Data (PIOP-1 Gender Stroop)")
+    # Evaluate on task data
+    print_section("STEP 6: Evaluate on Task Data (PIOP-1 Gender Stroop)")
     task_available = False
     try:
         if args.sample:
@@ -470,7 +402,8 @@ Examples:
 
         print("\nTest Results:")
         print(f"  Test Accuracy: {test_acc:.4f}")
-        print(f"  CV Validation → Test drop: {cv_results['val_mean'] - test_acc:.4f}")
+        if cv_results['n_splits'] > 1:
+            print(f"  CV Validation → Test drop: {cv_results['val_mean'] - test_acc:.4f}")
 
         error_map_test = calculate_error_map(y_true_test, y_pred_test, n_regions)
 
@@ -491,11 +424,12 @@ Examples:
             output_dirs['metrics'] / 'confusion_matrix_test.csv',
         )
 
-        comparison = compare_error_maps(error_map_cv_val, error_map_test)
-        save_results_csv(
-            comparison,
-            output_dirs['metrics'] / 'comparison_cv_validation_vs_task.csv',
-        )
+        if len(y_pred_cv_val) > 0:
+            comparison = compare_error_maps(error_map_cv_val, error_map_test)
+            save_results_csv(
+                comparison,
+                output_dirs['metrics'] / 'comparison_cv_validation_vs_task.csv',
+            )
 
         comparison_train = compare_error_maps(error_map_train, error_map_test)
         save_results_csv(
@@ -516,17 +450,19 @@ Examples:
         print(f"Error processing task data: {e}")
         print("Continuing with training data only...")
 
-    print_section("STEP 6: Generate Visualizations")
+    # Generate visualizations
+    print_section("STEP 7: Generate Visualizations")
     figures_dir = output_dirs['figures']
     figure_count = 0
 
-    plot_error_map(
-        error_map_cv_val,
-        title=f'CV Validation Error Map ({args.model}, {diagonal_strategy})',
-        output_path=str(figures_dir / 'error_map_cv_validation.png'),
-        region_list=region_list,
-    )
-    figure_count += 1
+    if len(y_pred_cv_val) > 0:
+        plot_error_map(
+            error_map_cv_val,
+            title=f'CV Validation Error Map ({args.model}, {diagonal_strategy})',
+            output_path=str(figures_dir / 'error_map_cv_validation.png'),
+            region_list=region_list,
+        )
+        figure_count += 1
 
     plot_error_map(
         error_map_train,
@@ -545,14 +481,15 @@ Examples:
         )
         figure_count += 1
 
-        plot_rest_vs_task_comparison(
-            error_map_cv_val,
-            error_map_test,
-            comparison,
-            output_path=str(figures_dir / 'comparison_cv_validation_vs_task.png'),
-            region_list=region_list,
-        )
-        figure_count += 1
+        if len(y_pred_cv_val) > 0:
+            plot_rest_vs_task_comparison(
+                error_map_cv_val,
+                error_map_test,
+                comparison,
+                output_path=str(figures_dir / 'comparison_cv_validation_vs_task.png'),
+                region_list=region_list,
+            )
+            figure_count += 1
 
         plot_rest_vs_task_comparison(
             error_map_train,
@@ -565,6 +502,7 @@ Examples:
 
     print(f"\nTotal figures: {figure_count}")
 
+    # Save metadata and print summary
     elapsed = time.time() - start_time
     if logger:
         logger.log_metadata('end_time', datetime.now().isoformat())
@@ -573,8 +511,12 @@ Examples:
         logger.save_metadata()
 
     chance_level = 1.0 / n_regions
-    improvement = cv_results['val_mean'] / chance_level
+    if cv_results['n_splits'] > 1:
+        improvement = cv_results['val_mean'] / chance_level
+    else:
+        improvement = train_acc / chance_level
 
+    # Print summary
     print_section("PIPELINE COMPLETE!")
     summary = f"""
 RESULTS SUMMARY
@@ -594,19 +536,30 @@ Configuration:
   Fisher Z transform: {'Enabled' if apply_fisher_z else 'Disabled'}
   Random seed: {random_seed}
 
-Cross-Validation Results (LEAK-FREE):
+"""
+    
+    if cv_results['n_splits'] > 1:
+        summary += f"""Cross-Validation Results:
   Validation accuracy: {cv_results['val_mean']:.4f} ± {cv_results['val_std']:.4f}
   Training accuracy: {cv_results['train_mean']:.4f} ± {cv_results['train_std']:.4f}
   Full Training Accuracy: {train_acc:.4f} (overfitted)
   Improvement over chance: {improvement:.1f}x
 """
+    else:
+        summary += f"""Training Results:
+  Training accuracy: {train_acc:.4f}
+  Improvement over chance: {improvement:.1f}x
+"""
+    
     if task_available:
         summary += f"""
 Task Data (Gender Stroop):
   Test subjects: {len(df_test)}
   Test accuracy: {test_acc:.4f}
-  CV validation → Task drop: {cv_results['val_mean'] - test_acc:.4f}
 """
+        if cv_results['n_splits'] > 1:
+            summary += f"  CV validation → Task drop: {cv_results['val_mean'] - test_acc:.4f}\n"
+    
     summary += f"""
 {'='*70}
 
@@ -623,8 +576,6 @@ Execution Time: {format_time(elapsed)}
 Completed: {time.strftime('%Y-%m-%d %H:%M:%S')}
 
 {'='*70}
-
-Pipeline completed successfully.
 """
 
     print(summary)

@@ -340,18 +340,50 @@ class BrainRegionClassifier:
             'enable_diagnostics': self.enable_diagnostics
         }
 
-        # Perform cross-validation
-        self.cv_results_ = cross_validate_no_leakage(
-            df_train,
-            self.preprocessor_class,
-            preprocessor_params,
-            self.model_instance,
-            n_splits=self.n_splits,
-            random_state=self.random_state,
-            verbose=verbose
-        )
+        # Perform cross-validation only if n_splits > 1
+        if self.n_splits == 1:
+            if verbose:
+                print("\n" + "="*70)
+                print("SKIPPING CROSS-VALIDATION (n_splits=1)")
+                print("Training final model on all data...")
+                print("="*70 + "\n")
+            
+            # Create empty/dummy cv_results matching the expected structure
+            self.cv_results_ = {
+                'fold_results': [],
+                'val_mean': 0.0,
+                'val_std': 0.0,
+                'train_mean': 0.0,
+                'train_std': 0.0,
+                'n_splits': 1,
+                'val_predictions': np.array([]),
+                'val_true': np.array([]),
+                'val_subjects': np.array([])
+            }
+            
+        else:
+            if verbose:
+                print("\n" + "="*70)
+                print(f"PERFORMING {self.n_splits}-FOLD CROSS-VALIDATION")
+                print("="*70 + "\n")
+            
+            # Perform cross-validation
+            self.cv_results_ = cross_validate_no_leakage(
+                df_train,
+                self.preprocessor_class,
+                preprocessor_params,
+                self.model_instance,
+                n_splits=self.n_splits,
+                random_state=self.random_state,
+                verbose=verbose
+            )
 
-        # Train final model on all training data
+        # Train final model on all training data (regardless of n_splits)
+        if verbose:
+            print("\n" + "="*70)
+            print("TRAINING FINAL MODEL ON ALL DATA")
+            print("="*70 + "\n")
+        
         self.pipeline_, self.preprocessor_ = train_final_model(
             df_train,
             self.preprocessor_class,

@@ -1,7 +1,6 @@
 # HTCondor Submit File for Hyperparameter Search
 universe = vanilla
 executable = CONDOR/scripts/run_hyperparameter_search.sh
-arguments = $(Process)
 
 getenv = True
 initialdir = /home/sjoon/projects/brain_connectivity_classifier/
@@ -10,13 +9,13 @@ should_transfer_files = IF_NEEDED
 when_to_transfer_output = ON_EXIT
 
 # Resources for Job 
-request_cpus = 32                
-request_memory = 32GB
-request_disk = 15GB
+request_cpus = 10                
+request_memory = 128GB
+request_disk = 2GB
 
-output = logs/hypersearch_$(Process).out
-error = logs/hypersearch_$(Process).err
-log = logs/hypersearch_$(Process).log
+output = logs/hypersearch.out
+error = logs/hypersearch.err
+log = logs/hypersearch.log
 
-# 20 jobs / iterations
-queue 20                        
+# Single job running all outer CV folds
+queue 1

@@ -1,31 +1,25 @@
 # Hyperparameter Search Space for Logistic Regression (Nested CV)
-# =================================================================
+# This format ensures the Python script knows the TYPE of distribution (e.g., "choice")
+# and can find the required parameters (e.g., "values").
 
 param_distributions:
   # Regularization strength (inverse)
-  # Smaller values = stronger regularization
   classifier__C:
     type: "choice"
-    values: [0.0001,0.0003,0.01,0.03,0.1,0.3,1.0]
+    values: [0.03, 0.1, 0.3]
   
   # Maximum number of iterations for convergence
   classifier__max_iter:
     type: "choice"
-    values: [100, 300, 500, 1000]
+    values: [100, 300, 500]
   
   # Optimization algorithm
   classifier__solver:
     type: "choice"
-    values: ["lbfgs"]
+    values: ["lbfgs", "saga"]
 
 # Nested Cross-Validation Settings
-n_iter: 20              # Number of random combinations to try per inner CV
-outer_cv: 5             # Number of outer CV folds (for unbiased performance estimation)
-inner_cv: 5             # Number of inner CV folds (for hyperparameter tuning)
-random_seed: 42         # Random seed for reproducibility
-
-
-# Parameter Distributions:
-#   - loguniform: samples uniformly in log space (good for C parameter)
-#   - choice: randomly selects from given values
-#   - uniform: samples uniformly in linear space (not used here)
+n_iter: 10             
+outer_cv: 3            
+inner_cv: 3           
+random_seed: 42
