@@ -1,0 +1,30 @@
+2025-12-10 20:14:04,459 - __main__ - INFO - ================================================================================
+2025-12-10 20:14:04,459 - __main__ - INFO - HEMISPHERE-SPECIFIC MULTINOMIAL LOGISTIC REGRESSION
+2025-12-10 20:14:04,460 - __main__ - INFO - ================================================================================
+2025-12-10 20:14:04,460 - __main__ - INFO - 
+Configuration:
+2025-12-10 20:14:04,461 - __main__ - INFO -   Hemisphere: left
+2025-12-10 20:14:04,461 - __main__ - INFO -   Data directory: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemisphere
+2025-12-10 20:14:04,461 - __main__ - INFO -   Output directory: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis
+2025-12-10 20:14:04,462 - __main__ - INFO -   Number of folds: 5
+2025-12-10 20:14:04,462 - __main__ - INFO -   Random state: 42
+2025-12-10 20:14:04,462 - __main__ - INFO -   Regularization C: None
+2025-12-10 20:14:04,463 - __main__ - INFO -   Diagonal strategy: region_mean
+2025-12-10 20:14:04,463 - __main__ - INFO -   Max iterations: 1000
+2025-12-10 20:14:04,463 - __main__ - INFO -   Save models: False
+2025-12-10 20:14:04,463 - __main__ - INFO - 
+================================================================================
+2025-12-10 20:14:04,464 - __main__ - INFO - TRAINING LEFT HEMISPHERE
+2025-12-10 20:14:04,464 - __main__ - INFO - ================================================================================
+
+2025-12-10 20:14:04,465 - __main__ - INFO - Loading hemisphere-specific data...
+2025-12-10 20:14:04,465 - __main__ - ERROR - 
+ERROR: load_hemisphere_data_from_csv() got an unexpected keyword argument 'data_dir'
+Traceback (most recent call last):
+  File "/home/sjoon/projects/brain_connectivity_classifier/scripts/hemisphere/02_train_hemisphere_multinomial.py", line 686, in main
+    results = train_single_hemisphere(args.hemisphere, args, logger)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sjoon/projects/brain_connectivity_classifier/scripts/hemisphere/02_train_hemisphere_multinomial.py", line 280, in train_single_hemisphere
+    data = load_hemisphere_data_from_csv(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: load_hemisphere_data_from_csv() got an unexpected keyword argument 'data_dir'

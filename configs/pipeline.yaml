@@ -11,7 +11,7 @@ output_dirs:
 
 # Feature extraction & preprocessing
 preprocessing:
-  diagonal_strategy: "diagonal_precision"            # Options: "zero", "random", "region_mean", "network_mean", "sample_matrix","sample_row", "diagonal_precision"
+  diagonal_strategy: "region_mean"            # Options: "zero", "random", "region_mean", "network_mean", "sample_matrix","sample_row", "diagonal_precision"
   include_diagonal: true                             
   apply_fisher_z: true                               # Apply Fisher Z transformation to correlation values (RECOMMENDED)
 

@@ -21,16 +21,16 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from CoreModules.models import load_model_from_config
-from CoreModules.features import BrainConnectivityPreprocessor, extract_regions
-from Classifiers.multinomial_classifier import BrainRegionClassifier
-from Evaluation.metrics import (
+from src.core.models import load_model_from_config
+from src.core.features import BrainConnectivityPreprocessor, extract_regions
+from src.classifiers.multinomial_classifier import BrainRegionClassifier
+from src.evaluation.metrics import (
     calculate_error_map,
     save_results_csv,
     save_confusion_matrix,
     compare_error_maps,
 )
-from Visualization.plot import plot_error_map, plot_rest_vs_task_comparison
+from src.visualization.plots import plot_error_map, plot_rest_vs_task_comparison
 
 
 def load_config(config_path: str) -> dict:
@@ -133,7 +133,7 @@ def main() -> int:
 
     # Parse arguments
     parser = argparse.ArgumentParser(description='Brain Connectivity Classification Pipeline')
-    parser.add_argument('--config', type=str, default='configs/config.yaml',
+    parser.add_argument('--config', type=str, default='configs/pipeline.yaml',
                         help='Path to configuration file')
     parser.add_argument('--model', type=str, default='logistic_regression',
                         help='Model to use (configs/models/{model}.yaml)')
@@ -259,7 +259,7 @@ def main() -> int:
         print(f"Loaded model: {type(model_instance).__name__}")
     except Exception as e:
         print(f"Error loading model '{args.model}': {e}")
-        from CoreModules.models import list_available_models
+        from src.core.models import list_available_models
         print("\nAvailable models in configs/models/:")
         for m in list_available_models("configs/models"):
             print(f"  - {m}")

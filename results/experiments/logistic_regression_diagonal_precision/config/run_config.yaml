@@ -1,0 +1,10 @@
+apply_fisher_z: true
+data:
+  test: data/raw/PIOP1_gstroop.csv
+  train: data/raw/PIOP2_restingstate.csv
+diagonal_strategy: diagonal_precision
+model: logistic_regression
+model_params: {}
+n_splits: 3
+random_seed: 42
+sample_mode: true
