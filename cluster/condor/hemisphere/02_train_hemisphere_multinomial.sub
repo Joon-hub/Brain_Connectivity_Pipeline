@@ -1,6 +1,6 @@
 # HTCondor Submit File for Hemisphere Data Splitting
 universe = vanilla
-executable = CONDOR/scripts/run_hemisphere_split.sh
+executable = cluster/condor/hemisphere/02_train_hemisphere_multinomial.sh
 
 getenv = True
 initialdir = /home/sjoon/projects/brain_connectivity_classifier/
@@ -9,14 +9,14 @@ should_transfer_files = IF_NEEDED
 when_to_transfer_output = ON_EXIT
 
 # Resources for Job 
-request_cpus = 4             
+request_cpus = 16             
 request_memory = 16GB
 request_disk = 5GB
 
 # Log files
-output = logs/hemisphere_split.out
-error = logs/hemisphere_split.err
-log = logs/hemisphere_split.log
+output = logs/hemisphere_multinomial_left.out
+error = logs/hemisphere_multinomial_left.err
+log = logs/hemisphere_multinomial_left.log
 
 # Single job - processes both datasets
 queue 1

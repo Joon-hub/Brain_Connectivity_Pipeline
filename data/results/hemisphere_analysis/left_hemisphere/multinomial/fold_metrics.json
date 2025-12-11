@@ -1,29 +1,50 @@
 [
   {
     "fold": 1,
-    "accuracy": 0.8625760649087221,
-    "balanced_accuracy": 0.8625760649087222,
-    "n_train": 3828,
-    "n_test": 1972,
-    "n_train_subjects": 33,
-    "n_test_subjects": 17
+    "accuracy": 0.6702586206896551,
+    "balanced_accuracy": 0.6702586206896551,
+    "n_train": 696,
+    "n_test": 464,
+    "n_train_subjects": 6,
+    "n_test_subjects": 4,
+    "best_params": {
+      "C": 2.9154431891537547,
+      "max_iter": 1000,
+      "solver": "lbfgs"
+    },
+    "best_inner_cv_score": 0.6364942528735633,
+    "tuning_method": "optuna"
   },
   {
     "fold": 2,
-    "accuracy": 0.8275862068965517,
-    "balanced_accuracy": 0.8275862068965517,
-    "n_train": 3828,
-    "n_test": 1972,
-    "n_train_subjects": 33,
-    "n_test_subjects": 17
+    "accuracy": 0.6982758620689655,
+    "balanced_accuracy": 0.6982758620689655,
+    "n_train": 812,
+    "n_test": 348,
+    "n_train_subjects": 7,
+    "n_test_subjects": 3,
+    "best_params": {
+      "C": 2.9154431891537547,
+      "max_iter": 1000,
+      "solver": "lbfgs"
+    },
+    "best_inner_cv_score": 0.632183908045977,
+    "tuning_method": "optuna"
   },
   {
     "fold": 3,
-    "accuracy": 0.84375,
-    "balanced_accuracy": 0.84375,
-    "n_train": 3944,
-    "n_test": 1856,
-    "n_train_subjects": 34,
-    "n_test_subjects": 16
+    "accuracy": 0.7413793103448276,
+    "balanced_accuracy": 0.7413793103448276,
+    "n_train": 812,
+    "n_test": 348,
+    "n_train_subjects": 7,
+    "n_test_subjects": 3,
+    "best_params": {
+      "C": 2.9154431891537547,
+      "max_iter": 1000,
+      "solver": "lbfgs"
+    },
+    "best_inner_cv_score": 0.6216475095785441,
+    "tuning_method": "optuna"
   }
 ]

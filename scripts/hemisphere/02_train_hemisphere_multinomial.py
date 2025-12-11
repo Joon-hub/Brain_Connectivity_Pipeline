@@ -24,6 +24,9 @@ from sklearn.model_selection import GroupKFold, GridSearchCV, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
+import optuna
+from optuna.samplers import TPESampler
+
 
 # Add project root to path
 project_root = Path(__file__).resolve().parents[2]
@@ -167,6 +170,21 @@ def parse_arguments():
         help='Enable hyperparameter tuning using settings from config file'
     )
     
+    parser.add_argument(
+        '--tune_method',
+        type=str,
+        default='grid',
+        choices=['grid', 'random', 'optuna'],
+        help='Hyperparameter tuning method: grid (GridSearchCV), random (RandomizedSearchCV), or optuna (Optuna TPE)'
+    )
+    
+    parser.add_argument(
+        '--optuna_trials',
+        type=int,
+        default=50,
+        help='Number of Optuna trials (only used if tune_method=optuna)'
+    )
+    
     return parser.parse_args()
 
 
@@ -269,6 +287,108 @@ def sample_first_n_subjects(
     return sampled_data
 
 
+def determine_best_hyperparameters(fold_metrics: list, logger: logging.Logger) -> dict:
+    """
+    Determine the best overall hyperparameters from cross-validation folds.
+    
+    Selects parameters from the fold with highest test accuracy.
+    Also provides statistics on parameter consistency across folds.
+    
+    Parameters
+    ----------
+    fold_metrics : list
+        List of dictionaries containing metrics for each fold
+    logger : logging.Logger
+        Logger instance
+    
+    Returns
+    -------
+    best_params_summary : dict
+        Dictionary with best parameters and selection statistics
+    """
+    
+    # Check if hyperparameter tuning was used
+    if 'best_params' not in fold_metrics[0]:
+        logger.info("\nNo hyperparameter tuning was performed (using fixed parameters)")
+        return None
+    
+    logger.info("\n" + "="*80)
+    logger.info("HYPERPARAMETER TUNING SUMMARY")
+    logger.info("="*80)
+    
+    # Check tuning method
+    tuning_method = fold_metrics[0].get('tuning_method', 'unknown')
+    logger.info(f"\nTuning method used: {tuning_method.upper()}")
+    
+    # Extract parameters from each fold
+    fold_params = []
+    fold_accs = []
+    
+    for fold_metric in fold_metrics:
+        fold_params.append(fold_metric['best_params'])
+        fold_accs.append(fold_metric['accuracy'])
+    
+    # Find fold with best test accuracy
+    best_fold_idx = np.argmax(fold_accs)
+    best_params = fold_params[best_fold_idx]
+    best_acc = fold_accs[best_fold_idx]
+    
+    logger.info(f"\n✓ Best parameters selected from Fold {best_fold_idx + 1} (accuracy: {best_acc:.4f}):")
+    for param, value in best_params.items():
+        logger.info(f"  • {param}: {value}")
+    
+    # Analyze parameter consistency across folds
+    logger.info("\nParameter consistency across folds:")
+    
+    # Count occurrences of each parameter value
+    from collections import Counter
+    param_names = list(best_params.keys())
+    
+    for param_name in param_names:
+        values = [fold_param[param_name] for fold_param in fold_params]
+        value_counts = Counter(values)
+        
+        logger.info(f"\n  {param_name}:")
+        for value, count in value_counts.most_common():
+            percentage = (count / len(fold_params)) * 100
+            logger.info(f"    {value}: {count}/{len(fold_params)} folds ({percentage:.1f}%)")
+    
+    # Create summary dictionary
+    best_params_summary = {
+        'best_parameters': best_params,
+        'selected_from_fold': int(best_fold_idx + 1),
+        'fold_accuracy': float(best_acc),
+        'parameter_frequencies': {}
+    }
+    
+    # Add frequency information for each parameter
+    for param_name in param_names:
+        values = [fold_param[param_name] for fold_param in fold_params]
+        value_counts = Counter(values)
+        best_params_summary['parameter_frequencies'][param_name] = {
+            str(value): count for value, count in value_counts.items()
+        }
+    
+    # Show fold-by-fold comparison
+    logger.info("\n" + "-"*80)
+    logger.info("Fold-by-fold hyperparameter comparison:")
+    logger.info("-"*80)
+    
+    # Create header
+    header = "Fold | " + " | ".join(f"{p:>10}" for p in param_names) + " | Accuracy"
+    logger.info(header)
+    logger.info("-" * len(header))
+    
+    for i, (params, acc) in enumerate(zip(fold_params, fold_accs)):
+        param_str = " | ".join(f"{str(params[p]):>10}" for p in param_names)
+        marker = " ← BEST" if i == best_fold_idx else ""
+        logger.info(f"{i+1:4d} | {param_str} | {acc:.4f}{marker}")
+    
+    logger.info("="*80 + "\n")
+    
+    return best_params_summary
+
+
 def preprocess_fold_data(
     X_train: np.ndarray,
     X_test: np.ndarray,
@@ -329,6 +449,69 @@ def preprocess_fold_data(
     logger.info(f"  Processed shapes - Train: {X_train_processed.shape}, Test: {X_test_processed.shape}")
     
     return X_train_processed, X_test_processed
+
+
+def create_optuna_objective(X_train, y_train, groups_train, inner_cv, random_state, logger):
+    """
+    Create Optuna objective function for hyperparameter optimization.
+    
+    Parameters
+    ----------
+    X_train : np.ndarray
+        Training features
+    y_train : np.ndarray
+        Training labels
+    groups_train : np.ndarray
+        Training groups (subject IDs)
+    inner_cv : GroupKFold
+        Cross-validation splitter
+    random_state : int
+        Random state for reproducibility
+    logger : logging.Logger
+        Logger instance
+    
+    Returns
+    -------
+    objective : callable
+        Optuna objective function
+    """
+    
+    def objective(trial):
+        """Optuna objective function."""
+        
+        # Suggest hyperparameters
+        C = trial.suggest_float('C', 0.001, 10.0, log=True)
+        max_iter = trial.suggest_categorical('max_iter', [200, 300, 500, 1000])
+        solver = trial.suggest_categorical('solver', ['lbfgs', 'saga'])
+        
+        # Create model with suggested parameters
+        model = LogisticRegression(
+            C=C,
+            max_iter=max_iter,
+            solver=solver,
+            random_state=random_state,
+            n_jobs=1,
+            verbose=0
+        )
+        
+        # Cross-validation on inner folds
+        from sklearn.metrics import accuracy_score
+        scores = []
+        
+        for inner_train_idx, inner_val_idx in inner_cv.split(X_train, y_train, groups=groups_train):
+            X_inner_train = X_train[inner_train_idx]
+            X_inner_val = X_train[inner_val_idx]
+            y_inner_train = y_train[inner_train_idx]
+            y_inner_val = y_train[inner_val_idx]
+            
+            model.fit(X_inner_train, y_inner_train)
+            y_inner_pred = model.predict(X_inner_val)
+            score = accuracy_score(y_inner_val, y_inner_pred)
+            scores.append(score)
+        
+        return np.mean(scores)
+    
+    return objective
 
 
 def train_single_hemisphere(
@@ -469,79 +652,118 @@ def train_single_hemisphere(
         # Train model
         logger.info("  Training multinomial logistic regression...")
         
-        # Determine if hyperparameter tuning is enabled
+        # Determine tuning method
         config = load_config(args.config_file)
         tune_hyperparams = args.tune_hyperparams and config.get('hyperparameter_optimization', {}).get('enabled', False)
         
         if tune_hyperparams:
             # Hyperparameter tuning enabled
-            hyperparam_config = config['hyperparameter_optimization']
-            logger.info("  Hyperparameter tuning ENABLED")
-            logger.info(f"  Method: {hyperparam_config['method']}")
-            logger.info(f"  Param grid: {hyperparam_config['param_grid']}")
-            
-            # Base model
-            base_model = LogisticRegression(
-                multi_class='multinomial',
-                solver='lbfgs',
-                random_state=args.random_state,
-                n_jobs=1,  # GridSearchCV handles parallelization
-                verbose=0
-            )
+            tune_method = args.tune_method
+            logger.info(f"  Hyperparameter tuning ENABLED (method: {tune_method})")
             
             # Inner CV for hyperparameter tuning
+            hyperparam_config = config.get('hyperparameter_optimization', {})
             inner_cv = GroupKFold(n_splits=hyperparam_config.get('cv_folds', 3))
-            
-            # Prepare inner groups (need to map back to subject IDs for inner split)
             inner_groups = groups_train
             
-            # Select search method
-            if hyperparam_config['method'] == 'GridSearchCV':
-                search = GridSearchCV(
-                    estimator=base_model,
-                    param_grid=hyperparam_config['param_grid'],
-                    cv=inner_cv,
-                    scoring=hyperparam_config.get('scoring', 'accuracy'),
-                    n_jobs=hyperparam_config.get('n_jobs', -1),
-                    verbose=hyperparam_config.get('verbose', 1),
-                    refit=hyperparam_config.get('refit', True)
+            if tune_method == 'optuna':
+                # OPTUNA OPTIMIZATION
+                logger.info(f"  Running Optuna optimization ({args.optuna_trials} trials)...")
+                
+                # Create Optuna study
+                study = optuna.create_study(
+                    direction='maximize',
+                    sampler=TPESampler(seed=args.random_state)
                 )
-            elif hyperparam_config['method'] == 'RandomizedSearchCV':
-                search = RandomizedSearchCV(
-                    estimator=base_model,
-                    param_distributions=hyperparam_config['param_grid'],
-                    n_iter=hyperparam_config.get('n_iter', 20),
-                    cv=inner_cv,
-                    scoring=hyperparam_config.get('scoring', 'accuracy'),
-                    n_jobs=hyperparam_config.get('n_jobs', -1),
-                    verbose=hyperparam_config.get('verbose', 1),
+                
+                # Create objective function
+                objective = create_optuna_objective(
+                    X_train_processed, y_train, inner_groups,
+                    inner_cv, args.random_state, logger
+                )
+                
+                # Optimize
+                study.optimize(
+                    objective,
+                    n_trials=args.optuna_trials,
+                    show_progress_bar=False,
+                    n_jobs=1  # Sequential for GroupKFold
+                )
+                
+                # Get best parameters
+                best_params = study.best_params
+                best_score = study.best_value
+                
+                logger.info(f"  Best parameters: {best_params}")
+                logger.info(f"  Best inner CV score: {best_score:.4f}")
+                
+                # Train final model with best parameters
+                model = LogisticRegression(
+                    C=best_params['C'],
+                    max_iter=best_params['max_iter'],
+                    solver=best_params['solver'],
                     random_state=args.random_state,
-                    refit=hyperparam_config.get('refit', True)
+                    n_jobs=args.n_jobs,
+                    verbose=0
                 )
+                model.fit(X_train_processed, y_train)
+                
+                # Store for metrics
+                search_best_params = best_params
+                search_best_score = best_score
+                
             else:
-                raise ValueError(f"Unknown search method: {hyperparam_config['method']}")
-            
-            # Fit the search (nested CV with subject-wise splits)
-            logger.info(f"  Running {hyperparam_config['method']}...")
-            search.fit(X_train_processed, y_train, groups=inner_groups)
-            
-            # Use best model
-            model = search.best_estimator_
-            
-            # Log best parameters
-            logger.info(f"  Best parameters: {search.best_params_}")
-            logger.info(f"  Best inner CV score: {search.best_score_:.4f}")
+                # GRID/RANDOM SEARCH
+                hyperparam_config = config['hyperparameter_optimization']
+                logger.info(f"  Method: {hyperparam_config['method']}")
+                logger.info(f"  Param grid: {hyperparam_config['param_grid']}")
+                
+                base_model = LogisticRegression(
+                    solver='lbfgs',
+                    random_state=args.random_state,
+                    n_jobs=1,
+                    verbose=0
+                )
+                
+                if hyperparam_config['method'] == 'GridSearchCV':
+                    search = GridSearchCV(
+                        estimator=base_model,
+                        param_grid=hyperparam_config['param_grid'],
+                        cv=inner_cv,
+                        scoring='accuracy',
+                        n_jobs=hyperparam_config.get('n_jobs', -1),
+                        verbose=hyperparam_config.get('verbose', 1),
+                        refit=True
+                    )
+                else:  # RandomizedSearchCV
+                    search = RandomizedSearchCV(
+                        estimator=base_model,
+                        param_distributions=hyperparam_config['param_grid'],
+                        n_iter=hyperparam_config.get('n_iter', 20),
+                        cv=inner_cv,
+                        scoring='accuracy',
+                        n_jobs=hyperparam_config.get('n_jobs', -1),
+                        verbose=hyperparam_config.get('verbose', 1),
+                        random_state=args.random_state,
+                        refit=True
+                    )
+                
+                logger.info(f"  Running {hyperparam_config['method']}...")
+                search.fit(X_train_processed, y_train, groups=inner_groups)
+                
+                model = search.best_estimator_
+                search_best_params = search.best_params_
+                search_best_score = search.best_score_
+                
+                logger.info(f"  Best parameters: {search_best_params}")
+                logger.info(f"  Best inner CV score: {search_best_score:.4f}")
+        
         else:
-            # No hyperparameter tuning - use fixed C value
-            if args.regularization_C is not None:
-                C = args.regularization_C
-            else:
-                C = 1.0
-            
+            # No hyperparameter tuning
+            C = args.regularization_C if args.regularization_C is not None else 1.0
             logger.info(f"  Using fixed regularization C={C}")
             
             model = LogisticRegression(
-                multi_class='multinomial',
                 solver='lbfgs',
                 C=C,
                 max_iter=args.max_iter,
@@ -549,7 +771,6 @@ def train_single_hemisphere(
                 n_jobs=args.n_jobs,
                 verbose=1 if args.verbose else 0
             )
-            
             model.fit(X_train_processed, y_train)
         
         # Predict on test set
@@ -574,8 +795,9 @@ def train_single_hemisphere(
         
         # Add hyperparameter info if tuning was performed
         if tune_hyperparams:
-            fold_metric_dict['best_params'] = search.best_params_
-            fold_metric_dict['best_inner_cv_score'] = float(search.best_score_)
+            fold_metric_dict['best_params'] = search_best_params
+            fold_metric_dict['best_inner_cv_score'] = float(search_best_score)
+            fold_metric_dict['tuning_method'] = args.tune_method
         
         fold_metrics.append(fold_metric_dict)
         
@@ -621,6 +843,13 @@ def train_single_hemisphere(
     logger.info(f"  Mean CV Accuracy: {overall_metrics['accuracy']:.4f}")
     logger.info(f"  Mean CV Balanced Accuracy: {overall_metrics['balanced_accuracy']:.4f}")
     logger.info(f"  Top-5 Accuracy: {overall_metrics.get('top_5_accuracy', 'N/A')}")
+    
+    # Determine best hyperparameters if tuning was performed
+    best_params_summary = determine_best_hyperparameters(fold_metrics, logger)
+    
+    # Add best params to overall metrics if available
+    if best_params_summary is not None:
+        overall_metrics['best_hyperparameters'] = best_params_summary
     
     # Compute per-region metrics
     logger.info("\nComputing per-region metrics...")
@@ -839,6 +1068,97 @@ def compare_hemispheres(
     logger.info(f"\nComparison results saved to: {comparison_dir}")
 
 
+def determine_best_hyperparameters(fold_metrics: list, logger: logging.Logger) -> dict:
+    """
+    Determine the best overall hyperparameters from cross-validation folds.
+    
+    Selects parameters from the fold with highest test accuracy.
+    Also provides statistics on parameter consistency across folds.
+    
+    Parameters
+    ----------
+    fold_metrics : list
+        List of dictionaries containing metrics for each fold
+    logger : logging.Logger
+        Logger instance
+    
+    Returns
+    -------
+    best_params_summary : dict
+        Dictionary with best parameters and selection statistics
+    """
+    
+    # Check if hyperparameter tuning was used
+    if 'best_params' not in fold_metrics[0]:
+        logger.info("\nNo hyperparameter tuning was performed")
+        return None
+    
+    logger.info("\n" + "="*60)
+    logger.info("HYPERPARAMETER TUNING SUMMARY")
+    logger.info("="*60)
+    
+    # Extract parameters from each fold
+    fold_params = []
+    fold_accs = []
+    
+    for fold_metric in fold_metrics:
+        fold_params.append(fold_metric['best_params'])
+        fold_accs.append(fold_metric['accuracy'])
+    
+    # Find fold with best test accuracy
+    best_fold_idx = np.argmax(fold_accs)
+    best_params = fold_params[best_fold_idx]
+    best_acc = fold_accs[best_fold_idx]
+    
+    logger.info(f"\nBest parameters selected from Fold {best_fold_idx + 1} (accuracy: {best_acc:.4f}):")
+    for param, value in best_params.items():
+        logger.info(f"  {param}: {value}")
+    
+    # Analyze parameter consistency across folds
+    logger.info("\nParameter consistency across folds:")
+    
+    # Count occurrences of each parameter value
+    from collections import Counter
+    param_names = list(best_params.keys())
+    
+    for param_name in param_names:
+        values = [fold_param[param_name] for fold_param in fold_params]
+        value_counts = Counter(values)
+        
+        logger.info(f"\n  {param_name}:")
+        for value, count in value_counts.most_common():
+            logger.info(f"    {value}: {count}/{len(fold_params)} folds")
+    
+    # Create summary dictionary
+    best_params_summary = {
+        'best_parameters': best_params,
+        'selected_from_fold': int(best_fold_idx + 1),
+        'fold_accuracy': float(best_acc),
+        'parameter_frequencies': {}
+    }
+    
+    # Add frequency information for each parameter
+    for param_name in param_names:
+        values = [fold_param[param_name] for fold_param in fold_params]
+        value_counts = Counter(values)
+        best_params_summary['parameter_frequencies'][param_name] = {
+            str(value): count for value, count in value_counts.items()
+        }
+    
+    # Show fold-by-fold comparison
+    logger.info("\nFold-by-fold hyperparameter comparison:")
+    logger.info("Fold | " + " | ".join(param_names) + " | Accuracy")
+    logger.info("-" * 80)
+    
+    for i, (params, acc) in enumerate(zip(fold_params, fold_accs)):
+        param_str = " | ".join(str(params[p]) for p in param_names)
+        logger.info(f"{i+1:4d} | {param_str} | {acc:.4f}")
+    
+    logger.info("="*60 + "\n")
+    
+    return best_params_summary
+
+
 def main():
     """Main execution function."""
     
@@ -868,6 +1188,10 @@ def main():
     logger.info(f"  Hyperparameter tuning: {args.tune_hyperparams}")
     
     if args.tune_hyperparams:
+        logger.info(f"  Tuning method: {args.tune_method}")
+        if args.tune_method == 'optuna':
+            logger.info(f"  Optuna trials: {args.optuna_trials}")
+        
         config = load_config(args.config_file)
         if config.get('hyperparameter_optimization', {}).get('enabled', False):
             hyperparam_config = config['hyperparameter_optimization']

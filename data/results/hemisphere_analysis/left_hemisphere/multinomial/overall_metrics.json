@@ -1,12 +1,32 @@
 {
-  "accuracy": 0.8446551724137931,
-  "balanced_accuracy": 0.8446551724137932,
-  "error_rate": 0.15534482758620693,
-  "precision": 0.8581304952735798,
-  "recall": 0.8446551724137931,
-  "f1_score": 0.849645857382899,
-  "cohen_kappa": 0.843304347826087,
-  "matthews_corrcoef": 0.8433559622846534,
-  "top_5_accuracy": 0.9639655172413794,
-  "top_10_accuracy": 0.983103448275862
+  "accuracy": 0.7,
+  "balanced_accuracy": 0.7,
+  "error_rate": 0.30000000000000004,
+  "precision": 0.7491226688726031,
+  "recall": 0.7,
+  "f1_score": 0.7119114444469893,
+  "cohen_kappa": 0.6973913043478261,
+  "matthews_corrcoef": 0.6977685360894555,
+  "top_5_accuracy": 0.9077586206896552,
+  "top_10_accuracy": 0.9508620689655173,
+  "best_hyperparameters": {
+    "best_parameters": {
+      "C": 2.9154431891537547,
+      "max_iter": 1000,
+      "solver": "lbfgs"
+    },
+    "selected_from_fold": 3,
+    "fold_accuracy": 0.7413793103448276,
+    "parameter_frequencies": {
+      "C": {
+        "2.9154431891537547": 3
+      },
+      "max_iter": {
+        "1000": 3
+      },
+      "solver": {
+        "lbfgs": 3
+      }
+    }
+  }
 }

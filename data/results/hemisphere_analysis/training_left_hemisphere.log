@@ -1,833 +1,213 @@
-2025-12-11 15:32:26,974 - __main__ - INFO - ================================================================================
-2025-12-11 15:32:26,974 - __main__ - INFO - HEMISPHERE-SPECIFIC MULTINOMIAL LOGISTIC REGRESSION
-2025-12-11 15:32:26,974 - __main__ - INFO - ================================================================================
-2025-12-11 15:32:26,974 - __main__ - INFO - 
+2025-12-11 19:35:06,913 - __main__ - INFO - ================================================================================
+2025-12-11 19:35:06,913 - __main__ - INFO - HEMISPHERE-SPECIFIC MULTINOMIAL LOGISTIC REGRESSION
+2025-12-11 19:35:06,913 - __main__ - INFO - ================================================================================
+2025-12-11 19:35:06,914 - __main__ - INFO - 
 Configuration:
-2025-12-11 15:32:26,974 - __main__ - INFO -   Hemisphere: left
-2025-12-11 15:32:26,975 - __main__ - INFO -   Data directory: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres
-2025-12-11 15:32:26,975 - __main__ - INFO -   Output directory: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis
-2025-12-11 15:32:26,975 - __main__ - INFO -   Number of folds: 3
-2025-12-11 15:32:26,976 - __main__ - INFO -   Random state: 42
-2025-12-11 15:32:26,976 - __main__ - INFO -   Regularization C: None
-2025-12-11 15:32:26,976 - __main__ - INFO -   Diagonal strategy: region_mean
-2025-12-11 15:32:26,976 - __main__ - INFO -   Max iterations: 1000
-2025-12-11 15:32:26,976 - __main__ - INFO -   Save models: False
-2025-12-11 15:32:26,977 - __main__ - INFO -   Sample size: All subjects (full dataset)
-2025-12-11 15:32:26,977 - __main__ - INFO - 
+2025-12-11 19:35:06,914 - __main__ - INFO -   Hemisphere: left
+2025-12-11 19:35:06,915 - __main__ - INFO -   Data directory: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres
+2025-12-11 19:35:06,915 - __main__ - INFO -   Output directory: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis
+2025-12-11 19:35:06,916 - __main__ - INFO -   Number of folds: 3
+2025-12-11 19:35:06,916 - __main__ - INFO -   Random state: 42
+2025-12-11 19:35:06,916 - __main__ - INFO -   Regularization C: None
+2025-12-11 19:35:06,916 - __main__ - INFO -   Diagonal strategy: region_mean
+2025-12-11 19:35:06,917 - __main__ - INFO -   Max iterations: 1000
+2025-12-11 19:35:06,917 - __main__ - INFO -   Save models: False
+2025-12-11 19:35:06,917 - __main__ - INFO -   Sample size: 10
+2025-12-11 19:35:06,917 - __main__ - INFO -   Hyperparameter tuning: True
+2025-12-11 19:35:06,917 - __main__ - INFO -   Tuning method: optuna
+2025-12-11 19:35:06,917 - __main__ - INFO -   Optuna trials: 3
+2025-12-11 19:35:06,940 - __main__ - INFO -   Tuning method: GridSearchCV
+2025-12-11 19:35:06,940 - __main__ - INFO -   Inner CV folds: 3
+2025-12-11 19:35:06,940 - __main__ - INFO -   Param grid: {'C': [0.001, 0.01, 0.1, 1.0, 10.0, 100.0], 'max_iter': [1000], 'solver': ['lbfgs', 'saga']}
+2025-12-11 19:35:06,941 - __main__ - WARNING - 
+⚠️  TESTING MODE ENABLED: Using only first 10 subjects
+2025-12-11 19:35:06,942 - __main__ - WARNING - ⚠️  This is NOT a full production run!
+
+2025-12-11 19:35:06,942 - __main__ - INFO - 
 ================================================================================
-2025-12-11 15:32:26,977 - __main__ - INFO - TRAINING LEFT HEMISPHERE
-2025-12-11 15:32:26,977 - __main__ - INFO - ================================================================================
+2025-12-11 19:35:06,942 - __main__ - INFO - TRAINING LEFT HEMISPHERE
+2025-12-11 19:35:06,942 - __main__ - INFO - ================================================================================
 
-2025-12-11 15:32:26,978 - __main__ - INFO - Loading hemisphere-specific data...
-2025-12-11 15:32:26,978 - src.hemisphere.hemisphere_utils - INFO - Loading left hemisphere data from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
-2025-12-11 15:32:27,338 - src.hemisphere.hemisphere_utils - INFO -   Subjects: 224
-2025-12-11 15:32:27,338 - src.hemisphere.hemisphere_utils - INFO -   Connections: 6670
-2025-12-11 15:32:27,342 - src.hemisphere.hemisphere_utils - INFO - Extracting region info from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
-2025-12-11 15:32:27,707 - src.hemisphere.hemisphere_utils - INFO - Extracted 116 regions for left hemisphere
-2025-12-11 15:32:27,707 - src.hemisphere.hemisphere_utils - INFO -   Regions: 116
-2025-12-11 15:32:27,707 - src.hemisphere.hemisphere_utils - INFO - Converting to full connectivity matrices...
-2025-12-11 15:32:27,725 - src.hemisphere.hemisphere_utils - INFO -   Matrix shape: (224, 116, 116)
-2025-12-11 15:32:27,748 - src.hemisphere.hemisphere_utils - INFO - Connectivity validation completed
-2025-12-11 15:32:27,748 - src.hemisphere.hemisphere_utils - INFO - Successfully loaded left hemisphere data
-2025-12-11 15:32:27,748 - __main__ - INFO - Data loaded:
-2025-12-11 15:32:27,749 - __main__ - INFO -   Subjects: 224
-2025-12-11 15:32:27,749 - __main__ - INFO -   Regions: 116
-2025-12-11 15:32:27,749 - __main__ - INFO -   Connectivity shape: (224, 116, 116)
-2025-12-11 15:32:27,749 - __main__ - INFO - 
-Preparing classification data...
-2025-12-11 15:32:27,749 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
-2025-12-11 15:32:27,749 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0)]
-2025-12-11 15:32:27,753 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
-2025-12-11 15:32:27,784 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
-2025-12-11 15:32:27,784 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
-2025-12-11 15:32:27,785 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (25984, 116)
-2025-12-11 15:32:27,785 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (25984,)
-2025-12-11 15:32:27,785 - src.hemisphere.hemisphere_utils - INFO -   Groups: (25984,)
-2025-12-11 15:32:27,785 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
-2025-12-11 15:32:27,791 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 224
-2025-12-11 15:32:27,792 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-0.848, 0.948]
-2025-12-11 15:32:27,799 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.028, std: 0.266
-2025-12-11 15:32:27,799 - __main__ - INFO - Classification data prepared:
-2025-12-11 15:32:27,799 - __main__ - INFO -   Samples (X): (25984, 116)
-2025-12-11 15:32:27,799 - __main__ - INFO -   Labels (y): (25984,)
-2025-12-11 15:32:27,799 - __main__ - INFO -   Groups: (25984,)
-2025-12-11 15:32:27,799 - __main__ - INFO -   Classes: 116
-2025-12-11 15:32:27,805 - __main__ - INFO -   Unique subjects in groups: 224
-2025-12-11 15:32:27,811 - __main__ - INFO - 
-Setting up 3-fold GroupKFold cross-validation...
-2025-12-11 15:32:27,811 - __main__ - INFO - 
-Starting cross-validation...
-
-2025-12-11 15:32:27,820 - __main__ - INFO - Fold 1/3
-2025-12-11 15:32:27,820 - __main__ - INFO -   Train samples: 17284, Test samples: 8700
-2025-12-11 15:32:27,822 - __main__ - INFO -   Train subjects: 149, Test subjects: 75
-2025-12-11 15:32:27,822 - __main__ - INFO -   Train labels distribution (first 10): [149, 149, 149, 149, 149, 149, 149, 149, 149, 149]
-2025-12-11 15:32:27,823 - __main__ - INFO -   Test labels distribution (first 10): [75, 75, 75, 75, 75, 75, 75, 75, 75, 75]
-2025-12-11 15:32:27,823 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:32:27,823 - __main__ - INFO -   Input shapes - Train: (17284, 116), Test: (8700, 116)
-2025-12-11 15:32:27,895 - __main__ - INFO -   Processed shapes - Train: (17284, 116), Test: (8700, 116)
-2025-12-11 15:32:27,895 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:32:47,370 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:32:47,581 - __main__ - INFO -   Fold accuracy: 0.9159
-2025-12-11 15:32:47,581 - __main__ - INFO -   Fold balanced accuracy: 0.9159
-2025-12-11 15:32:47,581 - __main__ - INFO -   Fold time: 19.76s
-
-2025-12-11 15:32:47,581 - __main__ - INFO - Fold 2/3
-2025-12-11 15:32:47,581 - __main__ - INFO -   Train samples: 17284, Test samples: 8700
-2025-12-11 15:32:47,612 - __main__ - INFO -   Train subjects: 149, Test subjects: 75
-2025-12-11 15:32:47,612 - __main__ - INFO -   Train labels distribution (first 10): [149, 149, 149, 149, 149, 149, 149, 149, 149, 149]
-2025-12-11 15:32:47,613 - __main__ - INFO -   Test labels distribution (first 10): [75, 75, 75, 75, 75, 75, 75, 75, 75, 75]
-2025-12-11 15:32:47,613 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:32:47,613 - __main__ - INFO -   Input shapes - Train: (17284, 116), Test: (8700, 116)
-2025-12-11 15:32:47,723 - __main__ - INFO -   Processed shapes - Train: (17284, 116), Test: (8700, 116)
-2025-12-11 15:32:47,723 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:32:51,309 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:32:51,675 - __main__ - INFO -   Fold accuracy: 0.8968
-2025-12-11 15:32:51,675 - __main__ - INFO -   Fold balanced accuracy: 0.8968
-2025-12-11 15:32:51,675 - __main__ - INFO -   Fold time: 4.09s
-
-2025-12-11 15:32:51,676 - __main__ - INFO - Fold 3/3
-2025-12-11 15:32:51,676 - __main__ - INFO -   Train samples: 17400, Test samples: 8584
-2025-12-11 15:32:51,678 - __main__ - INFO -   Train subjects: 150, Test subjects: 74
-2025-12-11 15:32:51,678 - __main__ - INFO -   Train labels distribution (first 10): [150, 150, 150, 150, 150, 150, 150, 150, 150, 150]
-2025-12-11 15:32:51,679 - __main__ - INFO -   Test labels distribution (first 10): [74, 74, 74, 74, 74, 74, 74, 74, 74, 74]
-2025-12-11 15:32:51,679 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:32:51,679 - __main__ - INFO -   Input shapes - Train: (17400, 116), Test: (8584, 116)
-2025-12-11 15:32:51,748 - __main__ - INFO -   Processed shapes - Train: (17400, 116), Test: (8584, 116)
-2025-12-11 15:32:51,749 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:32:55,038 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:32:55,381 - __main__ - INFO -   Fold accuracy: 0.9004
-2025-12-11 15:32:55,381 - __main__ - INFO -   Fold balanced accuracy: 0.9004
-2025-12-11 15:32:55,381 - __main__ - INFO -   Fold time: 3.71s
-
-2025-12-11 15:32:55,382 - __main__ - INFO - Cross-validation completed in 27.57s
-
-2025-12-11 15:32:55,389 - __main__ - INFO - Computing overall metrics...
-2025-12-11 15:32:55,389 - src.evaluation.hemisphere_metrics - INFO - Computing classification metrics...
-2025-12-11 15:32:55,588 - src.evaluation.hemisphere_metrics - INFO -   Accuracy: 0.9044
-2025-12-11 15:32:55,588 - src.evaluation.hemisphere_metrics - INFO -   Balanced Accuracy: 0.9044
-2025-12-11 15:32:55,588 - src.evaluation.hemisphere_metrics - INFO -   F1 Score: 0.9060
-2025-12-11 15:32:55,589 - __main__ - INFO - 
-OVERALL RESULTS (LEFT HEMISPHERE):
-2025-12-11 15:32:55,589 - __main__ - INFO -   Mean CV Accuracy: 0.9044
-2025-12-11 15:32:55,589 - __main__ - INFO -   Mean CV Balanced Accuracy: 0.9044
-2025-12-11 15:32:55,589 - __main__ - INFO -   Top-5 Accuracy: 0.9808343596059114
-2025-12-11 15:32:55,589 - __main__ - INFO - 
-Computing per-region metrics...
-2025-12-11 15:32:55,590 - src.evaluation.hemisphere_metrics - INFO - Computing per-region metrics...
-2025-12-11 15:32:55,590 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 116 regions
-2025-12-11 15:32:55,597 - src.evaluation.hemisphere_metrics - INFO -   Mean per-region accuracy: 0.9044
-2025-12-11 15:32:55,597 - src.evaluation.hemisphere_metrics - INFO -   Std per-region accuracy: 0.0848
-2025-12-11 15:32:55,597 - src.evaluation.hemisphere_metrics - INFO -   Min per-region accuracy: 0.5268
-2025-12-11 15:32:55,598 - src.evaluation.hemisphere_metrics - INFO -   Max per-region accuracy: 0.9955
-2025-12-11 15:32:55,598 - __main__ - INFO - Computing network-level metrics...
-2025-12-11 15:32:55,598 - src.evaluation.hemisphere_metrics - INFO - Computing network-level metrics...
-2025-12-11 15:32:55,608 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 18 networks
-2025-12-11 15:32:55,639 - src.evaluation.hemisphere_metrics - INFO -   Mean network accuracy: 0.9087
-2025-12-11 15:32:55,640 - src.evaluation.hemisphere_metrics - INFO -   Best network: DefaultA (accuracy=0.9570)
-2025-12-11 15:32:55,640 - src.evaluation.hemisphere_metrics - INFO -   Worst network: LimbicA (accuracy=0.7455)
-2025-12-11 15:32:55,641 - __main__ - INFO - Creating confusion matrix...
-2025-12-11 15:32:55,641 - src.evaluation.hemisphere_metrics - INFO - Creating confusion matrix...
-2025-12-11 15:32:55,641 - src.evaluation.hemisphere_metrics - INFO -   Confusion matrix shape: (116, 116)
-2025-12-11 15:32:55,641 - src.evaluation.hemisphere_metrics - INFO -   Total predictions: 25984
-2025-12-11 15:32:55,642 - src.evaluation.hemisphere_metrics - INFO -   Correct predictions (diagonal): 23499
-2025-12-11 15:32:55,642 - __main__ - INFO - 
-Saving results...
-2025-12-11 15:32:55,691 - __main__ - INFO - 
-Generating visualizations...
-2025-12-11 15:32:55,691 - src.visualization.hemisphere_viz - INFO - Plotting confusion matrix: (116, 116)
-2025-12-11 15:32:55,722 - src.visualization.hemisphere_viz - INFO -   Added 17 network boundaries
-2025-12-11 15:32:58,598 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/confusion_matrix.png
-2025-12-11 15:32:58,598 - src.visualization.hemisphere_viz - INFO - Plotting per-region accuracy for 116 regions
-2025-12-11 15:32:59,612 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/per_region_accuracy.png
-2025-12-11 15:32:59,613 - src.visualization.hemisphere_viz - INFO - Plotting network accuracy for 18 networks
-2025-12-11 15:33:00,402 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/network_accuracy.png
-2025-12-11 15:33:00,402 - __main__ - INFO - All results saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial
-2025-12-11 15:33:00,402 - __main__ - INFO - 
-================================================================================
-2025-12-11 15:33:00,402 - __main__ - INFO - TRAINING COMPLETED SUCCESSFULLY
-2025-12-11 15:33:00,402 - __main__ - INFO - ================================================================================
-2025-12-11 15:41:09,849 - __main__ - INFO - ================================================================================
-2025-12-11 15:41:09,849 - __main__ - INFO - HEMISPHERE-SPECIFIC MULTINOMIAL LOGISTIC REGRESSION
-2025-12-11 15:41:09,849 - __main__ - INFO - ================================================================================
-2025-12-11 15:41:09,849 - __main__ - INFO - 
-Configuration:
-2025-12-11 15:41:09,849 - __main__ - INFO -   Hemisphere: left
-2025-12-11 15:41:09,850 - __main__ - INFO -   Data directory: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres
-2025-12-11 15:41:09,850 - __main__ - INFO -   Output directory: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis
-2025-12-11 15:41:09,850 - __main__ - INFO -   Number of folds: 3
-2025-12-11 15:41:09,850 - __main__ - INFO -   Random state: 42
-2025-12-11 15:41:09,851 - __main__ - INFO -   Regularization C: None
-2025-12-11 15:41:09,851 - __main__ - INFO -   Diagonal strategy: region_mean
-2025-12-11 15:41:09,851 - __main__ - INFO -   Max iterations: 1000
-2025-12-11 15:41:09,851 - __main__ - INFO -   Save models: False
-2025-12-11 15:41:09,852 - __main__ - INFO -   Sample size: 50
-2025-12-11 15:41:09,852 - __main__ - INFO -   Hyperparameter tuning: True
-2025-12-11 15:41:09,872 - __main__ - WARNING -   Hyperparameter tuning requested but not enabled in config!
-2025-12-11 15:41:09,872 - __main__ - WARNING - 
-⚠️  TESTING MODE ENABLED: Using only first 50 subjects
-2025-12-11 15:41:09,872 - __main__ - WARNING - ⚠️  This is NOT a full production run!
-
-2025-12-11 15:41:09,872 - __main__ - INFO - 
-================================================================================
-2025-12-11 15:41:09,873 - __main__ - INFO - TRAINING LEFT HEMISPHERE
-2025-12-11 15:41:09,873 - __main__ - INFO - ================================================================================
-
-2025-12-11 15:41:09,874 - __main__ - INFO - Loading hemisphere-specific data...
-2025-12-11 15:41:09,874 - src.hemisphere.hemisphere_utils - INFO - Loading left hemisphere data from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
-2025-12-11 15:41:10,220 - src.hemisphere.hemisphere_utils - INFO -   Subjects: 224
-2025-12-11 15:41:10,220 - src.hemisphere.hemisphere_utils - INFO -   Connections: 6670
-2025-12-11 15:41:10,224 - src.hemisphere.hemisphere_utils - INFO - Extracting region info from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
-2025-12-11 15:41:10,573 - src.hemisphere.hemisphere_utils - INFO - Extracted 116 regions for left hemisphere
-2025-12-11 15:41:10,573 - src.hemisphere.hemisphere_utils - INFO -   Regions: 116
-2025-12-11 15:41:10,573 - src.hemisphere.hemisphere_utils - INFO - Converting to full connectivity matrices...
-2025-12-11 15:41:10,591 - src.hemisphere.hemisphere_utils - INFO -   Matrix shape: (224, 116, 116)
-2025-12-11 15:41:10,613 - src.hemisphere.hemisphere_utils - INFO - Connectivity validation completed
-2025-12-11 15:41:10,613 - src.hemisphere.hemisphere_utils - INFO - Successfully loaded left hemisphere data
-2025-12-11 15:41:10,614 - __main__ - INFO - 
+2025-12-11 19:35:06,942 - __main__ - INFO - Loading hemisphere-specific data...
+2025-12-11 19:35:06,943 - src.hemisphere.hemisphere_utils - INFO - Loading left hemisphere data from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
+2025-12-11 19:35:07,261 - src.hemisphere.hemisphere_utils - INFO -   Subjects: 224
+2025-12-11 19:35:07,261 - src.hemisphere.hemisphere_utils - INFO -   Connections: 6670
+2025-12-11 19:35:07,265 - src.hemisphere.hemisphere_utils - INFO - Extracting region info from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
+2025-12-11 19:35:07,650 - src.hemisphere.hemisphere_utils - INFO - Extracted 116 regions for left hemisphere
+2025-12-11 19:35:07,650 - src.hemisphere.hemisphere_utils - INFO -   Regions: 116
+2025-12-11 19:35:07,651 - src.hemisphere.hemisphere_utils - INFO - Converting to full connectivity matrices...
+2025-12-11 19:35:07,669 - src.hemisphere.hemisphere_utils - INFO -   Matrix shape: (224, 116, 116)
+2025-12-11 19:35:07,692 - src.hemisphere.hemisphere_utils - INFO - Connectivity validation completed
+2025-12-11 19:35:07,692 - src.hemisphere.hemisphere_utils - INFO - Successfully loaded left hemisphere data
+2025-12-11 19:35:07,693 - __main__ - INFO - 
 ============================================================
-2025-12-11 15:41:10,614 - __main__ - INFO - SAMPLING MODE ACTIVATED
-2025-12-11 15:41:10,614 - __main__ - INFO - ============================================================
-2025-12-11 15:41:10,614 - __main__ - INFO - Selecting first 50 subjects out of 224 available
-2025-12-11 15:41:10,614 - __main__ - INFO - Selected subjects: sub-0001_P2, sub-0002_P2, sub-0003_P2, sub-0004_P2, sub-0005_P2, sub-0006_P2, sub-0007_P2, sub-0008_P2, sub-0009_P2, sub-0011_P2... (+40 more)
-2025-12-11 15:41:10,614 - __main__ - INFO - Sampled connectivity shape: (50, 116, 116)
-2025-12-11 15:41:10,614 - __main__ - INFO - Sampled subjects: 50
-2025-12-11 15:41:10,614 - __main__ - INFO - ============================================================
+2025-12-11 19:35:07,693 - __main__ - INFO - SAMPLING MODE ACTIVATED
+2025-12-11 19:35:07,693 - __main__ - INFO - ============================================================
+2025-12-11 19:35:07,693 - __main__ - INFO - Selecting first 10 subjects out of 224 available
+2025-12-11 19:35:07,693 - __main__ - INFO - Selected subjects: sub-0001_P2, sub-0002_P2, sub-0003_P2, sub-0004_P2, sub-0005_P2, sub-0006_P2, sub-0007_P2, sub-0008_P2, sub-0009_P2, sub-0011_P2
+2025-12-11 19:35:07,694 - __main__ - INFO - Sampled connectivity shape: (10, 116, 116)
+2025-12-11 19:35:07,694 - __main__ - INFO - Sampled subjects: 10
+2025-12-11 19:35:07,694 - __main__ - INFO - ============================================================
 
-2025-12-11 15:41:10,614 - __main__ - WARNING - ⚠️  TESTING MODE: Using first 50 subjects only
-2025-12-11 15:41:10,614 - __main__ - WARNING - ⚠️  Results are for TESTING purposes - not production-ready!
-2025-12-11 15:41:10,615 - __main__ - INFO - Data loaded:
-2025-12-11 15:41:10,615 - __main__ - INFO -   Subjects: 50
-2025-12-11 15:41:10,615 - __main__ - INFO -   Regions: 116
-2025-12-11 15:41:10,615 - __main__ - INFO -   Connectivity shape: (50, 116, 116)
-2025-12-11 15:41:10,615 - __main__ - INFO - 
+2025-12-11 19:35:07,694 - __main__ - WARNING - ⚠️  TESTING MODE: Using first 10 subjects only
+2025-12-11 19:35:07,694 - __main__ - WARNING - ⚠️  Results are for TESTING purposes - not production-ready!
+2025-12-11 19:35:07,694 - __main__ - INFO - Data loaded:
+2025-12-11 19:35:07,694 - __main__ - INFO -   Subjects: 10
+2025-12-11 19:35:07,694 - __main__ - INFO -   Regions: 116
+2025-12-11 19:35:07,695 - __main__ - INFO -   Connectivity shape: (10, 116, 116)
+2025-12-11 19:35:07,695 - __main__ - INFO - 
 Preparing classification data...
-2025-12-11 15:41:10,615 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
-2025-12-11 15:41:10,615 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0)]
-2025-12-11 15:41:10,617 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
-2025-12-11 15:41:10,624 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
-2025-12-11 15:41:10,624 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
-2025-12-11 15:41:10,624 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (5800, 116)
-2025-12-11 15:41:10,624 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (5800,)
-2025-12-11 15:41:10,624 - src.hemisphere.hemisphere_utils - INFO -   Groups: (5800,)
-2025-12-11 15:41:10,624 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
-2025-12-11 15:41:10,626 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 50
-2025-12-11 15:41:10,626 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-0.848, 0.948]
-2025-12-11 15:41:10,628 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.027, std: 0.267
-2025-12-11 15:41:10,628 - __main__ - INFO - Classification data prepared:
-2025-12-11 15:41:10,628 - __main__ - INFO -   Samples (X): (5800, 116)
-2025-12-11 15:41:10,629 - __main__ - INFO -   Labels (y): (5800,)
-2025-12-11 15:41:10,629 - __main__ - INFO -   Groups: (5800,)
-2025-12-11 15:41:10,629 - __main__ - INFO -   Classes: 116
-2025-12-11 15:41:10,630 - __main__ - INFO -   Unique subjects in groups: 50
-2025-12-11 15:41:10,631 - __main__ - INFO - 
+2025-12-11 19:35:07,695 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2025-12-11 19:35:07,695 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0)]
+2025-12-11 19:35:07,695 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2025-12-11 19:35:07,698 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2025-12-11 19:35:07,698 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2025-12-11 19:35:07,699 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (1160, 116)
+2025-12-11 19:35:07,699 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (1160,)
+2025-12-11 19:35:07,699 - src.hemisphere.hemisphere_utils - INFO -   Groups: (1160,)
+2025-12-11 19:35:07,699 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2025-12-11 19:35:07,699 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 10
+2025-12-11 19:35:07,700 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-0.773, 0.893]
+2025-12-11 19:35:07,701 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.031, std: 0.268
+2025-12-11 19:35:07,701 - __main__ - INFO - Classification data prepared:
+2025-12-11 19:35:07,701 - __main__ - INFO -   Samples (X): (1160, 116)
+2025-12-11 19:35:07,701 - __main__ - INFO -   Labels (y): (1160,)
+2025-12-11 19:35:07,701 - __main__ - INFO -   Groups: (1160,)
+2025-12-11 19:35:07,702 - __main__ - INFO -   Classes: 116
+2025-12-11 19:35:07,702 - __main__ - INFO -   Unique subjects in groups: 10
+2025-12-11 19:35:07,702 - __main__ - INFO - 
 Setting up 3-fold GroupKFold cross-validation...
-2025-12-11 15:41:10,631 - __main__ - INFO - 
+2025-12-11 19:35:07,702 - __main__ - INFO - 
 Starting cross-validation...
 
-2025-12-11 15:41:10,633 - __main__ - INFO - Fold 1/3
-2025-12-11 15:41:10,633 - __main__ - INFO -   Train samples: 3828, Test samples: 1972
-2025-12-11 15:41:10,634 - __main__ - INFO -   Train subjects: 33, Test subjects: 17
-2025-12-11 15:41:10,634 - __main__ - INFO -   Train labels distribution (first 10): [33, 33, 33, 33, 33, 33, 33, 33, 33, 33]
-2025-12-11 15:41:10,634 - __main__ - INFO -   Test labels distribution (first 10): [17, 17, 17, 17, 17, 17, 17, 17, 17, 17]
-2025-12-11 15:41:10,634 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:41:10,634 - __main__ - INFO -   Input shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:41:10,650 - __main__ - INFO -   Processed shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:41:10,650 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:41:10,650 - __main__ - INFO -   Using fixed regularization C=1.0
-2025-12-11 15:41:25,586 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:41:25,775 - __main__ - INFO -   Fold accuracy: 0.8626
-2025-12-11 15:41:25,775 - __main__ - INFO -   Fold balanced accuracy: 0.8626
-2025-12-11 15:41:25,775 - __main__ - INFO -   Fold time: 15.14s
+2025-12-11 19:35:07,703 - __main__ - INFO - Fold 1/3
+2025-12-11 19:35:07,703 - __main__ - INFO -   Train samples: 696, Test samples: 464
+2025-12-11 19:35:07,703 - __main__ - INFO -   Train subjects: 6, Test subjects: 4
+2025-12-11 19:35:07,704 - __main__ - INFO -   Train labels distribution (first 10): [6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+2025-12-11 19:35:07,704 - __main__ - INFO -   Test labels distribution (first 10): [4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+2025-12-11 19:35:07,704 - __main__ - INFO -   Preprocessing fold data...
+2025-12-11 19:35:07,704 - __main__ - INFO -   Input shapes - Train: (696, 116), Test: (464, 116)
+2025-12-11 19:35:07,708 - __main__ - INFO -   Processed shapes - Train: (696, 116), Test: (464, 116)
+2025-12-11 19:35:07,708 - __main__ - INFO -   Training multinomial logistic regression...
+2025-12-11 19:35:07,717 - __main__ - INFO -   Hyperparameter tuning ENABLED (method: optuna)
+2025-12-11 19:35:07,717 - __main__ - INFO -   Running Optuna optimization (3 trials)...
+2025-12-11 19:37:10,582 - __main__ - INFO -   Best parameters: {'C': 2.9154431891537547, 'max_iter': 1000, 'solver': 'lbfgs'}
+2025-12-11 19:37:10,582 - __main__ - INFO -   Best inner CV score: 0.6365
+2025-12-11 19:37:25,689 - __main__ - INFO -   Predicting on test set...
+2025-12-11 19:37:25,694 - __main__ - INFO -   Fold accuracy: 0.6703
+2025-12-11 19:37:25,694 - __main__ - INFO -   Fold balanced accuracy: 0.6703
+2025-12-11 19:37:25,694 - __main__ - INFO -   Fold time: 137.99s
 
-2025-12-11 15:41:25,775 - __main__ - INFO - Fold 2/3
-2025-12-11 15:41:25,776 - __main__ - INFO -   Train samples: 3828, Test samples: 1972
-2025-12-11 15:41:25,779 - __main__ - INFO -   Train subjects: 33, Test subjects: 17
-2025-12-11 15:41:25,779 - __main__ - INFO -   Train labels distribution (first 10): [33, 33, 33, 33, 33, 33, 33, 33, 33, 33]
-2025-12-11 15:41:25,870 - __main__ - INFO -   Test labels distribution (first 10): [17, 17, 17, 17, 17, 17, 17, 17, 17, 17]
-2025-12-11 15:41:25,871 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:41:25,871 - __main__ - INFO -   Input shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:41:25,889 - __main__ - INFO -   Processed shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:41:25,889 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:41:25,889 - __main__ - INFO -   Using fixed regularization C=1.0
-2025-12-11 15:41:27,262 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:41:27,271 - __main__ - INFO -   Fold accuracy: 0.8276
-2025-12-11 15:41:27,271 - __main__ - INFO -   Fold balanced accuracy: 0.8276
-2025-12-11 15:41:27,271 - __main__ - INFO -   Fold time: 1.50s
+2025-12-11 19:37:25,694 - __main__ - INFO - Fold 2/3
+2025-12-11 19:37:25,695 - __main__ - INFO -   Train samples: 812, Test samples: 348
+2025-12-11 19:37:25,695 - __main__ - INFO -   Train subjects: 7, Test subjects: 3
+2025-12-11 19:37:25,695 - __main__ - INFO -   Train labels distribution (first 10): [7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
+2025-12-11 19:37:25,695 - __main__ - INFO -   Test labels distribution (first 10): [3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+2025-12-11 19:37:25,695 - __main__ - INFO -   Preprocessing fold data...
+2025-12-11 19:37:25,696 - __main__ - INFO -   Input shapes - Train: (812, 116), Test: (348, 116)
+2025-12-11 19:37:25,772 - __main__ - INFO -   Processed shapes - Train: (812, 116), Test: (348, 116)
+2025-12-11 19:37:25,772 - __main__ - INFO -   Training multinomial logistic regression...
+2025-12-11 19:37:25,877 - __main__ - INFO -   Hyperparameter tuning ENABLED (method: optuna)
+2025-12-11 19:37:25,877 - __main__ - INFO -   Running Optuna optimization (3 trials)...
+2025-12-11 19:40:06,329 - __main__ - INFO -   Best parameters: {'C': 2.9154431891537547, 'max_iter': 1000, 'solver': 'lbfgs'}
+2025-12-11 19:40:06,329 - __main__ - INFO -   Best inner CV score: 0.6322
+2025-12-11 19:40:07,728 - __main__ - INFO -   Predicting on test set...
+2025-12-11 19:40:07,732 - __main__ - INFO -   Fold accuracy: 0.6983
+2025-12-11 19:40:07,732 - __main__ - INFO -   Fold balanced accuracy: 0.6983
+2025-12-11 19:40:07,732 - __main__ - INFO -   Fold time: 162.04s
 
-2025-12-11 15:41:27,371 - __main__ - INFO - Fold 3/3
-2025-12-11 15:41:27,371 - __main__ - INFO -   Train samples: 3944, Test samples: 1856
-2025-12-11 15:41:27,374 - __main__ - INFO -   Train subjects: 34, Test subjects: 16
-2025-12-11 15:41:27,374 - __main__ - INFO -   Train labels distribution (first 10): [34, 34, 34, 34, 34, 34, 34, 34, 34, 34]
-2025-12-11 15:41:27,374 - __main__ - INFO -   Test labels distribution (first 10): [16, 16, 16, 16, 16, 16, 16, 16, 16, 16]
-2025-12-11 15:41:27,374 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:41:27,374 - __main__ - INFO -   Input shapes - Train: (3944, 116), Test: (1856, 116)
-2025-12-11 15:41:27,483 - __main__ - INFO -   Processed shapes - Train: (3944, 116), Test: (1856, 116)
-2025-12-11 15:41:27,483 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:41:27,483 - __main__ - INFO -   Using fixed regularization C=1.0
-2025-12-11 15:41:28,847 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:41:28,974 - __main__ - INFO -   Fold accuracy: 0.8438
-2025-12-11 15:41:28,974 - __main__ - INFO -   Fold balanced accuracy: 0.8438
-2025-12-11 15:41:28,974 - __main__ - INFO -   Fold time: 1.60s
+2025-12-11 19:40:07,733 - __main__ - INFO - Fold 3/3
+2025-12-11 19:40:07,733 - __main__ - INFO -   Train samples: 812, Test samples: 348
+2025-12-11 19:40:07,734 - __main__ - INFO -   Train subjects: 7, Test subjects: 3
+2025-12-11 19:40:07,734 - __main__ - INFO -   Train labels distribution (first 10): [7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
+2025-12-11 19:40:07,734 - __main__ - INFO -   Test labels distribution (first 10): [3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+2025-12-11 19:40:07,735 - __main__ - INFO -   Preprocessing fold data...
+2025-12-11 19:40:07,735 - __main__ - INFO -   Input shapes - Train: (812, 116), Test: (348, 116)
+2025-12-11 19:40:07,771 - __main__ - INFO -   Processed shapes - Train: (812, 116), Test: (348, 116)
+2025-12-11 19:40:07,771 - __main__ - INFO -   Training multinomial logistic regression...
+2025-12-11 19:40:07,870 - __main__ - INFO -   Hyperparameter tuning ENABLED (method: optuna)
+2025-12-11 19:40:07,871 - __main__ - INFO -   Running Optuna optimization (3 trials)...
+2025-12-11 19:42:53,803 - __main__ - INFO -   Best parameters: {'C': 2.9154431891537547, 'max_iter': 1000, 'solver': 'lbfgs'}
+2025-12-11 19:42:53,803 - __main__ - INFO -   Best inner CV score: 0.6216
+2025-12-11 19:43:08,716 - __main__ - INFO -   Predicting on test set...
+2025-12-11 19:43:08,719 - __main__ - INFO -   Fold accuracy: 0.7414
+2025-12-11 19:43:08,719 - __main__ - INFO -   Fold balanced accuracy: 0.7414
+2025-12-11 19:43:08,719 - __main__ - INFO -   Fold time: 180.99s
 
-2025-12-11 15:41:28,974 - __main__ - INFO - Cross-validation completed in 18.34s
+2025-12-11 19:43:08,719 - __main__ - INFO - Cross-validation completed in 481.02s
 
-2025-12-11 15:41:28,977 - __main__ - INFO - Computing overall metrics...
-2025-12-11 15:41:28,977 - src.evaluation.hemisphere_metrics - INFO - Computing classification metrics...
-2025-12-11 15:41:29,074 - src.evaluation.hemisphere_metrics - INFO -   Accuracy: 0.8447
-2025-12-11 15:41:29,075 - src.evaluation.hemisphere_metrics - INFO -   Balanced Accuracy: 0.8447
-2025-12-11 15:41:29,075 - src.evaluation.hemisphere_metrics - INFO -   F1 Score: 0.8496
-2025-12-11 15:41:29,075 - __main__ - INFO - 
+2025-12-11 19:43:08,721 - __main__ - INFO - Computing overall metrics...
+2025-12-11 19:43:08,721 - src.evaluation.hemisphere_metrics - INFO - Computing classification metrics...
+2025-12-11 19:43:08,774 - src.evaluation.hemisphere_metrics - INFO -   Accuracy: 0.7000
+2025-12-11 19:43:08,775 - src.evaluation.hemisphere_metrics - INFO -   Balanced Accuracy: 0.7000
+2025-12-11 19:43:08,775 - src.evaluation.hemisphere_metrics - INFO -   F1 Score: 0.7119
+2025-12-11 19:43:08,775 - __main__ - INFO - 
 OVERALL RESULTS (LEFT HEMISPHERE):
-2025-12-11 15:41:29,075 - __main__ - INFO -   Mean CV Accuracy: 0.8447
-2025-12-11 15:41:29,075 - __main__ - INFO -   Mean CV Balanced Accuracy: 0.8447
-2025-12-11 15:41:29,075 - __main__ - INFO -   Top-5 Accuracy: 0.9639655172413794
-2025-12-11 15:41:29,075 - __main__ - INFO - 
-Computing per-region metrics...
-2025-12-11 15:41:29,076 - src.evaluation.hemisphere_metrics - INFO - Computing per-region metrics...
-2025-12-11 15:41:29,076 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 116 regions
-2025-12-11 15:41:29,081 - src.evaluation.hemisphere_metrics - INFO -   Mean per-region accuracy: 0.8447
-2025-12-11 15:41:29,081 - src.evaluation.hemisphere_metrics - INFO -   Std per-region accuracy: 0.1079
-2025-12-11 15:41:29,082 - src.evaluation.hemisphere_metrics - INFO -   Min per-region accuracy: 0.4800
-2025-12-11 15:41:29,082 - src.evaluation.hemisphere_metrics - INFO -   Max per-region accuracy: 0.9800
-2025-12-11 15:41:29,082 - __main__ - INFO - Computing network-level metrics...
-2025-12-11 15:41:29,082 - src.evaluation.hemisphere_metrics - INFO - Computing network-level metrics...
-2025-12-11 15:41:29,085 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 18 networks
-2025-12-11 15:41:29,114 - src.evaluation.hemisphere_metrics - INFO -   Mean network accuracy: 0.8461
-2025-12-11 15:41:29,115 - src.evaluation.hemisphere_metrics - INFO -   Best network: DefaultC (accuracy=0.9267)
-2025-12-11 15:41:29,115 - src.evaluation.hemisphere_metrics - INFO -   Worst network: TempPar (accuracy=0.7000)
-2025-12-11 15:41:29,116 - __main__ - INFO - Creating confusion matrix...
-2025-12-11 15:41:29,116 - src.evaluation.hemisphere_metrics - INFO - Creating confusion matrix...
-2025-12-11 15:41:29,116 - src.evaluation.hemisphere_metrics - INFO -   Confusion matrix shape: (116, 116)
-2025-12-11 15:41:29,116 - src.evaluation.hemisphere_metrics - INFO -   Total predictions: 5800
-2025-12-11 15:41:29,116 - src.evaluation.hemisphere_metrics - INFO -   Correct predictions (diagonal): 4899
-2025-12-11 15:41:29,116 - __main__ - INFO - 
-Saving results...
-2025-12-11 15:41:29,142 - __main__ - INFO - 
-Generating visualizations...
-2025-12-11 15:41:29,143 - src.visualization.hemisphere_viz - INFO - Plotting confusion matrix: (116, 116)
-2025-12-11 15:41:29,176 - src.visualization.hemisphere_viz - INFO -   Added 17 network boundaries
-2025-12-11 15:41:32,584 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/confusion_matrix.png
-2025-12-11 15:41:32,584 - src.visualization.hemisphere_viz - INFO - Plotting per-region accuracy for 116 regions
-2025-12-11 15:41:33,561 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/per_region_accuracy.png
-2025-12-11 15:41:33,561 - src.visualization.hemisphere_viz - INFO - Plotting network accuracy for 18 networks
-2025-12-11 15:41:34,024 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/network_accuracy.png
-2025-12-11 15:41:34,025 - __main__ - INFO - All results saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial
-2025-12-11 15:41:34,026 - __main__ - INFO - 
-================================================================================
-2025-12-11 15:41:34,026 - __main__ - INFO - TRAINING COMPLETED SUCCESSFULLY
-2025-12-11 15:41:34,026 - __main__ - INFO - (TESTING MODE: Used 50 subjects only)
-2025-12-11 15:41:34,026 - __main__ - INFO - ================================================================================
-2025-12-11 15:41:50,195 - __main__ - INFO - ================================================================================
-2025-12-11 15:41:50,195 - __main__ - INFO - HEMISPHERE-SPECIFIC MULTINOMIAL LOGISTIC REGRESSION
-2025-12-11 15:41:50,195 - __main__ - INFO - ================================================================================
-2025-12-11 15:41:50,195 - __main__ - INFO - 
-Configuration:
-2025-12-11 15:41:50,196 - __main__ - INFO -   Hemisphere: left
-2025-12-11 15:41:50,196 - __main__ - INFO -   Data directory: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres
-2025-12-11 15:41:50,197 - __main__ - INFO -   Output directory: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis
-2025-12-11 15:41:50,197 - __main__ - INFO -   Number of folds: 3
-2025-12-11 15:41:50,198 - __main__ - INFO -   Random state: 42
-2025-12-11 15:41:50,198 - __main__ - INFO -   Regularization C: None
-2025-12-11 15:41:50,198 - __main__ - INFO -   Diagonal strategy: region_mean
-2025-12-11 15:41:50,198 - __main__ - INFO -   Max iterations: 1000
-2025-12-11 15:41:50,199 - __main__ - INFO -   Save models: False
-2025-12-11 15:41:50,199 - __main__ - INFO -   Sample size: 50
-2025-12-11 15:41:50,199 - __main__ - INFO -   Hyperparameter tuning: True
-2025-12-11 15:41:50,214 - __main__ - WARNING -   Hyperparameter tuning requested but not enabled in config!
-2025-12-11 15:41:50,214 - __main__ - WARNING - 
-⚠️  TESTING MODE ENABLED: Using only first 50 subjects
-2025-12-11 15:41:50,214 - __main__ - WARNING - ⚠️  This is NOT a full production run!
-
-2025-12-11 15:41:50,214 - __main__ - INFO - 
-================================================================================
-2025-12-11 15:41:50,214 - __main__ - INFO - TRAINING LEFT HEMISPHERE
-2025-12-11 15:41:50,214 - __main__ - INFO - ================================================================================
-
-2025-12-11 15:41:50,215 - __main__ - INFO - Loading hemisphere-specific data...
-2025-12-11 15:41:50,215 - src.hemisphere.hemisphere_utils - INFO - Loading left hemisphere data from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
-2025-12-11 15:41:50,824 - src.hemisphere.hemisphere_utils - INFO -   Subjects: 224
-2025-12-11 15:41:50,824 - src.hemisphere.hemisphere_utils - INFO -   Connections: 6670
-2025-12-11 15:41:50,963 - src.hemisphere.hemisphere_utils - INFO - Extracting region info from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
-2025-12-11 15:41:51,349 - src.hemisphere.hemisphere_utils - INFO - Extracted 116 regions for left hemisphere
-2025-12-11 15:41:51,350 - src.hemisphere.hemisphere_utils - INFO -   Regions: 116
-2025-12-11 15:41:51,350 - src.hemisphere.hemisphere_utils - INFO - Converting to full connectivity matrices...
-2025-12-11 15:41:51,373 - src.hemisphere.hemisphere_utils - INFO -   Matrix shape: (224, 116, 116)
-2025-12-11 15:41:51,399 - src.hemisphere.hemisphere_utils - INFO - Connectivity validation completed
-2025-12-11 15:41:51,399 - src.hemisphere.hemisphere_utils - INFO - Successfully loaded left hemisphere data
-2025-12-11 15:41:51,400 - __main__ - INFO - 
+2025-12-11 19:43:08,775 - __main__ - INFO -   Mean CV Accuracy: 0.7000
+2025-12-11 19:43:08,775 - __main__ - INFO -   Mean CV Balanced Accuracy: 0.7000
+2025-12-11 19:43:08,775 - __main__ - INFO -   Top-5 Accuracy: 0.9077586206896552
+2025-12-11 19:43:08,775 - __main__ - INFO - 
 ============================================================
-2025-12-11 15:41:51,400 - __main__ - INFO - SAMPLING MODE ACTIVATED
-2025-12-11 15:41:51,400 - __main__ - INFO - ============================================================
-2025-12-11 15:41:51,401 - __main__ - INFO - Selecting first 50 subjects out of 224 available
-2025-12-11 15:41:51,401 - __main__ - INFO - Selected subjects: sub-0001_P2, sub-0002_P2, sub-0003_P2, sub-0004_P2, sub-0005_P2, sub-0006_P2, sub-0007_P2, sub-0008_P2, sub-0009_P2, sub-0011_P2... (+40 more)
-2025-12-11 15:41:51,401 - __main__ - INFO - Sampled connectivity shape: (50, 116, 116)
-2025-12-11 15:41:51,401 - __main__ - INFO - Sampled subjects: 50
-2025-12-11 15:41:51,401 - __main__ - INFO - ============================================================
+2025-12-11 19:43:08,776 - __main__ - INFO - HYPERPARAMETER TUNING SUMMARY
+2025-12-11 19:43:08,776 - __main__ - INFO - ============================================================
+2025-12-11 19:43:08,776 - __main__ - INFO - 
+Best parameters selected from Fold 3 (accuracy: 0.7414):
+2025-12-11 19:43:08,776 - __main__ - INFO -   C: 2.9154431891537547
+2025-12-11 19:43:08,777 - __main__ - INFO -   max_iter: 1000
+2025-12-11 19:43:08,777 - __main__ - INFO -   solver: lbfgs
+2025-12-11 19:43:08,777 - __main__ - INFO - 
+Parameter consistency across folds:
+2025-12-11 19:43:08,777 - __main__ - INFO - 
+  C:
+2025-12-11 19:43:08,777 - __main__ - INFO -     2.9154431891537547: 3/3 folds
+2025-12-11 19:43:08,777 - __main__ - INFO - 
+  max_iter:
+2025-12-11 19:43:08,778 - __main__ - INFO -     1000: 3/3 folds
+2025-12-11 19:43:08,778 - __main__ - INFO - 
+  solver:
+2025-12-11 19:43:08,778 - __main__ - INFO -     lbfgs: 3/3 folds
+2025-12-11 19:43:08,778 - __main__ - INFO - 
+Fold-by-fold hyperparameter comparison:
+2025-12-11 19:43:08,778 - __main__ - INFO - Fold | C | max_iter | solver | Accuracy
+2025-12-11 19:43:08,779 - __main__ - INFO - --------------------------------------------------------------------------------
+2025-12-11 19:43:08,779 - __main__ - INFO -    1 | 2.9154431891537547 | 1000 | lbfgs | 0.6703
+2025-12-11 19:43:08,779 - __main__ - INFO -    2 | 2.9154431891537547 | 1000 | lbfgs | 0.6983
+2025-12-11 19:43:08,779 - __main__ - INFO -    3 | 2.9154431891537547 | 1000 | lbfgs | 0.7414
+2025-12-11 19:43:08,779 - __main__ - INFO - ============================================================
 
-2025-12-11 15:41:51,401 - __main__ - WARNING - ⚠️  TESTING MODE: Using first 50 subjects only
-2025-12-11 15:41:51,401 - __main__ - WARNING - ⚠️  Results are for TESTING purposes - not production-ready!
-2025-12-11 15:41:51,402 - __main__ - INFO - Data loaded:
-2025-12-11 15:41:51,402 - __main__ - INFO -   Subjects: 50
-2025-12-11 15:41:51,402 - __main__ - INFO -   Regions: 116
-2025-12-11 15:41:51,402 - __main__ - INFO -   Connectivity shape: (50, 116, 116)
-2025-12-11 15:41:51,402 - __main__ - INFO - 
-Preparing classification data...
-2025-12-11 15:41:51,402 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
-2025-12-11 15:41:51,402 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0)]
-2025-12-11 15:41:51,404 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
-2025-12-11 15:41:51,411 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
-2025-12-11 15:41:51,411 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
-2025-12-11 15:41:51,412 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (5800, 116)
-2025-12-11 15:41:51,412 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (5800,)
-2025-12-11 15:41:51,412 - src.hemisphere.hemisphere_utils - INFO -   Groups: (5800,)
-2025-12-11 15:41:51,412 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
-2025-12-11 15:41:51,414 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 50
-2025-12-11 15:41:51,414 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-0.848, 0.948]
-2025-12-11 15:41:51,416 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.027, std: 0.267
-2025-12-11 15:41:51,416 - __main__ - INFO - Classification data prepared:
-2025-12-11 15:41:51,416 - __main__ - INFO -   Samples (X): (5800, 116)
-2025-12-11 15:41:51,416 - __main__ - INFO -   Labels (y): (5800,)
-2025-12-11 15:41:51,416 - __main__ - INFO -   Groups: (5800,)
-2025-12-11 15:41:51,416 - __main__ - INFO -   Classes: 116
-2025-12-11 15:41:51,418 - __main__ - INFO -   Unique subjects in groups: 50
-2025-12-11 15:41:51,419 - __main__ - INFO - 
-Setting up 3-fold GroupKFold cross-validation...
-2025-12-11 15:41:51,419 - __main__ - INFO - 
-Starting cross-validation...
-
-2025-12-11 15:41:51,421 - __main__ - INFO - Fold 1/3
-2025-12-11 15:41:51,421 - __main__ - INFO -   Train samples: 3828, Test samples: 1972
-2025-12-11 15:41:51,422 - __main__ - INFO -   Train subjects: 33, Test subjects: 17
-2025-12-11 15:41:51,422 - __main__ - INFO -   Train labels distribution (first 10): [33, 33, 33, 33, 33, 33, 33, 33, 33, 33]
-2025-12-11 15:41:51,422 - __main__ - INFO -   Test labels distribution (first 10): [17, 17, 17, 17, 17, 17, 17, 17, 17, 17]
-2025-12-11 15:41:51,423 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:41:51,423 - __main__ - INFO -   Input shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:41:51,440 - __main__ - INFO -   Processed shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:41:51,440 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:41:51,440 - __main__ - INFO -   Using fixed regularization C=1.0
-2025-12-11 15:42:07,520 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:42:07,678 - __main__ - INFO -   Fold accuracy: 0.8626
-2025-12-11 15:42:07,678 - __main__ - INFO -   Fold balanced accuracy: 0.8626
-2025-12-11 15:42:07,678 - __main__ - INFO -   Fold time: 16.26s
-
-2025-12-11 15:42:07,679 - __main__ - INFO - Fold 2/3
-2025-12-11 15:42:07,679 - __main__ - INFO -   Train samples: 3828, Test samples: 1972
-2025-12-11 15:42:07,872 - __main__ - INFO -   Train subjects: 33, Test subjects: 17
-2025-12-11 15:42:07,872 - __main__ - INFO -   Train labels distribution (first 10): [33, 33, 33, 33, 33, 33, 33, 33, 33, 33]
-2025-12-11 15:42:07,872 - __main__ - INFO -   Test labels distribution (first 10): [17, 17, 17, 17, 17, 17, 17, 17, 17, 17]
-2025-12-11 15:42:07,872 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:42:07,873 - __main__ - INFO -   Input shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:42:07,890 - __main__ - INFO -   Processed shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:42:07,890 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:42:07,891 - __main__ - INFO -   Using fixed regularization C=1.0
-2025-12-11 15:42:09,312 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:42:09,574 - __main__ - INFO -   Fold accuracy: 0.8276
-2025-12-11 15:42:09,574 - __main__ - INFO -   Fold balanced accuracy: 0.8276
-2025-12-11 15:42:09,574 - __main__ - INFO -   Fold time: 1.90s
-
-2025-12-11 15:42:09,575 - __main__ - INFO - Fold 3/3
-2025-12-11 15:42:09,576 - __main__ - INFO -   Train samples: 3944, Test samples: 1856
-2025-12-11 15:42:09,577 - __main__ - INFO -   Train subjects: 34, Test subjects: 16
-2025-12-11 15:42:09,577 - __main__ - INFO -   Train labels distribution (first 10): [34, 34, 34, 34, 34, 34, 34, 34, 34, 34]
-2025-12-11 15:42:09,578 - __main__ - INFO -   Test labels distribution (first 10): [16, 16, 16, 16, 16, 16, 16, 16, 16, 16]
-2025-12-11 15:42:09,578 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:42:09,578 - __main__ - INFO -   Input shapes - Train: (3944, 116), Test: (1856, 116)
-2025-12-11 15:42:09,594 - __main__ - INFO -   Processed shapes - Train: (3944, 116), Test: (1856, 116)
-2025-12-11 15:42:09,594 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:42:09,594 - __main__ - INFO -   Using fixed regularization C=1.0
-2025-12-11 15:42:11,005 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:42:11,173 - __main__ - INFO -   Fold accuracy: 0.8438
-2025-12-11 15:42:11,173 - __main__ - INFO -   Fold balanced accuracy: 0.8438
-2025-12-11 15:42:11,173 - __main__ - INFO -   Fold time: 1.60s
-
-2025-12-11 15:42:11,174 - __main__ - INFO - Cross-validation completed in 19.75s
-
-2025-12-11 15:42:11,176 - __main__ - INFO - Computing overall metrics...
-2025-12-11 15:42:11,176 - src.evaluation.hemisphere_metrics - INFO - Computing classification metrics...
-2025-12-11 15:42:11,223 - src.evaluation.hemisphere_metrics - INFO -   Accuracy: 0.8447
-2025-12-11 15:42:11,223 - src.evaluation.hemisphere_metrics - INFO -   Balanced Accuracy: 0.8447
-2025-12-11 15:42:11,223 - src.evaluation.hemisphere_metrics - INFO -   F1 Score: 0.8496
-2025-12-11 15:42:11,223 - __main__ - INFO - 
-OVERALL RESULTS (LEFT HEMISPHERE):
-2025-12-11 15:42:11,270 - __main__ - INFO -   Mean CV Accuracy: 0.8447
-2025-12-11 15:42:11,270 - __main__ - INFO -   Mean CV Balanced Accuracy: 0.8447
-2025-12-11 15:42:11,271 - __main__ - INFO -   Top-5 Accuracy: 0.9639655172413794
-2025-12-11 15:42:11,271 - __main__ - INFO - 
+2025-12-11 19:43:08,779 - __main__ - INFO - 
 Computing per-region metrics...
-2025-12-11 15:42:11,271 - src.evaluation.hemisphere_metrics - INFO - Computing per-region metrics...
-2025-12-11 15:42:11,271 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 116 regions
-2025-12-11 15:42:11,283 - src.evaluation.hemisphere_metrics - INFO -   Mean per-region accuracy: 0.8447
-2025-12-11 15:42:11,283 - src.evaluation.hemisphere_metrics - INFO -   Std per-region accuracy: 0.1079
-2025-12-11 15:42:11,283 - src.evaluation.hemisphere_metrics - INFO -   Min per-region accuracy: 0.4800
-2025-12-11 15:42:11,283 - src.evaluation.hemisphere_metrics - INFO -   Max per-region accuracy: 0.9800
-2025-12-11 15:42:11,284 - __main__ - INFO - Computing network-level metrics...
-2025-12-11 15:42:11,284 - src.evaluation.hemisphere_metrics - INFO - Computing network-level metrics...
-2025-12-11 15:42:11,286 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 18 networks
-2025-12-11 15:42:11,316 - src.evaluation.hemisphere_metrics - INFO -   Mean network accuracy: 0.8461
-2025-12-11 15:42:11,316 - src.evaluation.hemisphere_metrics - INFO -   Best network: DefaultC (accuracy=0.9267)
-2025-12-11 15:42:11,317 - src.evaluation.hemisphere_metrics - INFO -   Worst network: TempPar (accuracy=0.7000)
-2025-12-11 15:42:11,317 - __main__ - INFO - Creating confusion matrix...
-2025-12-11 15:42:11,317 - src.evaluation.hemisphere_metrics - INFO - Creating confusion matrix...
-2025-12-11 15:42:11,318 - src.evaluation.hemisphere_metrics - INFO -   Confusion matrix shape: (116, 116)
-2025-12-11 15:42:11,318 - src.evaluation.hemisphere_metrics - INFO -   Total predictions: 5800
-2025-12-11 15:42:11,318 - src.evaluation.hemisphere_metrics - INFO -   Correct predictions (diagonal): 4899
-2025-12-11 15:42:11,318 - __main__ - INFO - 
+2025-12-11 19:43:08,780 - src.evaluation.hemisphere_metrics - INFO - Computing per-region metrics...
+2025-12-11 19:43:08,780 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 116 regions
+2025-12-11 19:43:08,876 - src.evaluation.hemisphere_metrics - INFO -   Mean per-region accuracy: 0.7000
+2025-12-11 19:43:08,876 - src.evaluation.hemisphere_metrics - INFO -   Std per-region accuracy: 0.2106
+2025-12-11 19:43:08,877 - src.evaluation.hemisphere_metrics - INFO -   Min per-region accuracy: 0.2000
+2025-12-11 19:43:08,877 - src.evaluation.hemisphere_metrics - INFO -   Max per-region accuracy: 1.0000
+2025-12-11 19:43:08,877 - __main__ - INFO - Computing network-level metrics...
+2025-12-11 19:43:08,877 - src.evaluation.hemisphere_metrics - INFO - Computing network-level metrics...
+2025-12-11 19:43:08,878 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 18 networks
+2025-12-11 19:43:08,909 - src.evaluation.hemisphere_metrics - INFO -   Mean network accuracy: 0.6946
+2025-12-11 19:43:08,909 - src.evaluation.hemisphere_metrics - INFO -   Best network: VisCent (accuracy=0.9167)
+2025-12-11 19:43:08,910 - src.evaluation.hemisphere_metrics - INFO -   Worst network: TempPar (accuracy=0.3000)
+2025-12-11 19:43:08,910 - __main__ - INFO - Creating confusion matrix...
+2025-12-11 19:43:08,910 - src.evaluation.hemisphere_metrics - INFO - Creating confusion matrix...
+2025-12-11 19:43:08,911 - src.evaluation.hemisphere_metrics - INFO -   Confusion matrix shape: (116, 116)
+2025-12-11 19:43:08,911 - src.evaluation.hemisphere_metrics - INFO -   Total predictions: 1160
+2025-12-11 19:43:08,911 - src.evaluation.hemisphere_metrics - INFO -   Correct predictions (diagonal): 812
+2025-12-11 19:43:08,911 - __main__ - INFO - 
 Saving results...
-2025-12-11 15:42:11,344 - __main__ - INFO - 
+2025-12-11 19:43:08,930 - __main__ - INFO - 
 Generating visualizations...
-2025-12-11 15:42:11,344 - src.visualization.hemisphere_viz - INFO - Plotting confusion matrix: (116, 116)
-2025-12-11 15:42:11,381 - src.visualization.hemisphere_viz - INFO -   Added 17 network boundaries
-2025-12-11 15:42:15,859 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/confusion_matrix.png
-2025-12-11 15:42:15,860 - src.visualization.hemisphere_viz - INFO - Plotting per-region accuracy for 116 regions
-2025-12-11 15:42:16,912 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/per_region_accuracy.png
-2025-12-11 15:42:16,913 - src.visualization.hemisphere_viz - INFO - Plotting network accuracy for 18 networks
-2025-12-11 15:42:17,384 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/network_accuracy.png
-2025-12-11 15:42:17,384 - __main__ - INFO - All results saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial
-2025-12-11 15:42:17,385 - __main__ - INFO - 
+2025-12-11 19:43:08,930 - src.visualization.hemisphere_viz - INFO - Plotting confusion matrix: (116, 116)
+2025-12-11 19:43:08,978 - src.visualization.hemisphere_viz - INFO -   Added 17 network boundaries
+2025-12-11 19:43:10,082 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/confusion_matrix.png
+2025-12-11 19:43:10,083 - src.visualization.hemisphere_viz - INFO - Plotting per-region accuracy for 116 regions
+2025-12-11 19:43:11,190 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/per_region_accuracy.png
+2025-12-11 19:43:11,190 - src.visualization.hemisphere_viz - INFO - Plotting network accuracy for 18 networks
+2025-12-11 19:43:11,627 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/network_accuracy.png
+2025-12-11 19:43:11,628 - __main__ - INFO - All results saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial
+2025-12-11 19:43:11,628 - __main__ - INFO - 
 ================================================================================
-2025-12-11 15:42:17,385 - __main__ - INFO - TRAINING COMPLETED SUCCESSFULLY
-2025-12-11 15:42:17,385 - __main__ - INFO - (TESTING MODE: Used 50 subjects only)
-2025-12-11 15:42:17,385 - __main__ - INFO - ================================================================================
-2025-12-11 15:49:56,082 - __main__ - INFO - ================================================================================
-2025-12-11 15:49:56,083 - __main__ - INFO - HEMISPHERE-SPECIFIC MULTINOMIAL LOGISTIC REGRESSION
-2025-12-11 15:49:56,083 - __main__ - INFO - ================================================================================
-2025-12-11 15:49:56,083 - __main__ - INFO - 
-Configuration:
-2025-12-11 15:49:56,083 - __main__ - INFO -   Hemisphere: left
-2025-12-11 15:49:56,083 - __main__ - INFO -   Data directory: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres
-2025-12-11 15:49:56,083 - __main__ - INFO -   Output directory: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis
-2025-12-11 15:49:56,083 - __main__ - INFO -   Number of folds: 3
-2025-12-11 15:49:56,084 - __main__ - INFO -   Random state: 42
-2025-12-11 15:49:56,084 - __main__ - INFO -   Regularization C: None
-2025-12-11 15:49:56,085 - __main__ - INFO -   Diagonal strategy: region_mean
-2025-12-11 15:49:56,085 - __main__ - INFO -   Max iterations: 1000
-2025-12-11 15:49:56,085 - __main__ - INFO -   Save models: False
-2025-12-11 15:49:56,085 - __main__ - INFO -   Sample size: 50
-2025-12-11 15:49:56,085 - __main__ - INFO -   Hyperparameter tuning: True
-2025-12-11 15:49:56,099 - __main__ - WARNING -   Hyperparameter tuning requested but not enabled in config!
-2025-12-11 15:49:56,099 - __main__ - WARNING - 
-⚠️  TESTING MODE ENABLED: Using only first 50 subjects
-2025-12-11 15:49:56,099 - __main__ - WARNING - ⚠️  This is NOT a full production run!
-
-2025-12-11 15:49:56,099 - __main__ - INFO - 
-================================================================================
-2025-12-11 15:49:56,099 - __main__ - INFO - TRAINING LEFT HEMISPHERE
-2025-12-11 15:49:56,100 - __main__ - INFO - ================================================================================
-
-2025-12-11 15:49:56,100 - __main__ - INFO - Loading hemisphere-specific data...
-2025-12-11 15:49:56,101 - src.hemisphere.hemisphere_utils - INFO - Loading left hemisphere data from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
-2025-12-11 15:49:56,453 - src.hemisphere.hemisphere_utils - INFO -   Subjects: 224
-2025-12-11 15:49:56,453 - src.hemisphere.hemisphere_utils - INFO -   Connections: 6670
-2025-12-11 15:49:56,457 - src.hemisphere.hemisphere_utils - INFO - Extracting region info from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
-2025-12-11 15:49:56,963 - src.hemisphere.hemisphere_utils - INFO - Extracted 116 regions for left hemisphere
-2025-12-11 15:49:56,963 - src.hemisphere.hemisphere_utils - INFO -   Regions: 116
-2025-12-11 15:49:56,964 - src.hemisphere.hemisphere_utils - INFO - Converting to full connectivity matrices...
-2025-12-11 15:49:56,991 - src.hemisphere.hemisphere_utils - INFO -   Matrix shape: (224, 116, 116)
-2025-12-11 15:49:57,016 - src.hemisphere.hemisphere_utils - INFO - Connectivity validation completed
-2025-12-11 15:49:57,016 - src.hemisphere.hemisphere_utils - INFO - Successfully loaded left hemisphere data
-2025-12-11 15:49:57,017 - __main__ - INFO - 
-============================================================
-2025-12-11 15:49:57,017 - __main__ - INFO - SAMPLING MODE ACTIVATED
-2025-12-11 15:49:57,017 - __main__ - INFO - ============================================================
-2025-12-11 15:49:57,017 - __main__ - INFO - Selecting first 50 subjects out of 224 available
-2025-12-11 15:49:57,017 - __main__ - INFO - Selected subjects: sub-0001_P2, sub-0002_P2, sub-0003_P2, sub-0004_P2, sub-0005_P2, sub-0006_P2, sub-0007_P2, sub-0008_P2, sub-0009_P2, sub-0011_P2... (+40 more)
-2025-12-11 15:49:57,018 - __main__ - INFO - Sampled connectivity shape: (50, 116, 116)
-2025-12-11 15:49:57,018 - __main__ - INFO - Sampled subjects: 50
-2025-12-11 15:49:57,018 - __main__ - INFO - ============================================================
-
-2025-12-11 15:49:57,018 - __main__ - WARNING - ⚠️  TESTING MODE: Using first 50 subjects only
-2025-12-11 15:49:57,018 - __main__ - WARNING - ⚠️  Results are for TESTING purposes - not production-ready!
-2025-12-11 15:49:57,018 - __main__ - INFO - Data loaded:
-2025-12-11 15:49:57,018 - __main__ - INFO -   Subjects: 50
-2025-12-11 15:49:57,018 - __main__ - INFO -   Regions: 116
-2025-12-11 15:49:57,018 - __main__ - INFO -   Connectivity shape: (50, 116, 116)
-2025-12-11 15:49:57,019 - __main__ - INFO - 
-Preparing classification data...
-2025-12-11 15:49:57,019 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
-2025-12-11 15:49:57,019 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0)]
-2025-12-11 15:49:57,021 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
-2025-12-11 15:49:57,028 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
-2025-12-11 15:49:57,028 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
-2025-12-11 15:49:57,029 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (5800, 116)
-2025-12-11 15:49:57,029 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (5800,)
-2025-12-11 15:49:57,029 - src.hemisphere.hemisphere_utils - INFO -   Groups: (5800,)
-2025-12-11 15:49:57,029 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
-2025-12-11 15:49:57,030 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 50
-2025-12-11 15:49:57,031 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-0.848, 0.948]
-2025-12-11 15:49:57,033 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.027, std: 0.267
-2025-12-11 15:49:57,033 - __main__ - INFO - Classification data prepared:
-2025-12-11 15:49:57,034 - __main__ - INFO -   Samples (X): (5800, 116)
-2025-12-11 15:49:57,034 - __main__ - INFO -   Labels (y): (5800,)
-2025-12-11 15:49:57,034 - __main__ - INFO -   Groups: (5800,)
-2025-12-11 15:49:57,034 - __main__ - INFO -   Classes: 116
-2025-12-11 15:49:57,035 - __main__ - INFO -   Unique subjects in groups: 50
-2025-12-11 15:49:57,036 - __main__ - INFO - 
-Setting up 3-fold GroupKFold cross-validation...
-2025-12-11 15:49:57,036 - __main__ - INFO - 
-Starting cross-validation...
-
-2025-12-11 15:49:57,039 - __main__ - INFO - Fold 1/3
-2025-12-11 15:49:57,039 - __main__ - INFO -   Train samples: 3828, Test samples: 1972
-2025-12-11 15:49:57,040 - __main__ - INFO -   Train subjects: 33, Test subjects: 17
-2025-12-11 15:49:57,040 - __main__ - INFO -   Train labels distribution (first 10): [33, 33, 33, 33, 33, 33, 33, 33, 33, 33]
-2025-12-11 15:49:57,040 - __main__ - INFO -   Test labels distribution (first 10): [17, 17, 17, 17, 17, 17, 17, 17, 17, 17]
-2025-12-11 15:49:57,040 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:49:57,040 - __main__ - INFO -   Input shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:49:57,057 - __main__ - INFO -   Processed shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:49:57,057 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:49:57,058 - __main__ - INFO -   Using fixed regularization C=1.0
-2025-12-11 15:50:12,487 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:50:12,674 - __main__ - INFO -   Fold accuracy: 0.8626
-2025-12-11 15:50:12,674 - __main__ - INFO -   Fold balanced accuracy: 0.8626
-2025-12-11 15:50:12,674 - __main__ - INFO -   Fold time: 15.64s
-
-2025-12-11 15:50:12,674 - __main__ - INFO - Fold 2/3
-2025-12-11 15:50:12,675 - __main__ - INFO -   Train samples: 3828, Test samples: 1972
-2025-12-11 15:50:12,677 - __main__ - INFO -   Train subjects: 33, Test subjects: 17
-2025-12-11 15:50:12,677 - __main__ - INFO -   Train labels distribution (first 10): [33, 33, 33, 33, 33, 33, 33, 33, 33, 33]
-2025-12-11 15:50:12,677 - __main__ - INFO -   Test labels distribution (first 10): [17, 17, 17, 17, 17, 17, 17, 17, 17, 17]
-2025-12-11 15:50:12,678 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:50:12,678 - __main__ - INFO -   Input shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:50:12,695 - __main__ - INFO -   Processed shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:50:12,696 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:50:12,696 - __main__ - INFO -   Using fixed regularization C=1.0
-2025-12-11 15:50:14,071 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:50:14,274 - __main__ - INFO -   Fold accuracy: 0.8276
-2025-12-11 15:50:14,274 - __main__ - INFO -   Fold balanced accuracy: 0.8276
-2025-12-11 15:50:14,275 - __main__ - INFO -   Fold time: 1.60s
-
-2025-12-11 15:50:14,275 - __main__ - INFO - Fold 3/3
-2025-12-11 15:50:14,275 - __main__ - INFO -   Train samples: 3944, Test samples: 1856
-2025-12-11 15:50:14,276 - __main__ - INFO -   Train subjects: 34, Test subjects: 16
-2025-12-11 15:50:14,276 - __main__ - INFO -   Train labels distribution (first 10): [34, 34, 34, 34, 34, 34, 34, 34, 34, 34]
-2025-12-11 15:50:14,276 - __main__ - INFO -   Test labels distribution (first 10): [16, 16, 16, 16, 16, 16, 16, 16, 16, 16]
-2025-12-11 15:50:14,277 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:50:14,277 - __main__ - INFO -   Input shapes - Train: (3944, 116), Test: (1856, 116)
-2025-12-11 15:50:14,293 - __main__ - INFO -   Processed shapes - Train: (3944, 116), Test: (1856, 116)
-2025-12-11 15:50:14,293 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:50:14,294 - __main__ - INFO -   Using fixed regularization C=1.0
-2025-12-11 15:50:15,649 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:50:15,774 - __main__ - INFO -   Fold accuracy: 0.8438
-2025-12-11 15:50:15,774 - __main__ - INFO -   Fold balanced accuracy: 0.8438
-2025-12-11 15:50:15,774 - __main__ - INFO -   Fold time: 1.50s
-
-2025-12-11 15:50:15,775 - __main__ - INFO - Cross-validation completed in 18.74s
-
-2025-12-11 15:50:15,777 - __main__ - INFO - Computing overall metrics...
-2025-12-11 15:50:15,777 - src.evaluation.hemisphere_metrics - INFO - Computing classification metrics...
-2025-12-11 15:50:15,891 - src.evaluation.hemisphere_metrics - INFO -   Accuracy: 0.8447
-2025-12-11 15:50:15,891 - src.evaluation.hemisphere_metrics - INFO -   Balanced Accuracy: 0.8447
-2025-12-11 15:50:15,891 - src.evaluation.hemisphere_metrics - INFO -   F1 Score: 0.8496
-2025-12-11 15:50:15,891 - __main__ - INFO - 
-OVERALL RESULTS (LEFT HEMISPHERE):
-2025-12-11 15:50:15,892 - __main__ - INFO -   Mean CV Accuracy: 0.8447
-2025-12-11 15:50:15,892 - __main__ - INFO -   Mean CV Balanced Accuracy: 0.8447
-2025-12-11 15:50:15,892 - __main__ - INFO -   Top-5 Accuracy: 0.9639655172413794
-2025-12-11 15:50:15,892 - __main__ - INFO - 
-Computing per-region metrics...
-2025-12-11 15:50:15,892 - src.evaluation.hemisphere_metrics - INFO - Computing per-region metrics...
-2025-12-11 15:50:15,892 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 116 regions
-2025-12-11 15:50:15,904 - src.evaluation.hemisphere_metrics - INFO -   Mean per-region accuracy: 0.8447
-2025-12-11 15:50:15,904 - src.evaluation.hemisphere_metrics - INFO -   Std per-region accuracy: 0.1079
-2025-12-11 15:50:15,905 - src.evaluation.hemisphere_metrics - INFO -   Min per-region accuracy: 0.4800
-2025-12-11 15:50:15,906 - src.evaluation.hemisphere_metrics - INFO -   Max per-region accuracy: 0.9800
-2025-12-11 15:50:15,906 - __main__ - INFO - Computing network-level metrics...
-2025-12-11 15:50:15,906 - src.evaluation.hemisphere_metrics - INFO - Computing network-level metrics...
-2025-12-11 15:50:15,909 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 18 networks
-2025-12-11 15:50:15,939 - src.evaluation.hemisphere_metrics - INFO -   Mean network accuracy: 0.8461
-2025-12-11 15:50:15,940 - src.evaluation.hemisphere_metrics - INFO -   Best network: DefaultC (accuracy=0.9267)
-2025-12-11 15:50:15,940 - src.evaluation.hemisphere_metrics - INFO -   Worst network: TempPar (accuracy=0.7000)
-2025-12-11 15:50:15,940 - __main__ - INFO - Creating confusion matrix...
-2025-12-11 15:50:15,941 - src.evaluation.hemisphere_metrics - INFO - Creating confusion matrix...
-2025-12-11 15:50:15,942 - src.evaluation.hemisphere_metrics - INFO -   Confusion matrix shape: (116, 116)
-2025-12-11 15:50:15,942 - src.evaluation.hemisphere_metrics - INFO -   Total predictions: 5800
-2025-12-11 15:50:15,943 - src.evaluation.hemisphere_metrics - INFO -   Correct predictions (diagonal): 4899
-2025-12-11 15:50:15,943 - __main__ - INFO - 
-Saving results...
-2025-12-11 15:50:15,968 - __main__ - INFO - 
-Generating visualizations...
-2025-12-11 15:50:15,968 - src.visualization.hemisphere_viz - INFO - Plotting confusion matrix: (116, 116)
-2025-12-11 15:50:16,014 - src.visualization.hemisphere_viz - INFO -   Added 17 network boundaries
-2025-12-11 15:50:17,981 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/confusion_matrix.png
-2025-12-11 15:50:17,981 - src.visualization.hemisphere_viz - INFO - Plotting per-region accuracy for 116 regions
-2025-12-11 15:50:19,086 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/per_region_accuracy.png
-2025-12-11 15:50:19,087 - src.visualization.hemisphere_viz - INFO - Plotting network accuracy for 18 networks
-2025-12-11 15:50:19,566 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/network_accuracy.png
-2025-12-11 15:50:19,566 - __main__ - INFO - All results saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial
-2025-12-11 15:50:19,567 - __main__ - INFO - 
-================================================================================
-2025-12-11 15:50:19,568 - __main__ - INFO - TRAINING COMPLETED SUCCESSFULLY
-2025-12-11 15:50:19,568 - __main__ - INFO - (TESTING MODE: Used 50 subjects only)
-2025-12-11 15:50:19,568 - __main__ - INFO - ================================================================================
-2025-12-11 15:52:19,239 - __main__ - INFO - ================================================================================
-2025-12-11 15:52:19,239 - __main__ - INFO - HEMISPHERE-SPECIFIC MULTINOMIAL LOGISTIC REGRESSION
-2025-12-11 15:52:19,239 - __main__ - INFO - ================================================================================
-2025-12-11 15:52:19,239 - __main__ - INFO - 
-Configuration:
-2025-12-11 15:52:19,239 - __main__ - INFO -   Hemisphere: left
-2025-12-11 15:52:19,240 - __main__ - INFO -   Data directory: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres
-2025-12-11 15:52:19,240 - __main__ - INFO -   Output directory: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis
-2025-12-11 15:52:19,240 - __main__ - INFO -   Number of folds: 3
-2025-12-11 15:52:19,240 - __main__ - INFO -   Random state: 42
-2025-12-11 15:52:19,241 - __main__ - INFO -   Regularization C: None
-2025-12-11 15:52:19,241 - __main__ - INFO -   Diagonal strategy: region_mean
-2025-12-11 15:52:19,241 - __main__ - INFO -   Max iterations: 1000
-2025-12-11 15:52:19,242 - __main__ - INFO -   Save models: False
-2025-12-11 15:52:19,242 - __main__ - INFO -   Sample size: 50
-2025-12-11 15:52:19,242 - __main__ - INFO -   Hyperparameter tuning: True
-2025-12-11 15:52:19,258 - __main__ - WARNING -   Hyperparameter tuning requested but not enabled in config!
-2025-12-11 15:52:19,258 - __main__ - WARNING - 
-⚠️  TESTING MODE ENABLED: Using only first 50 subjects
-2025-12-11 15:52:19,258 - __main__ - WARNING - ⚠️  This is NOT a full production run!
-
-2025-12-11 15:52:19,258 - __main__ - INFO - 
-================================================================================
-2025-12-11 15:52:19,259 - __main__ - INFO - TRAINING LEFT HEMISPHERE
-2025-12-11 15:52:19,259 - __main__ - INFO - ================================================================================
-
-2025-12-11 15:52:19,260 - __main__ - INFO - Loading hemisphere-specific data...
-2025-12-11 15:52:19,260 - src.hemisphere.hemisphere_utils - INFO - Loading left hemisphere data from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
-2025-12-11 15:52:19,625 - src.hemisphere.hemisphere_utils - INFO -   Subjects: 224
-2025-12-11 15:52:19,625 - src.hemisphere.hemisphere_utils - INFO -   Connections: 6670
-2025-12-11 15:52:19,630 - src.hemisphere.hemisphere_utils - INFO - Extracting region info from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
-2025-12-11 15:52:19,988 - src.hemisphere.hemisphere_utils - INFO - Extracted 116 regions for left hemisphere
-2025-12-11 15:52:19,989 - src.hemisphere.hemisphere_utils - INFO -   Regions: 116
-2025-12-11 15:52:19,989 - src.hemisphere.hemisphere_utils - INFO - Converting to full connectivity matrices...
-2025-12-11 15:52:20,015 - src.hemisphere.hemisphere_utils - INFO -   Matrix shape: (224, 116, 116)
-2025-12-11 15:52:20,050 - src.hemisphere.hemisphere_utils - INFO - Connectivity validation completed
-2025-12-11 15:52:20,050 - src.hemisphere.hemisphere_utils - INFO - Successfully loaded left hemisphere data
-2025-12-11 15:52:20,051 - __main__ - INFO - 
-============================================================
-2025-12-11 15:52:20,051 - __main__ - INFO - SAMPLING MODE ACTIVATED
-2025-12-11 15:52:20,051 - __main__ - INFO - ============================================================
-2025-12-11 15:52:20,051 - __main__ - INFO - Selecting first 50 subjects out of 224 available
-2025-12-11 15:52:20,051 - __main__ - INFO - Selected subjects: sub-0001_P2, sub-0002_P2, sub-0003_P2, sub-0004_P2, sub-0005_P2, sub-0006_P2, sub-0007_P2, sub-0008_P2, sub-0009_P2, sub-0011_P2... (+40 more)
-2025-12-11 15:52:20,052 - __main__ - INFO - Sampled connectivity shape: (50, 116, 116)
-2025-12-11 15:52:20,052 - __main__ - INFO - Sampled subjects: 50
-2025-12-11 15:52:20,052 - __main__ - INFO - ============================================================
-
-2025-12-11 15:52:20,052 - __main__ - WARNING - ⚠️  TESTING MODE: Using first 50 subjects only
-2025-12-11 15:52:20,052 - __main__ - WARNING - ⚠️  Results are for TESTING purposes - not production-ready!
-2025-12-11 15:52:20,052 - __main__ - INFO - Data loaded:
-2025-12-11 15:52:20,052 - __main__ - INFO -   Subjects: 50
-2025-12-11 15:52:20,052 - __main__ - INFO -   Regions: 116
-2025-12-11 15:52:20,052 - __main__ - INFO -   Connectivity shape: (50, 116, 116)
-2025-12-11 15:52:20,052 - __main__ - INFO - 
-Preparing classification data...
-2025-12-11 15:52:20,053 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
-2025-12-11 15:52:20,053 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0)]
-2025-12-11 15:52:20,054 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
-2025-12-11 15:52:20,061 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
-2025-12-11 15:52:20,061 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
-2025-12-11 15:52:20,062 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (5800, 116)
-2025-12-11 15:52:20,062 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (5800,)
-2025-12-11 15:52:20,062 - src.hemisphere.hemisphere_utils - INFO -   Groups: (5800,)
-2025-12-11 15:52:20,062 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
-2025-12-11 15:52:20,063 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 50
-2025-12-11 15:52:20,064 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-0.848, 0.948]
-2025-12-11 15:52:20,066 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.027, std: 0.267
-2025-12-11 15:52:20,066 - __main__ - INFO - Classification data prepared:
-2025-12-11 15:52:20,066 - __main__ - INFO -   Samples (X): (5800, 116)
-2025-12-11 15:52:20,066 - __main__ - INFO -   Labels (y): (5800,)
-2025-12-11 15:52:20,066 - __main__ - INFO -   Groups: (5800,)
-2025-12-11 15:52:20,066 - __main__ - INFO -   Classes: 116
-2025-12-11 15:52:20,068 - __main__ - INFO -   Unique subjects in groups: 50
-2025-12-11 15:52:20,069 - __main__ - INFO - 
-Setting up 3-fold GroupKFold cross-validation...
-2025-12-11 15:52:20,069 - __main__ - INFO - 
-Starting cross-validation...
-
-2025-12-11 15:52:20,071 - __main__ - INFO - Fold 1/3
-2025-12-11 15:52:20,071 - __main__ - INFO -   Train samples: 3828, Test samples: 1972
-2025-12-11 15:52:20,072 - __main__ - INFO -   Train subjects: 33, Test subjects: 17
-2025-12-11 15:52:20,072 - __main__ - INFO -   Train labels distribution (first 10): [33, 33, 33, 33, 33, 33, 33, 33, 33, 33]
-2025-12-11 15:52:20,072 - __main__ - INFO -   Test labels distribution (first 10): [17, 17, 17, 17, 17, 17, 17, 17, 17, 17]
-2025-12-11 15:52:20,072 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:52:20,072 - __main__ - INFO -   Input shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:52:20,089 - __main__ - INFO -   Processed shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:52:20,089 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:52:20,089 - __main__ - INFO -   Using fixed regularization C=1.0
-2025-12-11 15:52:35,111 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:52:35,273 - __main__ - INFO -   Fold accuracy: 0.8626
-2025-12-11 15:52:35,273 - __main__ - INFO -   Fold balanced accuracy: 0.8626
-2025-12-11 15:52:35,273 - __main__ - INFO -   Fold time: 15.20s
-
-2025-12-11 15:52:35,273 - __main__ - INFO - Fold 2/3
-2025-12-11 15:52:35,273 - __main__ - INFO -   Train samples: 3828, Test samples: 1972
-2025-12-11 15:52:35,276 - __main__ - INFO -   Train subjects: 33, Test subjects: 17
-2025-12-11 15:52:35,276 - __main__ - INFO -   Train labels distribution (first 10): [33, 33, 33, 33, 33, 33, 33, 33, 33, 33]
-2025-12-11 15:52:35,276 - __main__ - INFO -   Test labels distribution (first 10): [17, 17, 17, 17, 17, 17, 17, 17, 17, 17]
-2025-12-11 15:52:35,277 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:52:35,277 - __main__ - INFO -   Input shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:52:35,377 - __main__ - INFO -   Processed shapes - Train: (3828, 116), Test: (1972, 116)
-2025-12-11 15:52:35,377 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:52:35,377 - __main__ - INFO -   Using fixed regularization C=1.0
-2025-12-11 15:52:36,977 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:52:36,982 - __main__ - INFO -   Fold accuracy: 0.8276
-2025-12-11 15:52:36,982 - __main__ - INFO -   Fold balanced accuracy: 0.8276
-2025-12-11 15:52:36,982 - __main__ - INFO -   Fold time: 1.71s
-
-2025-12-11 15:52:36,982 - __main__ - INFO - Fold 3/3
-2025-12-11 15:52:36,983 - __main__ - INFO -   Train samples: 3944, Test samples: 1856
-2025-12-11 15:52:36,983 - __main__ - INFO -   Train subjects: 34, Test subjects: 16
-2025-12-11 15:52:36,983 - __main__ - INFO -   Train labels distribution (first 10): [34, 34, 34, 34, 34, 34, 34, 34, 34, 34]
-2025-12-11 15:52:36,983 - __main__ - INFO -   Test labels distribution (first 10): [16, 16, 16, 16, 16, 16, 16, 16, 16, 16]
-2025-12-11 15:52:37,071 - __main__ - INFO -   Preprocessing fold data...
-2025-12-11 15:52:37,071 - __main__ - INFO -   Input shapes - Train: (3944, 116), Test: (1856, 116)
-2025-12-11 15:52:37,179 - __main__ - INFO -   Processed shapes - Train: (3944, 116), Test: (1856, 116)
-2025-12-11 15:52:37,179 - __main__ - INFO -   Training multinomial logistic regression...
-2025-12-11 15:52:37,179 - __main__ - INFO -   Using fixed regularization C=1.0
-2025-12-11 15:52:38,546 - __main__ - INFO -   Predicting on test set...
-2025-12-11 15:52:38,554 - __main__ - INFO -   Fold accuracy: 0.8438
-2025-12-11 15:52:38,554 - __main__ - INFO -   Fold balanced accuracy: 0.8438
-2025-12-11 15:52:38,554 - __main__ - INFO -   Fold time: 1.57s
-
-2025-12-11 15:52:38,571 - __main__ - INFO - Cross-validation completed in 18.50s
-
-2025-12-11 15:52:38,673 - __main__ - INFO - Computing overall metrics...
-2025-12-11 15:52:38,674 - src.evaluation.hemisphere_metrics - INFO - Computing classification metrics...
-2025-12-11 15:52:38,719 - src.evaluation.hemisphere_metrics - INFO -   Accuracy: 0.8447
-2025-12-11 15:52:38,719 - src.evaluation.hemisphere_metrics - INFO -   Balanced Accuracy: 0.8447
-2025-12-11 15:52:38,719 - src.evaluation.hemisphere_metrics - INFO -   F1 Score: 0.8496
-2025-12-11 15:52:38,720 - __main__ - INFO - 
-OVERALL RESULTS (LEFT HEMISPHERE):
-2025-12-11 15:52:38,720 - __main__ - INFO -   Mean CV Accuracy: 0.8447
-2025-12-11 15:52:38,720 - __main__ - INFO -   Mean CV Balanced Accuracy: 0.8447
-2025-12-11 15:52:38,720 - __main__ - INFO -   Top-5 Accuracy: 0.9639655172413794
-2025-12-11 15:52:38,720 - __main__ - INFO - 
-Computing per-region metrics...
-2025-12-11 15:52:38,720 - src.evaluation.hemisphere_metrics - INFO - Computing per-region metrics...
-2025-12-11 15:52:38,720 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 116 regions
-2025-12-11 15:52:38,724 - src.evaluation.hemisphere_metrics - INFO -   Mean per-region accuracy: 0.8447
-2025-12-11 15:52:38,725 - src.evaluation.hemisphere_metrics - INFO -   Std per-region accuracy: 0.1079
-2025-12-11 15:52:38,725 - src.evaluation.hemisphere_metrics - INFO -   Min per-region accuracy: 0.4800
-2025-12-11 15:52:38,725 - src.evaluation.hemisphere_metrics - INFO -   Max per-region accuracy: 0.9800
-2025-12-11 15:52:38,726 - __main__ - INFO - Computing network-level metrics...
-2025-12-11 15:52:38,726 - src.evaluation.hemisphere_metrics - INFO - Computing network-level metrics...
-2025-12-11 15:52:38,728 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 18 networks
-2025-12-11 15:52:38,792 - src.evaluation.hemisphere_metrics - INFO -   Mean network accuracy: 0.8461
-2025-12-11 15:52:38,792 - src.evaluation.hemisphere_metrics - INFO -   Best network: DefaultC (accuracy=0.9267)
-2025-12-11 15:52:38,793 - src.evaluation.hemisphere_metrics - INFO -   Worst network: TempPar (accuracy=0.7000)
-2025-12-11 15:52:38,793 - __main__ - INFO - Creating confusion matrix...
-2025-12-11 15:52:38,793 - src.evaluation.hemisphere_metrics - INFO - Creating confusion matrix...
-2025-12-11 15:52:38,794 - src.evaluation.hemisphere_metrics - INFO -   Confusion matrix shape: (116, 116)
-2025-12-11 15:52:38,794 - src.evaluation.hemisphere_metrics - INFO -   Total predictions: 5800
-2025-12-11 15:52:38,794 - src.evaluation.hemisphere_metrics - INFO -   Correct predictions (diagonal): 4899
-2025-12-11 15:52:38,794 - __main__ - INFO - 
-Saving results...
-2025-12-11 15:52:38,820 - __main__ - INFO - 
-Generating visualizations...
-2025-12-11 15:52:38,820 - src.visualization.hemisphere_viz - INFO - Plotting confusion matrix: (116, 116)
-2025-12-11 15:52:38,851 - src.visualization.hemisphere_viz - INFO -   Added 17 network boundaries
-2025-12-11 15:52:39,994 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/confusion_matrix.png
-2025-12-11 15:52:39,994 - src.visualization.hemisphere_viz - INFO - Plotting per-region accuracy for 116 regions
-2025-12-11 15:52:41,050 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/per_region_accuracy.png
-2025-12-11 15:52:41,050 - src.visualization.hemisphere_viz - INFO - Plotting network accuracy for 18 networks
-2025-12-11 15:52:41,575 - src.visualization.hemisphere_viz - INFO -   Saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial/network_accuracy.png
-2025-12-11 15:52:41,575 - __main__ - INFO - All results saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial
-2025-12-11 15:52:41,577 - __main__ - INFO - 
-================================================================================
-2025-12-11 15:52:41,577 - __main__ - INFO - TRAINING COMPLETED SUCCESSFULLY
-2025-12-11 15:52:41,577 - __main__ - INFO - (TESTING MODE: Used 50 subjects only)
-2025-12-11 15:52:41,578 - __main__ - INFO - ================================================================================
+2025-12-11 19:43:11,629 - __main__ - INFO - TRAINING COMPLETED SUCCESSFULLY
+2025-12-11 19:43:11,629 - __main__ - INFO - (TESTING MODE: Used 10 subjects only)
+2025-12-11 19:43:11,629 - __main__ - INFO - ================================================================================

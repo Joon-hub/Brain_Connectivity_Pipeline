@@ -1,0 +1,195 @@
+# ---------------------------------------------------------------
+# HEMISPHERE-SPECIFIC BRAIN REGION CLASSIFICATION CONFIGURATION
+# ---------------------------------------------------------------
+
+# --- GLOBAL SETTINGS ---
+data:
+  input_dir: "data/processed/hemispheres"
+  output_dir: "data/results/hemisphere_analysis"
+  region_info: "data/processed/region_info.csv"
+  dataset: "rest"                                  # 'rest' (PIOP2) or 'task' (PIOP1)
+  hemisphere_split: "atlas_based"
+  return_matrices: true
+  include_bilateral: false
+
+reproducibility:
+  random_state: 42
+  use_deterministic: true
+  save_env_info: true
+
+logging: {level: "INFO", log_to_file: true, log_to_console: true}
+computation: {n_jobs: -1, memory_efficient: true, use_gpu: false}
+
+# --- Cross-validation ---
+cross_validation:
+  strategy: "GroupKFold"
+  n_folds: 3
+  random_state: 42
+
+# --- Preprocessing ---
+preprocessing:
+  apply_fisher_z: true
+  diagonal_strategy: "region_mean" # zero, region_mean, network_mean
+  standardize: true
+  feature_selection: null          # Options: null, 'variance_threshold', 'mutual_info'
+  variance_threshold: 0.01         # Only if feature_selection enabled
+
+
+# --- MODEL CONFIGURATIONS ---
+multinomial:
+  model_type: "LogisticRegression"
+  multi_class: "multinomial"          # 116-class softmax classifier
+  solver: "lbfgs"                     # Options: 'lbfgs', 'sag', 'saga', 'newton-cg'
+  C: 1.0                              # Inverse regularization strength (null = auto-optimize)
+  penalty: "l2"                       # L2 regularization
+  max_iter: 1000                      # Maximum optimization iterations
+  tol: 0.0001                         # Convergence tolerance
+  class_weight: null                  # Options: null, 'balanced'
+  n_jobs: -1                          # Use all CPU cores
+  verbose: 0                          # Suppress iteration logs
+  warm_start: false                   # Don't reuse previous solution
+
+ovr:
+  model_type: "LogisticRegression"
+  solver: "lbfgs"
+  C: 1.0
+  max_iter: 1000
+  class_weight: "balanced"            # Critical for 1-vs-115 imbalance
+  n_jobs: -1
+  verbose: 0
+  aggregation_method: "max_decision"  # 'max_decision' or 'calibrated_proba'
+
+ovo:
+  selection_strategy: "error_driven"  # Options: 'error_driven', 'network_focused', 'spatial', 'all_pairs', 'custom'
+  max_pairs: 200                      # Limit for computational efficiency
+  confusion_threshold: 0.05           # Min confusion rate to analyze pair
+  spatial_distance_threshold: 30.0    # Max distance (mm) for 'spatial' strategy
+  custom_pairs_file: null             # CSV with region_id_1, region_id_2 columns
+  
+  model_type: "LogisticRegression"
+  solver: "lbfgs"
+  C: 1.0
+  max_iter: 1000
+  class_weight: null                  # OvO naturally balanced
+  n_jobs: -1
+  verbose: 0
+
+# --- HYPERPARAMETER TUNING ---
+hyperparameter_optimization:
+  enabled: true                       # Enable hyperparameter optimization
+  method: "GridSearchCV"              # Options: 'GridSearchCV', 'RandomizedSearchCV', 'optuna'
+  
+  # Grid Search Configuration
+  param_grid:
+    C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]  # Regularization strength (discrete values)
+    max_iter: [1000]                  # Maximum iterations
+    solver: ['lbfgs', 'saga']         # Optimization algorithms (add if needed)
+  
+  # Optuna Configuration 
+  optuna:
+    n_trials: 50                      # Number of optimization trials
+    sampler: "TPE"                    # Tree-structured Parzen Estimator (recommended)
+    pruner: null                      # Options: null, 'MedianPruner', 'HyperbandPruner'
+    timeout: null                     # Max optimization time (seconds), null = no limit
+    
+    # Search space (continuous ranges, more flexible than grid)
+    search_space:
+      C:
+        type: "float"
+        range: [0.001, 10.0]
+        log: true                     # Log scale for C (samples more near 0.001)
+      max_iter:
+        type: "categorical"
+        choices: [200, 300, 500, 1000]
+      solver:
+        type: "categorical"
+        choices: ['lbfgs', 'saga']
+    
+    # Advanced Optuna settings
+    direction: "maximize"             # Maximize accuracy
+    show_progress_bar: false          # Disable for cleaner logs
+    n_jobs: 1                         # Sequential for GroupKFold compatibility
+    catch: []                         # Exceptions to catch during trials
+    
+  # Common settings (apply to all methods)
+  scoring: "accuracy"                 # Options: 'accuracy', 'balanced_accuracy', 'f1_weighted'
+  cv_folds: 3                         # Inner CV folds for tuning
+  n_jobs: -1                          # Parallel jobs (GridSearchCV/RandomizedSearchCV)
+  verbose: 1                          # Verbosity level
+  n_iter: 20                          # For RandomizedSearchCV only
+  refit: true                         # Refit best model on full training set
+
+
+# --- EVALUATION METRICS ---
+evaluation:
+  metrics: ["accuracy", "balanced_accuracy", "precision", "recall", "f1_score", 
+            "cohen_kappa", "matthews_corrcoef", "top_5_accuracy", "top_10_accuracy"]
+  confusion_matrix_normalize: false   # Options: false, 'true', 'pred', 'all'
+  compute_per_region: true            # Region-level accuracy
+  compute_network_level: true         # Network-level accuracy (visual, motor, DMN, etc.)
+  analyze_error_distribution: true    # Identify common misclassification patterns
+  save_predictions: true              # Save all predictions to CSV
+  save_probabilities: true            # Save class probabilities
+  save_models: false                  # Large files (~50MB per fold)
+
+
+
+
+# --- STRATEGY COMPARISON (MULTINOMIAL VS OVR VS OVO) ---
+comparison:
+  strategies: ["multinomial", "ovr"]  # Add "ovo" if needed
+  statistical_tests: ["paired_ttest", "pearson_correlation", "mcnemar"]
+  alpha: 0.05                         # Significance threshold
+  correction_method: "fdr_bh"         # Multiple comparison correction: null, 'bonferroni', 'fdr_bh'
+  generate_report: true
+  report_format: "txt"                # Options: 'txt', 'pdf', 'html'
+
+
+# --- HEMISPHERE COMPARISON (LEFT VS RIGHT) ---
+hemisphere_comparison:
+  enabled: true
+  tests: ["independent_ttest", "paired_ttest", "pearsonr"]
+  alpha: 0.05
+
+
+# ---LOGGING CONFIGURATION ---
+logging:
+  level: "INFO"                       # 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  log_to_file: true
+  log_dir: "logs"
+  log_filename_template: "{script_name}_{hemisphere}_{timestamp}.log"
+  log_to_console: true
+
+
+# --- OUTPUT STRUCTURE ---
+output:
+  create_subdirectories: true
+  subdirectory_structure: ["multinomial", "ovr", "ovo", "comparison"]
+  use_timestamps: false               # Add timestamp to filenames
+  timestamp_format: "%Y%m%d_%H%M%S"
+  compress_predictions: false         # Gzip large prediction files
+  compression_format: "gzip"          # Options: 'gzip', 'bz2', 'xz'
+  save_intermediate: true             # Save per-fold results
+  cleanup_temp_files: true
+
+
+# --- REPRODUCIBILITY ---
+reproducibility:
+  random_state: 42                    # Master seed
+  numpy_seed: 42
+  python_seed: 42
+  use_deterministic: true             # Slower but fully reproducible
+  save_environment_info: true         # Save package versions, system info
+  environment_info_file: "environment_info.txt"
+
+# --- DATA VALIDATION CHECKS ---
+validation:
+  check_data_integrity: true          # Verify file existence, correct shapes
+  check_nan: true                     # Detect missing values
+  check_inf: true                     # Detect infinite values
+  check_leakage: true                 # Verify train/test subject separation
+  validate_cv_splits: true            # Confirm GroupKFold behavior
+  check_class_balance: true
+  warn_imbalance_threshold: 0.1       # Warn if any class < 10% of data
+
