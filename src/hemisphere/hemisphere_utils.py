@@ -3,6 +3,9 @@ hemisphere_utils.py
 
 Utility functions for hemisphere-specific data handling and manipulation.
 Works with CSV data in wide format (subject × upper_triangle_connections).
+
+CRITICAL UPDATE: Diagonal values (self-connections) are now removed before
+reshaping to prevent them from being perfect predictors in classification.
 """
 
 import logging
@@ -461,10 +464,14 @@ def create_labels_from_connectivity(
 def prepare_classification_data(
     connectivity: np.ndarray,
     region_info: pd.DataFrame,
-    subject_ids: np.ndarray
+    subject_ids: np.ndarray,
+    remove_diagonal: bool = True
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Prepare data for classification by creating samples and labels.
+    
+    CRITICAL: Removes/zeros diagonal values BEFORE reshaping to prevent
+    self-connections from being perfect predictors of region identity.
     
     Parameters
     ----------
@@ -474,6 +481,10 @@ def prepare_classification_data(
         Region information
     subject_ids : np.ndarray
         Subject identifiers
+    remove_diagonal : bool, default=True
+        If True, set diagonal values to 0 before reshaping.
+        This prevents self-connections (=1.0) from being perfect predictors
+        of region identity, which would artificially inflate accuracy to 100%.
     
     Returns
     -------
@@ -485,13 +496,69 @@ def prepare_classification_data(
         Region ID for each sample
     groups : np.ndarray
         Subject IDs for GroupKFold (n_subjects * n_regions,)
+    
+    Notes
+    -----
+    Without removing diagonals:
+    - Self-connections are always 1.0 (by construction)
+    - Feature vector for region i has 1.0 at position i
+    - This is a perfect predictor → 100% accuracy (trivial solution)
+    
+    After removing diagonals:
+    - Model must learn from actual connectivity patterns
+    - Expected accuracy: 90-95% (realistic performance)
+    - Classification errors reveal genuine confusion patterns
+    
+    Examples
+    --------
+    >>> # Without diagonal removal (WRONG - leads to 100% accuracy)
+    >>> Region_0_features = [1.0, 0.3, 0.5, ...]  # 1.0 at position 0
+    >>> Region_5_features = [0.2, 0.4, 0.6, 0.3, 0.5, 1.0, ...]  # 1.0 at position 5
+    >>> # Model learns: "If feature[i]=1.0, predict region i" → trivial!
+    
+    >>> # With diagonal removal (CORRECT - realistic classification)
+    >>> Region_0_features = [0.0, 0.3, 0.5, ...]  # 0.0 at position 0
+    >>> Region_5_features = [0.2, 0.4, 0.6, 0.3, 0.5, 0.0, ...]  # 0.0 at position 5
+    >>> # Model learns from connectivity patterns → realistic performance
     """
     
     n_subjects, n_regions, _ = connectivity.shape
     n_samples = n_subjects * n_regions
     
+    # CRITICAL: Remove diagonal values BEFORE reshaping
+    # Without this, diagonal=1.0 acts as perfect predictor of region identity
+    if remove_diagonal:
+        logger.info("  Removing diagonal values (self-connections) before classification")
+        logger.info(f"  Original diagonal values (first subject, first 5 regions): "
+                   f"{[connectivity[0, i, i] for i in range(min(5, n_regions))]}")
+        
+        connectivity = connectivity.copy()  # Don't modify original
+        for i in range(n_subjects):
+            np.fill_diagonal(connectivity[i], 0.0)
+        
+        logger.info(f"  After removal (should be all zeros): "
+                   f"{[connectivity[0, i, i] for i in range(min(5, n_regions))]}")
+    else:
+        logger.warning("  ⚠️  Diagonal values NOT removed - self-connections will be perfect predictors!")
+        logger.warning("  ⚠️  This will lead to artificially inflated 100% accuracy!")
+    
     # Reshape connectivity: (n_subjects, n_regions, n_regions) -> (n_samples, n_regions)
     X = connectivity.reshape(n_samples, n_regions)
+    
+    # Verify no feature is constant at 1.0 (would indicate diagonal still present)
+    if remove_diagonal:
+        problematic_features = []
+        for feature_idx in range(n_regions):
+            unique_vals = np.unique(X[:, feature_idx])
+            if len(unique_vals) == 1 and abs(unique_vals[0] - 1.0) < 1e-6:
+                problematic_features.append(feature_idx)
+        
+        if problematic_features:
+            logger.error(f"  ❌ {len(problematic_features)} features are constant at 1.0 - "
+                        f"diagonal removal failed!")
+            logger.error(f"  Problematic features: {problematic_features[:10]}")
+        else:
+            logger.info("  ✅ Diagonal removal verified - no features constant at 1.0")
     
     # Create labels: each sample labeled by its target region
     y = np.tile(np.arange(n_regions), n_subjects)
@@ -505,6 +572,8 @@ def prepare_classification_data(
     logger.info(f"  Groups: {groups.shape}")
     logger.info(f"  Unique labels: {len(np.unique(y))}")
     logger.info(f"  Unique subjects: {len(np.unique(groups))}")
+    logger.info(f"  Feature range: [{X.min():.3f}, {X.max():.3f}]")
+    logger.info(f"  Feature mean: {X.mean():.3f}, std: {X.std():.3f}")
     
     return X, y, groups
 
@@ -602,7 +671,8 @@ if __name__ == "__main__":
             X, y, groups = prepare_classification_data(
                 connectivity=data['connectivity'],
                 region_info=data['region_info'],
-                subject_ids=data['subject_ids']
+                subject_ids=data['subject_ids'],
+                remove_diagonal=True  # CRITICAL: Set to True!
             )
             
             print(f"Classification data ready:")

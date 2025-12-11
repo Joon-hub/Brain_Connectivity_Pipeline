@@ -1,0 +1,13 @@
+{
+  "left_accuracy": 0.904364224137931,
+  "right_accuracy": 0.8640086206896552,
+  "accuracy_difference": 0.04035560344827582,
+  "paired_ttest": {
+    "t_statistic": 5.3383089895664995,
+    "p_value": 0.033345487597552466
+  },
+  "per_region_correlation": {
+    "correlation": 0.5959137223402595,
+    "p_value": 1.7035550046311668e-12
+  }
+}

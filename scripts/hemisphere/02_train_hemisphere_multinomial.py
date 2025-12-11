@@ -20,7 +20,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import GroupKFold, GridSearchCV, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -31,9 +31,8 @@ sys.path.insert(0, str(project_root))
 
 # Import your existing modules
 from src.hemisphere.hemisphere_utils import (
-    load_region_info_from_csv,
-    get_hemisphere_indices,
-    load_hemisphere_data_from_csv
+    load_hemisphere_data,
+    prepare_classification_data
 )
 from src.core.preprocessing import ConnectivityPreprocessor
 from src.evaluation.hemisphere_metrics import (
@@ -82,7 +81,7 @@ def parse_arguments():
     parser.add_argument(
         '--data_dir',
         type=Path,
-        default=project_root / 'data' / 'processed' / 'hemisphere',
+        default=project_root / 'data' / 'processed' / 'hemispheres',
         help='Directory containing hemisphere-specific data'
     )
     
@@ -155,12 +154,29 @@ def parse_arguments():
         help='Print detailed progress information'
     )
     
+    parser.add_argument(
+        '--sample',
+        type=int,
+        default=None,
+        help='Number of subjects to sample for testing (takes first N subjects). If None, uses all subjects.'
+    )
+    
+    parser.add_argument(
+        '--tune_hyperparams',
+        action='store_true',
+        help='Enable hyperparameter tuning using settings from config file'
+    )
+    
     return parser.parse_args()
 
 
 def load_config(config_file: Path) -> dict:
     """Load configuration from YAML file."""
-    import yaml
+    try:
+        import yaml
+    except ImportError:
+        logging.warning("PyYAML not installed. Using default configuration.")
+        return get_default_config()
     
     if config_file.exists():
         with open(config_file, 'r') as f:
@@ -168,18 +184,89 @@ def load_config(config_file: Path) -> dict:
         return config
     else:
         # Return default configuration
-        return {
-            'preprocessing': {
-                'apply_fisher_z': True,
-                'standardize': True,
-                'diagonal_strategy': 'region_mean'
-            },
-            'model': {
-                'solver': 'lbfgs',
-                'max_iter': 1000,
-                'multi_class': 'multinomial'
-            }
+        return get_default_config()
+
+
+def get_default_config() -> dict:
+    """Return default configuration."""
+    return {
+        'preprocessing': {
+            'apply_fisher_z': True,
+            'standardize': True,
+            'diagonal_strategy': 'region_mean'
+        },
+        'model': {
+            'solver': 'lbfgs',
+            'max_iter': 1000,
+            'multi_class': 'multinomial'
         }
+    }
+
+
+def sample_first_n_subjects(
+    data: dict,
+    n_sample: int,
+    logger: logging.Logger
+) -> dict:
+    """
+    Sample first n subjects for testing (deterministic selection).
+    
+    Parameters
+    ----------
+    data : dict
+        Dictionary containing connectivity, subject_ids, region_info, etc.
+    n_sample : int
+        Number of subjects to sample
+    logger : logging.Logger
+        Logger instance
+    
+    Returns
+    -------
+    sampled_data : dict
+        Dictionary with sampled data (first n subjects)
+    """
+    
+    total_subjects = data['n_subjects']
+    
+    # Validate sample size
+    if n_sample > total_subjects:
+        logger.warning(
+            f"Requested sample size ({n_sample}) exceeds available subjects ({total_subjects}). "
+            f"Using all {total_subjects} subjects."
+        )
+        return data
+    
+    if n_sample <= 0:
+        raise ValueError(f"Sample size must be positive, got {n_sample}")
+    
+    logger.info(f"\n{'='*60}")
+    logger.info(f"SAMPLING MODE ACTIVATED")
+    logger.info(f"{'='*60}")
+    logger.info(f"Selecting first {n_sample} subjects out of {total_subjects} available")
+    
+    # Sample connectivity matrices (first n subjects)
+    connectivity_sampled = data['connectivity'][:n_sample]
+    subject_ids_sampled = data['subject_ids'][:n_sample]
+    
+    # Log which subjects were selected
+    logger.info(f"Selected subjects: {', '.join(map(str, subject_ids_sampled[:10]))}" + 
+                (f"... (+{n_sample-10} more)" if n_sample > 10 else ""))
+    
+    # Create sampled data dictionary
+    sampled_data = {
+        'connectivity': connectivity_sampled,
+        'subject_ids': subject_ids_sampled,
+        'region_info': data['region_info'],  # Same for all subjects
+        'hemisphere': data['hemisphere'],
+        'n_subjects': n_sample,  # Update subject count
+        'n_regions': data['n_regions']
+    }
+    
+    logger.info(f"Sampled connectivity shape: {connectivity_sampled.shape}")
+    logger.info(f"Sampled subjects: {len(subject_ids_sampled)}")
+    logger.info(f"{'='*60}\n")
+    
+    return sampled_data
 
 
 def preprocess_fold_data(
@@ -193,14 +280,18 @@ def preprocess_fold_data(
     """
     Preprocess data within a single fold (leak-free).
     
+    NOTE: This function now expects 2D feature matrices (n_samples, n_features)
+    not 3D connectivity matrices. The diagonal imputation should have been
+    done before reshaping if needed, or we skip it here.
+    
     Parameters
     ----------
     X_train : np.ndarray
-        Training connectivity matrices (n_subjects, n_regions, n_regions)
+        Training features (n_train_samples, n_features)
     X_test : np.ndarray
-        Test connectivity matrices (n_subjects, n_regions, n_regions)
+        Test features (n_test_samples, n_features)
     diagonal_strategy : str
-        Strategy for diagonal imputation
+        Strategy for diagonal imputation (NOTE: may not be applicable here)
     region_info : pd.DataFrame
         Region information with network assignments
     hemisphere : str
@@ -216,21 +307,18 @@ def preprocess_fold_data(
         Processed test features (n_test, n_features)
     """
     
-    logger.info(f"  Preprocessing with diagonal_strategy='{diagonal_strategy}'")
+    logger.info(f"  Preprocessing fold data...")
+    logger.info(f"  Input shapes - Train: {X_train.shape}, Test: {X_test.shape}")
     
-    # Initialize preprocessor
-    preprocessor = ConnectivityPreprocessor(
-        diagonal_strategy=diagonal_strategy,
-        apply_fisher_z=True,
-        standardize=True
-    )
+    # Apply Fisher Z-transformation if not already done
+    # (typically should be done on full matrices before reshaping)
+    X_train_processed = np.arctanh(np.clip(X_train, -0.999, 0.999))
+    X_test_processed = np.arctanh(np.clip(X_test, -0.999, 0.999))
     
-    # Fit on training data only
-    preprocessor.fit(X_train, region_info=region_info)
-    
-    # Transform both train and test
-    X_train_processed = preprocessor.transform(X_train)
-    X_test_processed = preprocessor.transform(X_test)
+    # Standardization - fit on training data only
+    scaler = StandardScaler()
+    X_train_processed = scaler.fit_transform(X_train_processed)
+    X_test_processed = scaler.transform(X_test_processed)
     
     # Validate no NaN/Inf
     if np.any(np.isnan(X_train_processed)) or np.any(np.isinf(X_train_processed)):
@@ -238,8 +326,7 @@ def preprocess_fold_data(
     if np.any(np.isnan(X_test_processed)) or np.any(np.isinf(X_test_processed)):
         raise ValueError("NaN or Inf detected in test data after preprocessing")
     
-    logger.info(f"  Training features shape: {X_train_processed.shape}")
-    logger.info(f"  Test features shape: {X_test_processed.shape}")
+    logger.info(f"  Processed shapes - Train: {X_train_processed.shape}, Test: {X_test_processed.shape}")
     
     return X_train_processed, X_test_processed
 
@@ -275,33 +362,60 @@ def train_single_hemisphere(
     output_dir = args.output_dir / f"{hemisphere}_hemisphere" / "multinomial"
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Load data
+    # Load data - FIXED: Use load_hemisphere_data instead of load_hemisphere_data_from_csv
     logger.info("Loading hemisphere-specific data...")
-    data = load_hemisphere_data_from_csv(
+    data = load_hemisphere_data(
         data_dir=args.data_dir,
         hemisphere=hemisphere,
-        dataset='rest'  # or 'task' depending on your needs
+        dataset='rest',  # or 'task' depending on your needs
+        return_matrix=True,
+        validate=True
     )
     
+    # SAMPLE FIRST N SUBJECTS IF SPECIFIED (TESTING MODE)
+    if args.sample is not None:
+        data = sample_first_n_subjects(
+            data=data,
+            n_sample=args.sample,
+            logger=logger
+        )
+        logger.warning(f"⚠️  TESTING MODE: Using first {args.sample} subjects only")
+        logger.warning(f"⚠️  Results are for TESTING purposes - not production-ready!")
+    
     connectivity = data['connectivity']  # (n_subjects, n_regions, n_regions)
-    labels = data['labels']  # (n_subjects,)
     subject_ids = data['subject_ids']  # (n_subjects,)
     region_info = data['region_info']  # DataFrame with region metadata
     
     n_subjects, n_regions, _ = connectivity.shape
-    n_classes = len(np.unique(labels))
     
     logger.info(f"Data loaded:")
     logger.info(f"  Subjects: {n_subjects}")
     logger.info(f"  Regions: {n_regions}")
-    logger.info(f"  Classes: {n_classes}")
     logger.info(f"  Connectivity shape: {connectivity.shape}")
-    logger.info(f"  Labels shape: {labels.shape}")
     
-    # Validate data
-    assert connectivity.shape[1] == connectivity.shape[2], "Connectivity must be square"
-    assert connectivity.shape[0] == len(labels), "Mismatch between connectivity and labels"
-    assert np.all(labels >= 0) and np.all(labels < n_classes), "Invalid label values"
+    # FIXED: Prepare classification data - creates samples and labels
+    logger.info("\nPreparing classification data...")
+    X, y, groups = prepare_classification_data(
+        connectivity=connectivity,
+        region_info=region_info,
+        subject_ids=subject_ids
+    )
+    
+    n_samples = X.shape[0]
+    n_classes = len(np.unique(y))
+    
+    logger.info(f"Classification data prepared:")
+    logger.info(f"  Samples (X): {X.shape}")
+    logger.info(f"  Labels (y): {y.shape}")
+    logger.info(f"  Groups: {groups.shape}")
+    logger.info(f"  Classes: {n_classes}")
+    logger.info(f"  Unique subjects in groups: {len(np.unique(groups))}")
+    
+    # Validate data - FIXED: Check correct shapes
+    assert X.shape[0] == len(y), "Mismatch between X and y"
+    assert X.shape[0] == len(groups), "Mismatch between X and groups"
+    assert np.all(y >= 0) and np.all(y < n_classes), "Invalid label values"
+    assert len(np.unique(groups)) == n_subjects, "Groups should have one entry per subject"
     
     # Set up cross-validation
     logger.info(f"\nSetting up {args.n_folds}-fold GroupKFold cross-validation...")
@@ -319,26 +433,30 @@ def train_single_hemisphere(
     logger.info("\nStarting cross-validation...\n")
     start_time = time.time()
     
-    for fold_idx, (train_idx, test_idx) in enumerate(gkf.split(connectivity, labels, groups=subject_ids)):
+    # FIXED: Split using prepared data (X, y, groups)
+    for fold_idx, (train_idx, test_idx) in enumerate(gkf.split(X, y, groups=groups)):
         fold_start = time.time()
         logger.info(f"Fold {fold_idx + 1}/{args.n_folds}")
-        logger.info(f"  Train subjects: {len(train_idx)}, Test subjects: {len(test_idx)}")
+        logger.info(f"  Train samples: {len(train_idx)}, Test samples: {len(test_idx)}")
         
-        # Split data - CRITICAL: subject-wise split
-        X_train = connectivity[train_idx]
-        X_test = connectivity[test_idx]
-        y_train = labels[train_idx]
-        y_test = labels[test_idx]
+        # Split data - FIXED: Now splitting sample-level data
+        X_train = X[train_idx]
+        X_test = X[test_idx]
+        y_train = y[train_idx]
+        y_test = y[test_idx]
+        groups_train = groups[train_idx]
+        groups_test = groups[test_idx]
         
-        # Verify no subject leakage
-        train_subjects = set(subject_ids[train_idx])
-        test_subjects = set(subject_ids[test_idx])
+        # Verify no subject leakage - FIXED: Check groups (subject IDs)
+        train_subjects = set(groups_train)
+        test_subjects = set(groups_test)
         assert len(train_subjects.intersection(test_subjects)) == 0, "Subject leakage detected!"
         
-        logger.info(f"  Train labels distribution: {np.bincount(y_train).tolist()[:10]}...")
-        logger.info(f"  Test labels distribution: {np.bincount(y_test).tolist()[:10]}...")
+        logger.info(f"  Train subjects: {len(train_subjects)}, Test subjects: {len(test_subjects)}")
+        logger.info(f"  Train labels distribution (first 10): {np.bincount(y_train)[:10].tolist()}")
+        logger.info(f"  Test labels distribution (first 10): {np.bincount(y_test)[:10].tolist()}")
         
-        # Preprocess within fold (LEAK-FREE)
+        # Preprocess within fold (LEAK-FREE) - FIXED: Now receives 2D features
         X_train_processed, X_test_processed = preprocess_fold_data(
             X_train=X_train,
             X_test=X_test,
@@ -351,24 +469,88 @@ def train_single_hemisphere(
         # Train model
         logger.info("  Training multinomial logistic regression...")
         
-        # Determine regularization parameter
-        if args.regularization_C is not None:
-            C = args.regularization_C
+        # Determine if hyperparameter tuning is enabled
+        config = load_config(args.config_file)
+        tune_hyperparams = args.tune_hyperparams and config.get('hyperparameter_optimization', {}).get('enabled', False)
+        
+        if tune_hyperparams:
+            # Hyperparameter tuning enabled
+            hyperparam_config = config['hyperparameter_optimization']
+            logger.info("  Hyperparameter tuning ENABLED")
+            logger.info(f"  Method: {hyperparam_config['method']}")
+            logger.info(f"  Param grid: {hyperparam_config['param_grid']}")
+            
+            # Base model
+            base_model = LogisticRegression(
+                multi_class='multinomial',
+                solver='lbfgs',
+                random_state=args.random_state,
+                n_jobs=1,  # GridSearchCV handles parallelization
+                verbose=0
+            )
+            
+            # Inner CV for hyperparameter tuning
+            inner_cv = GroupKFold(n_splits=hyperparam_config.get('cv_folds', 3))
+            
+            # Prepare inner groups (need to map back to subject IDs for inner split)
+            inner_groups = groups_train
+            
+            # Select search method
+            if hyperparam_config['method'] == 'GridSearchCV':
+                search = GridSearchCV(
+                    estimator=base_model,
+                    param_grid=hyperparam_config['param_grid'],
+                    cv=inner_cv,
+                    scoring=hyperparam_config.get('scoring', 'accuracy'),
+                    n_jobs=hyperparam_config.get('n_jobs', -1),
+                    verbose=hyperparam_config.get('verbose', 1),
+                    refit=hyperparam_config.get('refit', True)
+                )
+            elif hyperparam_config['method'] == 'RandomizedSearchCV':
+                search = RandomizedSearchCV(
+                    estimator=base_model,
+                    param_distributions=hyperparam_config['param_grid'],
+                    n_iter=hyperparam_config.get('n_iter', 20),
+                    cv=inner_cv,
+                    scoring=hyperparam_config.get('scoring', 'accuracy'),
+                    n_jobs=hyperparam_config.get('n_jobs', -1),
+                    verbose=hyperparam_config.get('verbose', 1),
+                    random_state=args.random_state,
+                    refit=hyperparam_config.get('refit', True)
+                )
+            else:
+                raise ValueError(f"Unknown search method: {hyperparam_config['method']}")
+            
+            # Fit the search (nested CV with subject-wise splits)
+            logger.info(f"  Running {hyperparam_config['method']}...")
+            search.fit(X_train_processed, y_train, groups=inner_groups)
+            
+            # Use best model
+            model = search.best_estimator_
+            
+            # Log best parameters
+            logger.info(f"  Best parameters: {search.best_params_}")
+            logger.info(f"  Best inner CV score: {search.best_score_:.4f}")
         else:
-            # Use a reasonable default (you can load from config)
-            C = 1.0
-        
-        model = LogisticRegression(
-            multi_class='multinomial',
-            solver='lbfgs',
-            C=C,
-            max_iter=args.max_iter,
-            random_state=args.random_state,
-            n_jobs=args.n_jobs,
-            verbose=1 if args.verbose else 0
-        )
-        
-        model.fit(X_train_processed, y_train)
+            # No hyperparameter tuning - use fixed C value
+            if args.regularization_C is not None:
+                C = args.regularization_C
+            else:
+                C = 1.0
+            
+            logger.info(f"  Using fixed regularization C={C}")
+            
+            model = LogisticRegression(
+                multi_class='multinomial',
+                solver='lbfgs',
+                C=C,
+                max_iter=args.max_iter,
+                random_state=args.random_state,
+                n_jobs=args.n_jobs,
+                verbose=1 if args.verbose else 0
+            )
+            
+            model.fit(X_train_processed, y_train)
         
         # Predict on test set
         logger.info("  Predicting on test set...")
@@ -380,13 +562,22 @@ def train_single_hemisphere(
         fold_acc = accuracy_score(y_test, y_pred)
         fold_bal_acc = balanced_accuracy_score(y_test, y_pred)
         
-        fold_metrics.append({
+        fold_metric_dict = {
             'fold': fold_idx + 1,
             'accuracy': fold_acc,
             'balanced_accuracy': fold_bal_acc,
             'n_train': len(y_train),
-            'n_test': len(y_test)
-        })
+            'n_test': len(y_test),
+            'n_train_subjects': len(train_subjects),
+            'n_test_subjects': len(test_subjects)
+        }
+        
+        # Add hyperparameter info if tuning was performed
+        if tune_hyperparams:
+            fold_metric_dict['best_params'] = search.best_params_
+            fold_metric_dict['best_inner_cv_score'] = float(search.best_score_)
+        
+        fold_metrics.append(fold_metric_dict)
         
         fold_time = time.time() - fold_start
         logger.info(f"  Fold accuracy: {fold_acc:.4f}")
@@ -404,7 +595,9 @@ def train_single_hemisphere(
                 'fold': fold_idx + 1,
                 'model': model,
                 'train_idx': train_idx,
-                'test_idx': test_idx
+                'test_idx': test_idx,
+                'train_subjects': list(train_subjects),
+                'test_subjects': list(test_subjects)
             })
     
     total_time = time.time() - start_time
@@ -518,6 +711,7 @@ def train_single_hemisphere(
         'n_subjects': n_subjects,
         'n_regions': n_regions,
         'n_classes': n_classes,
+        'n_samples': n_samples,
         'predictions': all_predictions,
         'probabilities': all_probabilities,
         'true_labels': all_true_labels,
@@ -670,6 +864,22 @@ def main():
     logger.info(f"  Diagonal strategy: {args.diagonal_strategy}")
     logger.info(f"  Max iterations: {args.max_iter}")
     logger.info(f"  Save models: {args.save_models}")
+    logger.info(f"  Sample size: {args.sample if args.sample else 'All subjects (full dataset)'}")
+    logger.info(f"  Hyperparameter tuning: {args.tune_hyperparams}")
+    
+    if args.tune_hyperparams:
+        config = load_config(args.config_file)
+        if config.get('hyperparameter_optimization', {}).get('enabled', False):
+            hyperparam_config = config['hyperparameter_optimization']
+            logger.info(f"  Tuning method: {hyperparam_config.get('method', 'GridSearchCV')}")
+            logger.info(f"  Inner CV folds: {hyperparam_config.get('cv_folds', 3)}")
+            logger.info(f"  Param grid: {hyperparam_config.get('param_grid', {})}")
+        else:
+            logger.warning("  Hyperparameter tuning requested but not enabled in config!")
+    
+    if args.sample is not None:
+        logger.warning(f"\n⚠️  TESTING MODE ENABLED: Using only first {args.sample} subjects")
+        logger.warning(f"⚠️  This is NOT a full production run!\n")
     
     try:
         # Train based on hemisphere argument
@@ -687,6 +897,8 @@ def main():
         
         logger.info("\n" + "="*80)
         logger.info("TRAINING COMPLETED SUCCESSFULLY")
+        if args.sample is not None:
+            logger.info(f"(TESTING MODE: Used {args.sample} subjects only)")
         logger.info("="*80)
         
     except Exception as e:

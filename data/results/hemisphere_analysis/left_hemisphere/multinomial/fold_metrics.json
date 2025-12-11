@@ -1,0 +1,29 @@
+[
+  {
+    "fold": 1,
+    "accuracy": 0.8625760649087221,
+    "balanced_accuracy": 0.8625760649087222,
+    "n_train": 3828,
+    "n_test": 1972,
+    "n_train_subjects": 33,
+    "n_test_subjects": 17
+  },
+  {
+    "fold": 2,
+    "accuracy": 0.8275862068965517,
+    "balanced_accuracy": 0.8275862068965517,
+    "n_train": 3828,
+    "n_test": 1972,
+    "n_train_subjects": 33,
+    "n_test_subjects": 17
+  },
+  {
+    "fold": 3,
+    "accuracy": 0.84375,
+    "balanced_accuracy": 0.84375,
+    "n_train": 3944,
+    "n_test": 1856,
+    "n_train_subjects": 34,
+    "n_test_subjects": 16
+  }
+]
