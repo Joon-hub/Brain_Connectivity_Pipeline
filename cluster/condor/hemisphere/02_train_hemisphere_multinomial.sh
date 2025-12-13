@@ -6,7 +6,7 @@ echo "=== Hemisphere Training | Host: $(hostname) | $(date) | CPUs: $(nproc) ===
 # Setup Paths & Variables
 VENV_PATH="${PWD}/masterthesis_venv2/bin/activate"
 CONFIG_FILE="configs/hemisphere_config.yaml"
-HEMISPHERE="left"
+HEMISPHERE="both"
 RESULTS_DIR="data/results/hemisphere_analysis/${HEMISPHERE}_hemisphere/multinomial"
 
 # Check & Activate Venv
@@ -26,14 +26,12 @@ echo "✓ Environment ready. Starting training..."
 
 # Run Training
 python scripts/hemisphere/02_train_hemisphere_multinomial.py \
-    --config "$CONFIG_FILE" \
-    --hemisphere "$HEMISPHERE" \
-    --n_folds 3 \
-    --tune_hyperparams \
-    --tune_method optuna \
-    --optuna_trials 3 \
-    --random_state 42
-    --sample 7
+      --hemisphere both \
+      --tune_hyperparams \
+      --optuna_trials 50 \
+      --n_folds 5 \
+      --test_on_task
+    
 
 EXIT_CODE=$?
 

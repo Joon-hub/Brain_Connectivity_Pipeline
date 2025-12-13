@@ -1,12 +1,25 @@
 {
-  "accuracy": 0.8640086206896552,
-  "balanced_accuracy": 0.8640086206896551,
-  "error_rate": 0.13599137931034477,
-  "precision": 0.87237426608674,
-  "recall": 0.8640086206896552,
-  "f1_score": 0.867466180774662,
-  "cohen_kappa": 0.8628260869565217,
-  "matthews_corrcoef": 0.8628444371491621,
-  "top_5_accuracy": 0.9670258620689656,
-  "top_10_accuracy": 0.985301724137931
+  "accuracy": 0.9135621921182266,
+  "balanced_accuracy": 0.9135621921182265,
+  "error_rate": 0.08643780788177335,
+  "precision": 0.9168810961801005,
+  "recall": 0.9135621921182266,
+  "f1_score": 0.914946866110722,
+  "cohen_kappa": 0.9128105590062112,
+  "matthews_corrcoef": 0.9128164490184398,
+  "top_5_accuracy": 0.9820658866995073,
+  "top_10_accuracy": 0.9923029556650246,
+  "best_hyperparameters": {
+    "C": 0.2993509795709992,
+    "max_iter": 200,
+    "solver": "lbfgs",
+    "_optuna_best_score": 0.9289974985568598,
+    "_optuna_n_trials": 50,
+    "_optuna_time_seconds": 1147.182698249817
+  },
+  "preprocessing": {
+    "diagonal_strategy": "region_mean",
+    "fisher_z_applied": true,
+    "standardize_per_fold": true
+  }
 }

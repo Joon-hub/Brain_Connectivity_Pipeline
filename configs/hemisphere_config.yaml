@@ -1,6 +1,11 @@
-# ---------------------------------------------------------------
+# ===============================================================================
 # HEMISPHERE-SPECIFIC BRAIN REGION CLASSIFICATION CONFIGURATION
-# ---------------------------------------------------------------
+# ===============================================================================
+# Updated to match new preprocessing flow:
+#   1. Diagonal imputation + Fisher Z BEFORE cross-validation
+#   2. StandardScaler on full dataset for Optuna
+#   3. StandardScaler within CV folds (leak-free)
+# ===============================================================================
 
 # --- GLOBAL SETTINGS ---
 data:
@@ -14,182 +19,262 @@ data:
 
 reproducibility:
   random_state: 42
+  numpy_seed: 42
+  python_seed: 42
   use_deterministic: true
   save_env_info: true
 
-logging: {level: "INFO", log_to_file: true, log_to_console: true}
-computation: {n_jobs: -1, memory_efficient: true, use_gpu: false}
+logging:
+  level: "INFO"
+  log_to_file: true
+  log_to_console: true
 
-# --- Cross-validation ---
+computation:
+  n_jobs: -1
+  memory_efficient: true
+  use_gpu: false
+
+
+# --- PREPROCESSING ---
+# NOTE: Preprocessing now happens in stages:
+#   1. Diagonal imputation + Fisher Z → Applied ONCE before CV
+#   2. StandardScaler → Applied on full data for Optuna, then within each CV fold
+preprocessing:
+  # Stage 1: Applied ONCE to full dataset before CV
+  diagonal_imputation:
+    enabled: true
+    strategy: "region_mean"           # Options: 'zero', 'region_mean', 'network_mean', 'global_mean'
+    
+  fisher_z_transformation:
+    enabled: true
+    clip_values: true
+    clip_range: [-0.999, 0.999]       # Prevent arctanh overflow
+  
+  # Stage 2: StandardScaler behavior
+  standardization:
+    enabled: true
+    for_optuna: true                  # Scale full dataset for Optuna
+    per_fold: true                    # Re-scale within each CV fold (leak-free)
+  
+  # Feature selection (currently not implemented)
+  feature_selection:
+    enabled: false
+    method: null                      # Options: null, 'variance_threshold', 'mutual_info'
+    variance_threshold: 0.01
+
+
+# --- CROSS-VALIDATION ---
 cross_validation:
-  strategy: "GroupKFold"
-  n_folds: 3
+  strategy: "GroupKFold"              # Prevents subject leakage
+  n_folds: 5                          # Number of CV folds (use 3 for testing)
   random_state: 42
 
-# --- Preprocessing ---
-preprocessing:
-  apply_fisher_z: true
-  diagonal_strategy: "region_mean" # zero, region_mean, network_mean
-  standardize: true
-  feature_selection: null          # Options: null, 'variance_threshold', 'mutual_info'
-  variance_threshold: 0.01         # Only if feature_selection enabled
 
-
-# --- MODEL CONFIGURATIONS ---
-multinomial:
-  model_type: "LogisticRegression"
+# --- MODEL CONFIGURATION ---
+model:
+  type: "LogisticRegression"
   multi_class: "multinomial"          # 116-class softmax classifier
-  solver: "lbfgs"                     # Options: 'lbfgs', 'sag', 'saga', 'newton-cg'
-  C: 1.0                              # Inverse regularization strength (null = auto-optimize)
   penalty: "l2"                       # L2 regularization
-  max_iter: 1000                      # Maximum optimization iterations
   tol: 0.0001                         # Convergence tolerance
   class_weight: null                  # Options: null, 'balanced'
-  n_jobs: -1                          # Use all CPU cores
-  verbose: 0                          # Suppress iteration logs
-  warm_start: false                   # Don't reuse previous solution
-
-ovr:
-  model_type: "LogisticRegression"
-  solver: "lbfgs"
-  C: 1.0
-  max_iter: 1000
-  class_weight: "balanced"            # Critical for 1-vs-115 imbalance
-  n_jobs: -1
-  verbose: 0
-  aggregation_method: "max_decision"  # 'max_decision' or 'calibrated_proba'
-
-ovo:
-  selection_strategy: "error_driven"  # Options: 'error_driven', 'network_focused', 'spatial', 'all_pairs', 'custom'
-  max_pairs: 200                      # Limit for computational efficiency
-  confusion_threshold: 0.05           # Min confusion rate to analyze pair
-  spatial_distance_threshold: 30.0    # Max distance (mm) for 'spatial' strategy
-  custom_pairs_file: null             # CSV with region_id_1, region_id_2 columns
+  warm_start: false
   
-  model_type: "LogisticRegression"
-  solver: "lbfgs"
-  C: 1.0
-  max_iter: 1000
-  class_weight: null                  # OvO naturally balanced
-  n_jobs: -1
-  verbose: 0
+  # Default hyperparameters (used if tuning disabled)
+  default_params:
+    C: 1.0                            # Inverse regularization strength
+    solver: "lbfgs"                   # Options: 'lbfgs', 'sag', 'saga', 'newton-cg'
+    max_iter: 1000                    # Maximum optimization iterations
+    n_jobs: -1                        # Use all CPU cores
+    verbose: 0                        # Suppress iteration logs
 
-# --- HYPERPARAMETER TUNING ---
+
+# --- HYPERPARAMETER OPTIMIZATION ---
 hyperparameter_optimization:
-  enabled: true                       # Enable hyperparameter optimization
-  method: "GridSearchCV"              # Options: 'GridSearchCV', 'RandomizedSearchCV', 'optuna'
+  enabled: true                       # Enable hyperparameter tuning
+  method: "optuna"                    # Only 'optuna' supported in new version
   
-  # Grid Search Configuration
-  param_grid:
-    C: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]  # Regularization strength (discrete values)
-    max_iter: [1000]                  # Maximum iterations
-    solver: ['lbfgs', 'saga']         # Optimization algorithms (add if needed)
-  
-  # Optuna Configuration 
   optuna:
     n_trials: 50                      # Number of optimization trials
-    sampler: "TPE"                    # Tree-structured Parzen Estimator (recommended)
-    pruner: null                      # Options: null, 'MedianPruner', 'HyperbandPruner'
-    timeout: null                     # Max optimization time (seconds), null = no limit
+    sampler: "TPE"                    # Tree-structured Parzen Estimator
     
-    # Search space (continuous ranges, more flexible than grid)
+    # Search space for hyperparameters
     search_space:
       C:
         type: "float"
         range: [0.001, 10.0]
-        log: true                     # Log scale for C (samples more near 0.001)
+        log: true                     # Log scale for better exploration
+      
       max_iter:
         type: "categorical"
-        choices: [200, 300, 500, 1000]
+        choices: [200, 500, 1000]
+      
       solver:
         type: "categorical"
-        choices: ['lbfgs', 'saga']
+        choices: ["lbfgs", "saga"]
     
-    # Advanced Optuna settings
+    # Optuna settings
     direction: "maximize"             # Maximize accuracy
-    show_progress_bar: false          # Disable for cleaner logs
-    n_jobs: 1                         # Sequential for GroupKFold compatibility
-    catch: []                         # Exceptions to catch during trials
+    show_progress_bar: false          # Cleaner logs
+    timeout: null                     # No time limit
     
-  # Common settings (apply to all methods)
-  scoring: "accuracy"                 # Options: 'accuracy', 'balanced_accuracy', 'f1_weighted'
-  cv_folds: 3                         # Inner CV folds for tuning
-  n_jobs: -1                          # Parallel jobs (GridSearchCV/RandomizedSearchCV)
-  verbose: 1                          # Verbosity level
-  n_iter: 20                          # For RandomizedSearchCV only
-  refit: true                         # Refit best model on full training set
+    # Evaluation method
+    evaluation:
+      method: "simple_split"          # Simple train/test split (no inner CV)
+      test_size: 0.2                  # 80/20 split
+      stratify: true                  # Maintain class balance
+      random_state: 42
+    
+    # Logging
+    verbose: true
+    log_trials: true
+    save_study: false                 # Don't save Optuna study object
 
 
 # --- EVALUATION METRICS ---
 evaluation:
-  metrics: ["accuracy", "balanced_accuracy", "precision", "recall", "f1_score", 
-            "cohen_kappa", "matthews_corrcoef", "top_5_accuracy", "top_10_accuracy"]
-  confusion_matrix_normalize: false   # Options: false, 'true', 'pred', 'all'
+  metrics:
+    - "accuracy"
+    - "balanced_accuracy"
+    - "top_5_accuracy"
+    - "top_10_accuracy"
+  
   compute_per_region: true            # Region-level accuracy
-  compute_network_level: true         # Network-level accuracy (visual, motor, DMN, etc.)
-  analyze_error_distribution: true    # Identify common misclassification patterns
-  save_predictions: true              # Save all predictions to CSV
-  save_probabilities: true            # Save class probabilities
-  save_models: false                  # Large files (~50MB per fold)
-
-
-
-
-# --- STRATEGY COMPARISON (MULTINOMIAL VS OVR VS OVO) ---
-comparison:
-  strategies: ["multinomial", "ovr"]  # Add "ovo" if needed
-  statistical_tests: ["paired_ttest", "pearson_correlation", "mcnemar"]
-  alpha: 0.05                         # Significance threshold
-  correction_method: "fdr_bh"         # Multiple comparison correction: null, 'bonferroni', 'fdr_bh'
-  generate_report: true
-  report_format: "txt"                # Options: 'txt', 'pdf', 'html'
-
-
-# --- HEMISPHERE COMPARISON (LEFT VS RIGHT) ---
-hemisphere_comparison:
-  enabled: true
-  tests: ["independent_ttest", "paired_ttest", "pearsonr"]
-  alpha: 0.05
-
-
-# ---LOGGING CONFIGURATION ---
-logging:
-  level: "INFO"                       # 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
-  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  log_to_file: true
-  log_dir: "logs"
-  log_filename_template: "{script_name}_{hemisphere}_{timestamp}.log"
-  log_to_console: true
+  compute_network_level: true         # Network-level accuracy
+  
+  confusion_matrix:
+    compute: true
+    normalize: false                  # Options: false, 'true', 'pred', 'all'
+  
+  save_outputs:
+    predictions: true                 # Save CV predictions
+    probabilities: true               # Save class probabilities
+    models: false                     # Don't save models (large files)
+    fold_indices: true                # Save which samples in which fold
 
 
 # --- OUTPUT STRUCTURE ---
 output:
   create_subdirectories: true
-  subdirectory_structure: ["multinomial", "ovr", "ovo", "comparison"]
-  use_timestamps: false               # Add timestamp to filenames
+  subdirectory_structure:
+    - "multinomial"
+    - "ovr"
+    - "ovo"
+    - "comparison"
+  
+  use_timestamps: false
   timestamp_format: "%Y%m%d_%H%M%S"
-  compress_predictions: false         # Gzip large prediction files
-  compression_format: "gzip"          # Options: 'gzip', 'bz2', 'xz'
-  save_intermediate: true             # Save per-fold results
-  cleanup_temp_files: true
+  
+  file_formats:
+    metrics: "json"
+    predictions: "npy"
+    probabilities: "npy"
+    per_region_metrics: "csv"
+    network_metrics: "csv"
+  
+  compression:
+    enabled: false
+    format: "gzip"                    # Options: 'gzip', 'bz2', 'xz'
 
 
-# --- REPRODUCIBILITY ---
-reproducibility:
-  random_state: 42                    # Master seed
-  numpy_seed: 42
-  python_seed: 42
-  use_deterministic: true             # Slower but fully reproducible
-  save_environment_info: true         # Save package versions, system info
-  environment_info_file: "environment_info.txt"
+# --- VISUALIZATION ---
+visualization:
+  confusion_matrix:
+    enabled: true
+    format: "png"
+    dpi: 300
+    show_network_boundaries: true
+  
+  per_region_accuracy:
+    enabled: true
+    format: "png"
+    dpi: 300
+    sort_by: "network"                # Options: 'network', 'accuracy', 'region_id'
+  
+  network_accuracy:
+    enabled: true
+    format: "png"
+    dpi: 300
 
-# --- DATA VALIDATION CHECKS ---
+
+# --- HEMISPHERE COMPARISON ---
+hemisphere_comparison:
+  enabled: true
+  
+  statistical_tests:
+    - "paired_ttest"                  # Compare fold accuracies
+    - "pearsonr"                      # Correlate per-region accuracies
+  
+  alpha: 0.05                         # Significance threshold
+  
+  visualizations:
+    - "accuracy_comparison"           # Bar plot
+    - "per_region_scatter"            # Scatter plot of accuracies
+
+
+# --- VALIDATION CHECKS ---
 validation:
-  check_data_integrity: true          # Verify file existence, correct shapes
+  # Data integrity
+  check_data_integrity: true          # Verify file existence, shapes
   check_nan: true                     # Detect missing values
   check_inf: true                     # Detect infinite values
+  
+  # Cross-validation integrity
   check_leakage: true                 # Verify train/test subject separation
   validate_cv_splits: true            # Confirm GroupKFold behavior
+  
+  # Class balance
   check_class_balance: true
   warn_imbalance_threshold: 0.1       # Warn if any class < 10% of data
 
+
+# --- ADVANCED SETTINGS ---
+advanced:
+  # Memory management
+  memory_efficient_mode: true
+  batch_processing: false
+  
+  # Debugging
+  save_intermediate_results: true
+  cleanup_temp_files: true
+  
+  # Performance monitoring
+  profile_performance: false
+  track_memory_usage: false
+
+
+# ===============================================================================
+# NOTES FOR USERS
+# ===============================================================================
+# 
+# PREPROCESSING FLOW:
+#   1. Load connectivity matrices
+#   2. Apply diagonal imputation (ONCE, before CV)
+#   3. Apply Fisher Z transformation (ONCE, before CV)
+#   4. Flatten to features
+#   5. [If tuning] Scale full dataset → Run Optuna → Get best hyperparameters
+#   6. Cross-validation: Scale within each fold (leak-free) → Train → Evaluate
+#
+# HYPERPARAMETER TUNING:
+#   - Optuna runs on the FULL SCALED dataset
+#   - Uses simple 80/20 split (no inner CV for speed)
+#   - Selected hyperparameters used in all CV folds
+#   - Final evaluation still uses proper fold-wise scaling
+#
+# TYPICAL USAGE:
+#   
+#   Testing mode (7 subjects, 3 trials, 3 folds):
+#   python scripts/hemisphere/02_train_hemisphere_multinomial.py \
+#       --hemisphere left \
+#       --sample 7 \
+#       --tune_hyperparams \
+#       --optuna_trials 3 \
+#       --n_folds 3
+#   
+#   Production mode (all subjects, 50 trials, 5 folds):
+#   python scripts/hemisphere/02_train_hemisphere_multinomial.py \
+#       --hemisphere left \
+#       --tune_hyperparams \
+#       --optuna_trials 50 \
+#       --n_folds 5
+#
+# ===============================================================================

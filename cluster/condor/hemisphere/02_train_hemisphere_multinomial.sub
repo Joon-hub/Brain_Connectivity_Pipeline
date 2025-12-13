@@ -9,14 +9,14 @@ should_transfer_files = IF_NEEDED
 when_to_transfer_output = ON_EXIT
 
 # Resources for Job 
-request_cpus = 16             
-request_memory = 16GB
+request_cpus = 32             
+request_memory = 128GB
 request_disk = 5GB
 
 # Log files
-output = logs/hemisphere_multinomial_left.out
-error = logs/hemisphere_multinomial_left.err
-log = logs/hemisphere_multinomial_left.log
+output = logs/hemisphere_multinomial.out
+error = logs/hemisphere_multinomial.err
+log = logs/hemisphere_multinomial.log
 
 # Single job - processes both datasets
 queue 1
