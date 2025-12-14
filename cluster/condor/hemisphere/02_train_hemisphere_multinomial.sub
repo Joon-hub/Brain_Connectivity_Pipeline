@@ -14,9 +14,9 @@ request_memory = 128GB
 request_disk = 5GB
 
 # Log files
-output = logs/hemisphere_multinomial.out
-error = logs/hemisphere_multinomial.err
-log = logs/hemisphere_multinomial.log
+output = logs/02_hemisphere_multinomial.out
+error = logs/02_hemisphere_multinomial.err
+log = logs/02_hemisphere_multinomial.log
 
 # Single job - processes both datasets
 queue 1

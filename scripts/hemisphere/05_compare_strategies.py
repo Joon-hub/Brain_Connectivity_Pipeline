@@ -4,7 +4,7 @@
 Compare classification performance across different strategies:
 - Multinomial logistic regression (baseline)
 - One-vs-Rest (OvR) - region discriminability
-- One-vs-One (OvO) - pairwise confusability (if available)
+- One-vs-One (OvO) - pairwise confusability
 
 Generates comprehensive comparison tables, figures, and statistical analyses.
 
@@ -12,9 +12,6 @@ Usage:
     python scripts/hemisphere/05_compare_strategies.py --hemisphere left
     python scripts/hemisphere/05_compare_strategies.py --hemisphere right
     python scripts/hemisphere/05_compare_strategies.py --hemisphere both
-
-Author: Joon
-Date: 2024
 """
 
 import argparse
@@ -30,6 +27,11 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sns
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+
+warnings.filterwarnings("ignore", category=ConvergenceWarning)
+
 
 # Add project root to path
 project_root = Path(__file__).resolve().parents[2]
@@ -133,46 +135,39 @@ def load_strategy_results(
     results = {'strategy': strategy, 'hemisphere': hemisphere}
     
     try:
-        # Load overall metrics
-        metrics_file = strategy_dir / f"{strategy}_overall_metrics.json" if strategy != 'multinomial' else strategy_dir / "overall_metrics.json"
+        # Load overall metrics (all strategies use same filename)
+        metrics_file = strategy_dir / "overall_metrics.json"
         if metrics_file.exists():
             with open(metrics_file, 'r') as f:
                 results['overall_metrics'] = json.load(f)
+        else:
+            logger.warning(f"    Overall metrics not found: {metrics_file}")
         
-        # Load per-region metrics
-        if strategy == 'multinomial':
-            per_region_file = strategy_dir / "per_region_metrics.csv"
-        elif strategy == 'ovr':
-            per_region_file = strategy_dir / "ovr_per_region_metrics.csv"
-        else:  # ovo
-            per_region_file = strategy_dir / "ovo_pair_summary.csv"
-        
+        # Load per-region metrics (all strategies use same filename)
+        per_region_file = strategy_dir / "per_region_metrics.csv"
         if per_region_file.exists():
             results['per_region_metrics'] = pd.read_csv(per_region_file)
-        
-        # Load predictions
-        if strategy == 'multinomial':
-            pred_file = strategy_dir / "cv_predictions.npy"
         else:
-            pred_file = strategy_dir / f"{strategy}_predictions.npy"
+            logger.warning(f"    Per-region metrics not found: {per_region_file}")
         
+        # Load predictions (all strategies use same filename)
+        pred_file = strategy_dir / "cv_predictions.npy"
         if pred_file.exists():
             results['predictions'] = np.load(pred_file)
-        
-        # Load true labels
-        if strategy == 'multinomial':
-            labels_file = strategy_dir / "cv_true_labels.npy"
         else:
-            labels_file = strategy_dir / f"{strategy}_true_labels.npy"
+            logger.warning(f"    Predictions not found: {pred_file}")
         
+        # Load true labels (all strategies use same filename)
+        labels_file = strategy_dir / "cv_true_labels.npy"
         if labels_file.exists():
             results['true_labels'] = np.load(labels_file)
+        else:
+            logger.warning(f"    True labels not found: {labels_file}")
         
-        # Load confusion matrix (multinomial only)
-        if strategy == 'multinomial':
-            cm_file = strategy_dir / "confusion_matrix.npy"
-            if cm_file.exists():
-                results['confusion_matrix'] = np.load(cm_file)
+        # Load confusion matrix (all strategies have this)
+        cm_file = strategy_dir / "confusion_matrix.npy"
+        if cm_file.exists():
+            results['confusion_matrix'] = np.load(cm_file)
         
         logger.info(f"    Successfully loaded {strategy.upper()} results")
         
@@ -247,6 +242,7 @@ def compare_overall_performance(
     
     if 'OvO' in comparison_df.columns:
         comparison_df['OvO - Multinomial'] = comparison_df['OvO'] - comparison_df['Multinomial']
+        comparison_df['OvO - OvR'] = comparison_df['OvO'] - comparison_df['OvR']
     
     logger.info("\nOverall Performance Comparison:")
     logger.info("\n" + comparison_df.to_string(index=False))
@@ -257,10 +253,11 @@ def compare_overall_performance(
 def compare_per_region_performance(
     multinomial_results: Dict,
     ovr_results: Dict,
+    ovo_results: Optional[Dict],
     logger: logging.Logger
 ) -> pd.DataFrame:
     """
-    Compare per-region performance between multinomial and OvR.
+    Compare per-region performance across strategies.
     
     Parameters
     ----------
@@ -268,6 +265,8 @@ def compare_per_region_performance(
         Multinomial results
     ovr_results : dict
         OvR results
+    ovo_results : dict, optional
+        OvO results
     logger : logging.Logger
         Logger instance
     
@@ -283,28 +282,40 @@ def compare_per_region_performance(
     multi_per_region = multinomial_results['per_region_metrics'].copy()
     ovr_per_region = ovr_results['per_region_metrics'].copy()
     
-    # Merge on region_id
+    # Merge multinomial and OvR
     comparison = pd.merge(
         multi_per_region[['region_id', 'region_name', 'network', 'accuracy']],
-        ovr_per_region[['region_id', 'mean_accuracy']],
+        ovr_per_region[['region_id', 'accuracy']],
         on='region_id',
         how='inner',
         suffixes=('_multinomial', '_ovr')
     )
     
-    # Rename OvR column
-    comparison = comparison.rename(columns={'mean_accuracy': 'accuracy_ovr'})
+    # Add OvO if available
+    if ovo_results is not None and 'per_region_metrics' in ovo_results:
+        ovo_per_region = ovo_results['per_region_metrics'].copy()
+        comparison = pd.merge(
+            comparison,
+            ovo_per_region[['region_id', 'accuracy']],
+            on='region_id',
+            how='inner'
+        )
+        comparison = comparison.rename(columns={'accuracy': 'accuracy_ovo'})
     
-    # Calculate difference
+    # Calculate differences
     comparison['ovr_advantage'] = comparison['accuracy_ovr'] - comparison['accuracy_multinomial']
     
-    # Correlation
+    if 'accuracy_ovo' in comparison.columns:
+        comparison['ovo_advantage'] = comparison['accuracy_ovo'] - comparison['accuracy_multinomial']
+        comparison['ovo_vs_ovr'] = comparison['accuracy_ovo'] - comparison['accuracy_ovr']
+    
+    # Multinomial vs OvR correlation
     corr, p_value = stats.pearsonr(
         comparison['accuracy_multinomial'],
         comparison['accuracy_ovr']
     )
     
-    logger.info(f"  Pearson correlation: r = {corr:.4f}, p = {p_value:.4f}")
+    logger.info(f"  Multinomial vs OvR correlation: r = {corr:.4f}, p = {p_value:.4f}")
     
     # Paired t-test
     t_stat, t_pvalue = stats.ttest_rel(
@@ -312,12 +323,44 @@ def compare_per_region_performance(
         comparison['accuracy_multinomial']
     )
     
-    logger.info(f"  Paired t-test: t = {t_stat:.4f}, p = {t_pvalue:.4f}")
+    logger.info(f"  Multinomial vs OvR paired t-test: t = {t_stat:.4f}, p = {t_pvalue:.4f}")
+    
+    # OvO comparisons if available
+    if 'accuracy_ovo' in comparison.columns:
+        # Multinomial vs OvO
+        corr_ovo, p_ovo = stats.pearsonr(
+            comparison['accuracy_multinomial'],
+            comparison['accuracy_ovo']
+        )
+        logger.info(f"  Multinomial vs OvO correlation: r = {corr_ovo:.4f}, p = {p_ovo:.4f}")
+        
+        t_stat_ovo, t_pvalue_ovo = stats.ttest_rel(
+            comparison['accuracy_ovo'],
+            comparison['accuracy_multinomial']
+        )
+        logger.info(f"  Multinomial vs OvO paired t-test: t = {t_stat_ovo:.4f}, p = {t_pvalue_ovo:.4f}")
+        
+        # OvR vs OvO
+        corr_ovr_ovo, p_ovr_ovo = stats.pearsonr(
+            comparison['accuracy_ovr'],
+            comparison['accuracy_ovo']
+        )
+        logger.info(f"  OvR vs OvO correlation: r = {corr_ovr_ovo:.4f}, p = {p_ovr_ovo:.4f}")
+        
+        t_stat_ovr_ovo, t_pvalue_ovr_ovo = stats.ttest_rel(
+            comparison['accuracy_ovo'],
+            comparison['accuracy_ovr']
+        )
+        logger.info(f"  OvR vs OvO paired t-test: t = {t_stat_ovr_ovo:.4f}, p = {t_pvalue_ovr_ovo:.4f}")
     
     # Summary statistics
     logger.info(f"  Mean multinomial accuracy: {comparison['accuracy_multinomial'].mean():.4f}")
     logger.info(f"  Mean OvR accuracy: {comparison['accuracy_ovr'].mean():.4f}")
     logger.info(f"  Mean OvR advantage: {comparison['ovr_advantage'].mean():.4f}")
+    
+    if 'accuracy_ovo' in comparison.columns:
+        logger.info(f"  Mean OvO accuracy: {comparison['accuracy_ovo'].mean():.4f}")
+        logger.info(f"  Mean OvO advantage: {comparison['ovo_advantage'].mean():.4f}")
     
     return comparison
 
@@ -325,6 +368,7 @@ def compare_per_region_performance(
 def analyze_error_patterns(
     multinomial_results: Dict,
     ovr_results: Dict,
+    ovo_results: Optional[Dict],
     logger: logging.Logger
 ) -> Dict:
     """
@@ -336,6 +380,8 @@ def analyze_error_patterns(
         Multinomial results
     ovr_results : dict
         OvR results
+    ovo_results : dict, optional
+        OvO results
     logger : logging.Logger
         Logger instance
     
@@ -363,7 +409,7 @@ def analyze_error_patterns(
     logger.info(f"  Multinomial errors: {n_errors_multi} ({n_errors_multi/len(y_true)*100:.2f}%)")
     logger.info(f"  OvR errors: {n_errors_ovr} ({n_errors_ovr/len(y_true)*100:.2f}%)")
     
-    # Error overlap analysis
+    # Error overlap analysis (Multinomial vs OvR)
     errors_both = errors_multi & errors_ovr
     errors_only_multi = errors_multi & ~errors_ovr
     errors_only_ovr = ~errors_multi & errors_ovr
@@ -374,37 +420,87 @@ def analyze_error_patterns(
     n_errors_only_ovr = np.sum(errors_only_ovr)
     n_correct_both = np.sum(correct_both)
     
-    logger.info(f"\nError Overlap:")
+    logger.info(f"\nError Overlap (Multinomial vs OvR):")
     logger.info(f"  Errors in both: {n_errors_both} ({n_errors_both/len(y_true)*100:.2f}%)")
     logger.info(f"  Errors only in multinomial: {n_errors_only_multi} ({n_errors_only_multi/len(y_true)*100:.2f}%)")
     logger.info(f"  Errors only in OvR: {n_errors_only_ovr} ({n_errors_only_ovr/len(y_true)*100:.2f}%)")
     logger.info(f"  Correct in both: {n_correct_both} ({n_correct_both/len(y_true)*100:.2f}%)")
     
-    # McNemar's test
-    # Contingency table: [[both_correct, ovr_error_multi_correct], [multi_error_ovr_correct, both_error]]
-    contingency = np.array([
+    # McNemar's test (Multinomial vs OvR)
+    contingency_multi_ovr = np.array([
         [n_correct_both, n_errors_only_ovr],
         [n_errors_only_multi, n_errors_both]
     ])
     
     from statsmodels.stats.contingency_tables import mcnemar
-    result = mcnemar(contingency, exact=True)
+    result_multi_ovr = mcnemar(contingency_multi_ovr, exact=True)
     
-    logger.info(f"\nMcNemar's Test:")
-    logger.info(f"  Statistic: {result.statistic:.4f}")
-    logger.info(f"  p-value: {result.pvalue:.4f}")
+    logger.info(f"\nMcNemar's Test (Multinomial vs OvR):")
+    logger.info(f"  Statistic: {result_multi_ovr.statistic:.4f}")
+    logger.info(f"  p-value: {result_multi_ovr.pvalue:.4f}")
     
     error_analysis = {
         'n_errors_multi': int(n_errors_multi),
         'n_errors_ovr': int(n_errors_ovr),
-        'n_errors_both': int(n_errors_both),
+        'n_errors_both_multi_ovr': int(n_errors_both),
         'n_errors_only_multi': int(n_errors_only_multi),
         'n_errors_only_ovr': int(n_errors_only_ovr),
-        'n_correct_both': int(n_correct_both),
-        'mcnemar_statistic': float(result.statistic),
-        'mcnemar_pvalue': float(result.pvalue),
-        'contingency_table': contingency.tolist()
+        'n_correct_both_multi_ovr': int(n_correct_both),
+        'mcnemar_statistic_multi_ovr': float(result_multi_ovr.statistic),
+        'mcnemar_pvalue_multi_ovr': float(result_multi_ovr.pvalue),
+        'contingency_table_multi_ovr': contingency_multi_ovr.tolist()
     }
+    
+    # OvO analysis if available
+    if ovo_results is not None and 'predictions' in ovo_results:
+        y_pred_ovo = ovo_results['predictions']
+        errors_ovo = y_true != y_pred_ovo
+        n_errors_ovo = np.sum(errors_ovo)
+        
+        logger.info(f"  OvO errors: {n_errors_ovo} ({n_errors_ovo/len(y_true)*100:.2f}%)")
+        
+        # Multinomial vs OvO
+        errors_both_multi_ovo = errors_multi & errors_ovo
+        errors_only_multi_ovo = errors_multi & ~errors_ovo
+        errors_only_ovo = ~errors_multi & errors_ovo
+        correct_both_multi_ovo = ~errors_multi & ~errors_ovo
+        
+        contingency_multi_ovo = np.array([
+            [np.sum(correct_both_multi_ovo), np.sum(errors_only_ovo)],
+            [np.sum(errors_only_multi_ovo), np.sum(errors_both_multi_ovo)]
+        ])
+        
+        result_multi_ovo = mcnemar(contingency_multi_ovo, exact=True)
+        
+        logger.info(f"\nMcNemar's Test (Multinomial vs OvO):")
+        logger.info(f"  Statistic: {result_multi_ovo.statistic:.4f}")
+        logger.info(f"  p-value: {result_multi_ovo.pvalue:.4f}")
+        
+        # OvR vs OvO
+        errors_both_ovr_ovo = errors_ovr & errors_ovo
+        errors_only_ovr_ovo = errors_ovr & ~errors_ovo
+        errors_only_ovo_ovr = ~errors_ovr & errors_ovo
+        correct_both_ovr_ovo = ~errors_ovr & ~errors_ovo
+        
+        contingency_ovr_ovo = np.array([
+            [np.sum(correct_both_ovr_ovo), np.sum(errors_only_ovo_ovr)],
+            [np.sum(errors_only_ovr_ovo), np.sum(errors_both_ovr_ovo)]
+        ])
+        
+        result_ovr_ovo = mcnemar(contingency_ovr_ovo, exact=True)
+        
+        logger.info(f"\nMcNemar's Test (OvR vs OvO):")
+        logger.info(f"  Statistic: {result_ovr_ovo.statistic:.4f}")
+        logger.info(f"  p-value: {result_ovr_ovo.pvalue:.4f}")
+        
+        # Add OvO to error analysis
+        error_analysis.update({
+            'n_errors_ovo': int(n_errors_ovo),
+            'mcnemar_statistic_multi_ovo': float(result_multi_ovo.statistic),
+            'mcnemar_pvalue_multi_ovo': float(result_multi_ovo.pvalue),
+            'mcnemar_statistic_ovr_ovo': float(result_ovr_ovo.statistic),
+            'mcnemar_pvalue_ovr_ovo': float(result_ovr_ovo.pvalue)
+        })
     
     return error_analysis
 
@@ -412,6 +508,7 @@ def analyze_error_patterns(
 def create_comparison_visualizations(
     multinomial_results: Dict,
     ovr_results: Dict,
+    ovo_results: Optional[Dict],
     per_region_comparison: pd.DataFrame,
     error_analysis: Dict,
     output_dir: Path,
@@ -427,6 +524,8 @@ def create_comparison_visualizations(
         Multinomial results
     ovr_results : dict
         OvR results
+    ovo_results : dict, optional
+        OvO results
     per_region_comparison : pd.DataFrame
         Per-region comparison data
     error_analysis : dict
@@ -441,9 +540,13 @@ def create_comparison_visualizations(
     
     logger.info("\nCreating comparison visualizations...")
     
+    # Determine number of strategies
+    has_ovo = ovo_results is not None and 'overall_metrics' in ovo_results
+    n_strategies = 3 if has_ovo else 2
+    
     # 1. Overall metrics comparison bar chart
     logger.info("  Creating overall metrics comparison...")
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(12, 6))
     
     metrics = ['accuracy', 'balanced_accuracy', 'f1_score']
     metric_labels = ['Accuracy', 'Balanced Accuracy', 'F1 Score']
@@ -455,18 +558,32 @@ def create_comparison_visualizations(
     ovr_values = [ovr_metrics.get(m, 0) for m in metrics]
     
     x = np.arange(len(metric_labels))
-    width = 0.35
     
-    bars1 = ax.bar(x - width/2, multi_values, width, label='Multinomial',
-                   color='steelblue', alpha=0.8, edgecolor='black', linewidth=1.5)
-    bars2 = ax.bar(x + width/2, ovr_values, width, label='One-vs-Rest',
-                   color='coral', alpha=0.8, edgecolor='black', linewidth=1.5)
+    if has_ovo:
+        ovo_metrics = ovo_results['overall_metrics']
+        ovo_values = [ovo_metrics.get(m, 0) for m in metrics]
+        width = 0.25
+        
+        bars1 = ax.bar(x - width, multi_values, width, label='Multinomial',
+                       color='steelblue', alpha=0.8, edgecolor='black', linewidth=1.5)
+        bars2 = ax.bar(x, ovr_values, width, label='One-vs-Rest',
+                       color='coral', alpha=0.8, edgecolor='black', linewidth=1.5)
+        bars3 = ax.bar(x + width, ovo_values, width, label='One-vs-One',
+                       color='mediumseagreen', alpha=0.8, edgecolor='black', linewidth=1.5)
+        all_bars = [bars1, bars2, bars3]
+    else:
+        width = 0.35
+        bars1 = ax.bar(x - width/2, multi_values, width, label='Multinomial',
+                       color='steelblue', alpha=0.8, edgecolor='black', linewidth=1.5)
+        bars2 = ax.bar(x + width/2, ovr_values, width, label='One-vs-Rest',
+                       color='coral', alpha=0.8, edgecolor='black', linewidth=1.5)
+        all_bars = [bars1, bars2]
     
     # Add value labels
-    for bars in [bars1, bars2]:
+    for bars in all_bars:
         for bar in bars:
             height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2., height + 0.01,
+            ax.text(bar.get_x() + bar.get_width()/2., height + 0.005,
                    f'{height:.3f}', ha='center', va='bottom',
                    fontsize=9, fontweight='bold')
     
@@ -484,76 +601,158 @@ def create_comparison_visualizations(
     plt.savefig(output_dir / 'overall_metrics_comparison.png', dpi=300, bbox_inches='tight')
     plt.close()
     
-    # 2. Per-region scatter plot
-    logger.info("  Creating per-region scatter plot...")
-    fig, ax = plt.subplots(figsize=(10, 10))
+    # 2. Per-region scatter plots
+    logger.info("  Creating per-region scatter plots...")
     
-    # Color by network if available
-    if 'network' in per_region_comparison.columns:
-        networks = per_region_comparison['network'].unique()
-        network_colors = dict(zip(networks, plt.cm.tab10(np.linspace(0, 1, len(networks)))))
-        colors = [network_colors[net] for net in per_region_comparison['network']]
+    if has_ovo:
+        # Create 3 scatter plots
+        fig, axes = plt.subplots(1, 3, figsize=(18, 6))
         
-        # Create legend
-        handles = [mpatches.Patch(color=network_colors[net], label=net) for net in networks]
-        ax.legend(handles=handles, title='Network', loc='lower right', frameon=True)
+        comparisons = [
+            ('accuracy_multinomial', 'accuracy_ovr', 'Multinomial vs OvR', axes[0]),
+            ('accuracy_multinomial', 'accuracy_ovo', 'Multinomial vs OvO', axes[1]),
+            ('accuracy_ovr', 'accuracy_ovo', 'OvR vs OvO', axes[2])
+        ]
+        
+        for x_col, y_col, title, ax in comparisons:
+            # Color by network if available
+            if 'network' in per_region_comparison.columns:
+                networks = per_region_comparison['network'].unique()
+                network_colors = dict(zip(networks, plt.cm.tab10(np.linspace(0, 1, len(networks)))))
+                colors = [network_colors[net] for net in per_region_comparison['network']]
+            else:
+                colors = 'steelblue'
+            
+            ax.scatter(per_region_comparison[x_col],
+                       per_region_comparison[y_col],
+                       c=colors, alpha=0.6, s=50, edgecolor='black', linewidth=0.5)
+            
+            # Diagonal line
+            ax.plot([0, 1], [0, 1], 'k--', alpha=0.3, linewidth=2)
+            
+            # Correlation
+            corr, p_value = stats.pearsonr(
+                per_region_comparison[x_col],
+                per_region_comparison[y_col]
+            )
+            
+            ax.text(0.05, 0.95, f'r = {corr:.3f}\np = {p_value:.4f}',
+                    transform=ax.transAxes, verticalalignment='top',
+                    bbox=dict(boxstyle='round', facecolor='white', alpha=0.8),
+                    fontweight='bold', fontsize=9)
+            
+            ax.set_xlabel(x_col.replace('accuracy_', '').replace('_', ' ').title() + ' Accuracy',
+                          fontweight='bold')
+            ax.set_ylabel(y_col.replace('accuracy_', '').replace('_', ' ').title() + ' Accuracy',
+                          fontweight='bold')
+            ax.set_title(title, fontweight='bold', pad=10)
+            ax.set_xlim([0, 1])
+            ax.set_ylim([0, 1])
+            ax.set_aspect('equal')
+            ax.grid(alpha=0.3, linestyle='--')
+        
+        plt.tight_layout()
+        plt.savefig(output_dir / 'per_region_scatter_all.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        
     else:
-        colors = 'steelblue'
+        # Single scatter plot: Multinomial vs OvR
+        fig, ax = plt.subplots(figsize=(10, 10))
+        
+        if 'network' in per_region_comparison.columns:
+            networks = per_region_comparison['network'].unique()
+            network_colors = dict(zip(networks, plt.cm.tab10(np.linspace(0, 1, len(networks)))))
+            colors = [network_colors[net] for net in per_region_comparison['network']]
+            
+            # Create legend
+            handles = [mpatches.Patch(color=network_colors[net], label=net) for net in networks]
+            ax.legend(handles=handles, title='Network', loc='lower right', frameon=True)
+        else:
+            colors = 'steelblue'
+        
+        ax.scatter(per_region_comparison['accuracy_multinomial'],
+                   per_region_comparison['accuracy_ovr'],
+                   c=colors, alpha=0.6, s=50, edgecolor='black', linewidth=0.5)
+        
+        # Diagonal line
+        ax.plot([0, 1], [0, 1], 'k--', alpha=0.3, linewidth=2, label='Perfect Agreement')
+        
+        # Correlation
+        corr, p_value = stats.pearsonr(
+            per_region_comparison['accuracy_multinomial'],
+            per_region_comparison['accuracy_ovr']
+        )
+        
+        ax.text(0.05, 0.95, f'r = {corr:.3f}\np = {p_value:.4f}',
+                transform=ax.transAxes, verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8),
+                fontweight='bold')
+        
+        ax.set_xlabel('Multinomial Accuracy', fontweight='bold')
+        ax.set_ylabel('One-vs-Rest Accuracy', fontweight='bold')
+        ax.set_title(f'{hemisphere.capitalize()} Hemisphere - Per-Region Performance Correlation',
+                     fontweight='bold', pad=20)
+        ax.set_xlim([0, 1])
+        ax.set_ylim([0, 1])
+        ax.set_aspect('equal')
+        ax.grid(alpha=0.3, linestyle='--')
+        
+        plt.tight_layout()
+        plt.savefig(output_dir / 'per_region_scatter.png', dpi=300, bbox_inches='tight')
+        plt.close()
     
-    ax.scatter(per_region_comparison['accuracy_multinomial'],
-               per_region_comparison['accuracy_ovr'],
-               c=colors, alpha=0.6, s=50, edgecolor='black', linewidth=0.5)
+    # 3. Advantage distribution histograms
+    logger.info("  Creating advantage distribution plots...")
     
-    # Diagonal line
-    ax.plot([0, 1], [0, 1], 'k--', alpha=0.3, linewidth=2, label='Perfect Agreement')
+    if has_ovo:
+        fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+        
+        advantages = [
+            ('ovr_advantage', 'OvR - Multinomial', 'mediumseagreen', axes[0]),
+            ('ovo_advantage', 'OvO - Multinomial', 'coral', axes[1]),
+            ('ovo_vs_ovr', 'OvO - OvR', 'steelblue', axes[2])
+        ]
+        
+        for col, title, color, ax in advantages:
+            ax.hist(per_region_comparison[col], bins=30,
+                    color=color, alpha=0.7, edgecolor='black')
+            ax.axvline(0, color='red', linestyle='--', linewidth=2, label='No Difference')
+            ax.axvline(per_region_comparison[col].mean(), color='darkblue',
+                       linestyle='--', linewidth=2,
+                       label=f"Mean: {per_region_comparison[col].mean():.4f}")
+            
+            ax.set_xlabel(f'{title} Accuracy', fontweight='bold')
+            ax.set_ylabel('Number of Regions', fontweight='bold')
+            ax.set_title(f'{title} Performance', fontweight='bold', pad=10)
+            ax.legend(frameon=True, fontsize=9)
+            ax.grid(axis='y', alpha=0.3, linestyle='--')
+        
+        plt.tight_layout()
+        plt.savefig(output_dir / 'advantage_distributions.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        
+    else:
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        ax.hist(per_region_comparison['ovr_advantage'], bins=30,
+                color='mediumseagreen', alpha=0.7, edgecolor='black')
+        ax.axvline(0, color='red', linestyle='--', linewidth=2, label='No Difference')
+        ax.axvline(per_region_comparison['ovr_advantage'].mean(), color='blue',
+                   linestyle='--', linewidth=2,
+                   label=f"Mean: {per_region_comparison['ovr_advantage'].mean():.4f}")
+        
+        ax.set_xlabel('OvR Accuracy - Multinomial Accuracy', fontweight='bold')
+        ax.set_ylabel('Number of Regions', fontweight='bold')
+        ax.set_title(f'{hemisphere.capitalize()} Hemisphere - OvR Performance Advantage',
+                     fontweight='bold', pad=20)
+        ax.legend(frameon=True)
+        ax.grid(axis='y', alpha=0.3, linestyle='--')
+        
+        plt.tight_layout()
+        plt.savefig(output_dir / 'ovr_advantage_distribution.png', dpi=300, bbox_inches='tight')
+        plt.close()
     
-    # Correlation
-    corr, p_value = stats.pearsonr(
-        per_region_comparison['accuracy_multinomial'],
-        per_region_comparison['accuracy_ovr']
-    )
-    
-    ax.text(0.05, 0.95, f'r = {corr:.3f}\np = {p_value:.4f}',
-            transform=ax.transAxes, verticalalignment='top',
-            bbox=dict(boxstyle='round', facecolor='white', alpha=0.8),
-            fontweight='bold')
-    
-    ax.set_xlabel('Multinomial Accuracy', fontweight='bold')
-    ax.set_ylabel('One-vs-Rest Accuracy', fontweight='bold')
-    ax.set_title(f'{hemisphere.capitalize()} Hemisphere - Per-Region Performance Correlation',
-                 fontweight='bold', pad=20)
-    ax.set_xlim([0, 1])
-    ax.set_ylim([0, 1])
-    ax.set_aspect('equal')
-    ax.grid(alpha=0.3, linestyle='--')
-    
-    plt.tight_layout()
-    plt.savefig(output_dir / 'per_region_scatter.png', dpi=300, bbox_inches='tight')
-    plt.close()
-    
-    # 3. OvR advantage distribution
-    logger.info("  Creating OvR advantage distribution...")
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    ax.hist(per_region_comparison['ovr_advantage'], bins=30, 
-            color='mediumseagreen', alpha=0.7, edgecolor='black')
-    ax.axvline(0, color='red', linestyle='--', linewidth=2, label='No Difference')
-    ax.axvline(per_region_comparison['ovr_advantage'].mean(), color='blue',
-               linestyle='--', linewidth=2, 
-               label=f"Mean: {per_region_comparison['ovr_advantage'].mean():.4f}")
-    
-    ax.set_xlabel('OvR Accuracy - Multinomial Accuracy', fontweight='bold')
-    ax.set_ylabel('Number of Regions', fontweight='bold')
-    ax.set_title(f'{hemisphere.capitalize()} Hemisphere - OvR Performance Advantage',
-                 fontweight='bold', pad=20)
-    ax.legend(frameon=True)
-    ax.grid(axis='y', alpha=0.3, linestyle='--')
-    
-    plt.tight_layout()
-    plt.savefig(output_dir / 'ovr_advantage_distribution.png', dpi=300, bbox_inches='tight')
-    plt.close()
-    
-    # 4. Error overlap Venn diagram (as bar chart)
+    # 4. Error overlap visualization
     logger.info("  Creating error overlap visualization...")
     fig, ax = plt.subplots(figsize=(10, 6))
     
@@ -565,10 +764,10 @@ def create_comparison_visualizations(
     ]
     
     counts = [
-        error_analysis['n_correct_both'],
+        error_analysis['n_correct_both_multi_ovr'],
         error_analysis['n_errors_only_multi'],
         error_analysis['n_errors_only_ovr'],
-        error_analysis['n_errors_both']
+        error_analysis['n_errors_both_multi_ovr']
     ]
     
     colors_venn = ['lightgreen', 'lightcoral', 'lightblue', 'orange']
@@ -586,13 +785,13 @@ def create_comparison_visualizations(
                ha='center', va='bottom', fontsize=10, fontweight='bold')
     
     ax.set_ylabel('Number of Samples', fontweight='bold')
-    ax.set_title(f'{hemisphere.capitalize()} Hemisphere - Error Pattern Overlap',
+    ax.set_title(f'{hemisphere.capitalize()} Hemisphere - Error Pattern Overlap (Multinomial vs OvR)',
                  fontweight='bold', pad=20)
     ax.grid(axis='y', alpha=0.3, linestyle='--')
     
     # Add McNemar test result
     ax.text(0.98, 0.98,
-            f"McNemar's test: p = {error_analysis['mcnemar_pvalue']:.4f}",
+            f"McNemar's test: p = {error_analysis['mcnemar_pvalue_multi_ovr']:.4f}",
             transform=ax.transAxes,
             verticalalignment='top',
             horizontalalignment='right',
@@ -603,54 +802,116 @@ def create_comparison_visualizations(
     plt.savefig(output_dir / 'error_overlap.png', dpi=300, bbox_inches='tight')
     plt.close()
     
-    # 5. Top regions with largest OvR advantage
-    logger.info("  Creating top OvR advantage regions...")
-    fig, ax = plt.subplots(figsize=(12, 8))
+    # 5. Top regions with largest advantages
+    logger.info("  Creating top advantage regions plot...")
     
-    # Get top 20 regions with largest OvR advantage
-    top_regions = per_region_comparison.nlargest(20, 'ovr_advantage')
-    
-    y_pos = np.arange(len(top_regions))
-    colors_advantage = ['green' if x > 0 else 'red' for x in top_regions['ovr_advantage']]
-    
-    ax.barh(y_pos, top_regions['ovr_advantage'], color=colors_advantage,
-            alpha=0.7, edgecolor='black', linewidth=0.5)
-    
-    ax.set_yticks(y_pos)
-    ax.set_yticklabels(top_regions['region_name'], fontsize=8)
-    ax.set_xlabel('OvR Advantage (OvR - Multinomial)', fontweight='bold')
-    ax.set_title(f'{hemisphere.capitalize()} Hemisphere - Top 20 Regions by OvR Advantage',
-                 fontweight='bold', pad=20)
-    ax.axvline(0, color='black', linestyle='-', linewidth=1)
-    ax.grid(axis='x', alpha=0.3, linestyle='--')
-    
-    plt.tight_layout()
-    plt.savefig(output_dir / 'top_ovr_advantage_regions.png', dpi=300, bbox_inches='tight')
-    plt.close()
+    if has_ovo:
+        fig, axes = plt.subplots(1, 2, figsize=(20, 8))
+        
+        # OvR advantage
+        top_ovr = per_region_comparison.nlargest(20, 'ovr_advantage')
+        colors_ovr = ['green' if x > 0 else 'red' for x in top_ovr['ovr_advantage']]
+        
+        y_pos = np.arange(len(top_ovr))
+        axes[0].barh(y_pos, top_ovr['ovr_advantage'], color=colors_ovr,
+                     alpha=0.7, edgecolor='black', linewidth=0.5)
+        axes[0].set_yticks(y_pos)
+        axes[0].set_yticklabels(top_ovr['region_name'], fontsize=8)
+        axes[0].set_xlabel('OvR Advantage', fontweight='bold')
+        axes[0].set_title('Top 20 Regions by OvR Advantage', fontweight='bold', pad=10)
+        axes[0].axvline(0, color='black', linestyle='-', linewidth=1)
+        axes[0].grid(axis='x', alpha=0.3, linestyle='--')
+        
+        # OvO advantage
+        top_ovo = per_region_comparison.nlargest(20, 'ovo_advantage')
+        colors_ovo = ['green' if x > 0 else 'red' for x in top_ovo['ovo_advantage']]
+        
+        y_pos = np.arange(len(top_ovo))
+        axes[1].barh(y_pos, top_ovo['ovo_advantage'], color=colors_ovo,
+                     alpha=0.7, edgecolor='black', linewidth=0.5)
+        axes[1].set_yticks(y_pos)
+        axes[1].set_yticklabels(top_ovo['region_name'], fontsize=8)
+        axes[1].set_xlabel('OvO Advantage', fontweight='bold')
+        axes[1].set_title('Top 20 Regions by OvO Advantage', fontweight='bold', pad=10)
+        axes[1].axvline(0, color='black', linestyle='-', linewidth=1)
+        axes[1].grid(axis='x', alpha=0.3, linestyle='--')
+        
+        plt.tight_layout()
+        plt.savefig(output_dir / 'top_advantage_regions.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        
+    else:
+        fig, ax = plt.subplots(figsize=(12, 8))
+        
+        top_regions = per_region_comparison.nlargest(20, 'ovr_advantage')
+        
+        y_pos = np.arange(len(top_regions))
+        colors_advantage = ['green' if x > 0 else 'red' for x in top_regions['ovr_advantage']]
+        
+        ax.barh(y_pos, top_regions['ovr_advantage'], color=colors_advantage,
+                alpha=0.7, edgecolor='black', linewidth=0.5)
+        
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(top_regions['region_name'], fontsize=8)
+        ax.set_xlabel('OvR Advantage (OvR - Multinomial)', fontweight='bold')
+        ax.set_title(f'{hemisphere.capitalize()} Hemisphere - Top 20 Regions by OvR Advantage',
+                     fontweight='bold', pad=20)
+        ax.axvline(0, color='black', linestyle='-', linewidth=1)
+        ax.grid(axis='x', alpha=0.3, linestyle='--')
+        
+        plt.tight_layout()
+        plt.savefig(output_dir / 'top_ovr_advantage_regions.png', dpi=300, bbox_inches='tight')
+        plt.close()
     
     # 6. Network-level comparison (if available)
     if 'network' in per_region_comparison.columns:
         logger.info("  Creating network-level comparison...")
         
-        network_comparison = per_region_comparison.groupby('network').agg({
-            'accuracy_multinomial': 'mean',
-            'accuracy_ovr': 'mean',
-            'ovr_advantage': 'mean'
-        }).reset_index()
-        
-        network_comparison = network_comparison.sort_values('ovr_advantage', ascending=False)
-        
-        fig, ax = plt.subplots(figsize=(12, 6))
-        
-        x = np.arange(len(network_comparison))
-        width = 0.35
-        
-        bars1 = ax.bar(x - width/2, network_comparison['accuracy_multinomial'],
-                      width, label='Multinomial', color='steelblue',
-                      alpha=0.8, edgecolor='black', linewidth=1.5)
-        bars2 = ax.bar(x + width/2, network_comparison['accuracy_ovr'],
-                      width, label='One-vs-Rest', color='coral',
-                      alpha=0.8, edgecolor='black', linewidth=1.5)
+        if has_ovo:
+            network_comparison = per_region_comparison.groupby('network').agg({
+                'accuracy_multinomial': 'mean',
+                'accuracy_ovr': 'mean',
+                'accuracy_ovo': 'mean',
+                'ovr_advantage': 'mean',
+                'ovo_advantage': 'mean'
+            }).reset_index()
+            
+            network_comparison = network_comparison.sort_values('ovr_advantage', ascending=False)
+            
+            fig, ax = plt.subplots(figsize=(14, 6))
+            
+            x = np.arange(len(network_comparison))
+            width = 0.25
+            
+            bars1 = ax.bar(x - width, network_comparison['accuracy_multinomial'],
+                          width, label='Multinomial', color='steelblue',
+                          alpha=0.8, edgecolor='black', linewidth=1.5)
+            bars2 = ax.bar(x, network_comparison['accuracy_ovr'],
+                          width, label='One-vs-Rest', color='coral',
+                          alpha=0.8, edgecolor='black', linewidth=1.5)
+            bars3 = ax.bar(x + width, network_comparison['accuracy_ovo'],
+                          width, label='One-vs-One', color='mediumseagreen',
+                          alpha=0.8, edgecolor='black', linewidth=1.5)
+        else:
+            network_comparison = per_region_comparison.groupby('network').agg({
+                'accuracy_multinomial': 'mean',
+                'accuracy_ovr': 'mean',
+                'ovr_advantage': 'mean'
+            }).reset_index()
+            
+            network_comparison = network_comparison.sort_values('ovr_advantage', ascending=False)
+            
+            fig, ax = plt.subplots(figsize=(12, 6))
+            
+            x = np.arange(len(network_comparison))
+            width = 0.35
+            
+            bars1 = ax.bar(x - width/2, network_comparison['accuracy_multinomial'],
+                          width, label='Multinomial', color='steelblue',
+                          alpha=0.8, edgecolor='black', linewidth=1.5)
+            bars2 = ax.bar(x + width/2, network_comparison['accuracy_ovr'],
+                          width, label='One-vs-Rest', color='coral',
+                          alpha=0.8, edgecolor='black', linewidth=1.5)
         
         ax.set_xticks(x)
         ax.set_xticklabels(network_comparison['network'], rotation=45, ha='right')
@@ -736,12 +997,12 @@ def compare_single_hemisphere(
     
     # Per-region performance comparison
     per_region_comparison = compare_per_region_performance(
-        multinomial_results, ovr_results, logger
+        multinomial_results, ovr_results, ovo_results, logger
     )
     
     # Error pattern analysis
     error_analysis = analyze_error_patterns(
-        multinomial_results, ovr_results, logger
+        multinomial_results, ovr_results, ovo_results, logger
     )
     
     # Save comparison results
@@ -767,6 +1028,7 @@ def compare_single_hemisphere(
     create_comparison_visualizations(
         multinomial_results,
         ovr_results,
+        ovo_results,
         per_region_comparison,
         error_analysis,
         output_dir,
@@ -781,6 +1043,7 @@ def compare_single_hemisphere(
         overall_comparison,
         per_region_comparison,
         error_analysis,
+        ovo_results is not None,
         output_dir,
         logger
     )
@@ -803,6 +1066,7 @@ def create_summary_report(
     overall_comparison: pd.DataFrame,
     per_region_comparison: pd.DataFrame,
     error_analysis: Dict,
+    has_ovo: bool,
     output_dir: Path,
     logger: logging.Logger
 ):
@@ -819,6 +1083,8 @@ def create_summary_report(
         Per-region comparison
     error_analysis : dict
         Error analysis results
+    has_ovo : bool
+        Whether OvO results are included
     output_dir : Path
         Output directory
     logger : logging.Logger
@@ -850,7 +1116,15 @@ def create_summary_report(
         f.write(f"Overall Accuracy:\n")
         f.write(f"  - Multinomial: {multi_acc:.4f}\n")
         f.write(f"  - One-vs-Rest: {ovr_acc:.4f}\n")
-        f.write(f"  - Difference: {diff:+.4f}\n\n")
+        f.write(f"  - Difference: {diff:+.4f}\n")
+        
+        if has_ovo:
+            ovo_acc = overall_comparison[overall_comparison['Metric'] == 'Accuracy']['OvO'].values[0]
+            f.write(f"  - One-vs-One: {ovo_acc:.4f}\n")
+            f.write(f"  - OvO vs Multinomial: {ovo_acc - multi_acc:+.4f}\n")
+            f.write(f"  - OvO vs OvR: {ovo_acc - ovr_acc:+.4f}\n")
+        
+        f.write("\n")
         
         # Per-region statistics
         f.write("Per-Region Analysis:\n")
@@ -859,47 +1133,66 @@ def create_summary_report(
         f.write(f"  - Mean OvR accuracy: {per_region_comparison['accuracy_ovr'].mean():.4f}\n")
         f.write(f"  - Mean OvR advantage: {per_region_comparison['ovr_advantage'].mean():.4f}\n")
         
+        if has_ovo:
+            f.write(f"  - Mean OvO accuracy: {per_region_comparison['accuracy_ovo'].mean():.4f}\n")
+            f.write(f"  - Mean OvO advantage: {per_region_comparison['ovo_advantage'].mean():.4f}\n")
+        
         # Correlation
         corr, p_value = stats.pearsonr(
             per_region_comparison['accuracy_multinomial'],
             per_region_comparison['accuracy_ovr']
         )
-        f.write(f"  - Correlation: r = {corr:.4f}, p = {p_value:.4f}\n\n")
+        f.write(f"  - Multinomial vs OvR correlation: r = {corr:.4f}, p = {p_value:.4f}\n")
+        
+        if has_ovo:
+            corr_ovo, p_ovo = stats.pearsonr(
+                per_region_comparison['accuracy_multinomial'],
+                per_region_comparison['accuracy_ovo']
+            )
+            f.write(f"  - Multinomial vs OvO correlation: r = {corr_ovo:.4f}, p = {p_ovo:.4f}\n")
+        
+        f.write("\n")
         
         # Error patterns
         f.write("3. ERROR PATTERN ANALYSIS\n")
         f.write("-"*80 + "\n")
         
         total_samples = sum([
-            error_analysis['n_correct_both'],
+            error_analysis['n_correct_both_multi_ovr'],
             error_analysis['n_errors_only_multi'],
             error_analysis['n_errors_only_ovr'],
-            error_analysis['n_errors_both']
+            error_analysis['n_errors_both_multi_ovr']
         ])
         
         f.write(f"Total samples: {total_samples}\n\n")
-        f.write(f"Error Distribution:\n")
-        f.write(f"  - Correct in both: {error_analysis['n_correct_both']} "
-               f"({error_analysis['n_correct_both']/total_samples*100:.2f}%)\n")
+        f.write(f"Error Distribution (Multinomial vs OvR):\n")
+        f.write(f"  - Correct in both: {error_analysis['n_correct_both_multi_ovr']} "
+               f"({error_analysis['n_correct_both_multi_ovr']/total_samples*100:.2f}%)\n")
         f.write(f"  - Error only in Multinomial: {error_analysis['n_errors_only_multi']} "
                f"({error_analysis['n_errors_only_multi']/total_samples*100:.2f}%)\n")
         f.write(f"  - Error only in OvR: {error_analysis['n_errors_only_ovr']} "
                f"({error_analysis['n_errors_only_ovr']/total_samples*100:.2f}%)\n")
-        f.write(f"  - Error in both: {error_analysis['n_errors_both']} "
-               f"({error_analysis['n_errors_both']/total_samples*100:.2f}%)\n\n")
+        f.write(f"  - Error in both: {error_analysis['n_errors_both_multi_ovr']} "
+               f"({error_analysis['n_errors_both_multi_ovr']/total_samples*100:.2f}%)\n\n")
         
-        f.write(f"McNemar's Test (Strategy Difference):\n")
-        f.write(f"  - Statistic: {error_analysis['mcnemar_statistic']:.4f}\n")
-        f.write(f"  - p-value: {error_analysis['mcnemar_pvalue']:.4f}\n")
+        f.write(f"McNemar's Test (Multinomial vs OvR):\n")
+        f.write(f"  - Statistic: {error_analysis['mcnemar_statistic_multi_ovr']:.4f}\n")
+        f.write(f"  - p-value: {error_analysis['mcnemar_pvalue_multi_ovr']:.4f}\n")
         
-        if error_analysis['mcnemar_pvalue'] < 0.05:
+        if error_analysis['mcnemar_pvalue_multi_ovr'] < 0.05:
             f.write(f"  - Result: Strategies differ significantly (p < 0.05)\n")
         else:
             f.write(f"  - Result: No significant difference between strategies\n")
         
+        if has_ovo:
+            f.write(f"\nMcNemar's Test (Multinomial vs OvO):\n")
+            f.write(f"  - p-value: {error_analysis.get('mcnemar_pvalue_multi_ovo', 'N/A')}\n")
+            f.write(f"\nMcNemar's Test (OvR vs OvO):\n")
+            f.write(f"  - p-value: {error_analysis.get('mcnemar_pvalue_ovr_ovo', 'N/A')}\n")
+        
         f.write("\n")
         
-        # Top regions with OvR advantage
+        # Top regions with advantages
         f.write("4. TOP REGIONS WITH OVR ADVANTAGE\n")
         f.write("-"*80 + "\n")
         
@@ -918,6 +1211,16 @@ def create_summary_report(
         for idx, row in bottom_10.iterrows():
             f.write(f"{row['region_name']}: {row['ovr_advantage']:+.4f} "
                    f"(Multi: {row['accuracy_multinomial']:.4f}, OvR: {row['accuracy_ovr']:.4f})\n")
+        
+        if has_ovo:
+            f.write("\n")
+            f.write("6. TOP REGIONS WITH OVO ADVANTAGE\n")
+            f.write("-"*80 + "\n")
+            
+            top_10_ovo = per_region_comparison.nlargest(10, 'ovo_advantage')
+            for idx, row in top_10_ovo.iterrows():
+                f.write(f"{row['region_name']}: {row['ovo_advantage']:+.4f} "
+                       f"(Multi: {row['accuracy_multinomial']:.4f}, OvO: {row['accuracy_ovo']:.4f})\n")
         
         f.write("\n")
         f.write("="*80 + "\n")
@@ -978,12 +1281,32 @@ def compare_hemispheres(
     logger.info(f"  Left OvR: {left_ovr_acc:.4f}")
     logger.info(f"  Right OvR: {right_ovr_acc:.4f}")
     
-    # Create visualization
-    fig, ax = plt.subplots(figsize=(10, 6))
+    # Check for OvO
+    has_ovo = 'OvO' in left_results['overall_comparison'].columns
     
-    strategies = ['Multinomial', 'One-vs-Rest']
-    left_values = [left_multi_acc, left_ovr_acc]
-    right_values = [right_multi_acc, right_ovr_acc]
+    if has_ovo:
+        left_ovo_acc = left_results['overall_comparison'][
+            left_results['overall_comparison']['Metric'] == 'Accuracy'
+        ]['OvO'].values[0]
+        
+        right_ovo_acc = right_results['overall_comparison'][
+            right_results['overall_comparison']['Metric'] == 'Accuracy'
+        ]['OvO'].values[0]
+        
+        logger.info(f"  Left OvO: {left_ovo_acc:.4f}")
+        logger.info(f"  Right OvO: {right_ovo_acc:.4f}")
+    
+    # Create visualization
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    if has_ovo:
+        strategies = ['Multinomial', 'One-vs-Rest', 'One-vs-One']
+        left_values = [left_multi_acc, left_ovr_acc, left_ovo_acc]
+        right_values = [right_multi_acc, right_ovr_acc, right_ovo_acc]
+    else:
+        strategies = ['Multinomial', 'One-vs-Rest']
+        left_values = [left_multi_acc, left_ovr_acc]
+        right_values = [right_multi_acc, right_ovr_acc]
     
     x = np.arange(len(strategies))
     width = 0.35

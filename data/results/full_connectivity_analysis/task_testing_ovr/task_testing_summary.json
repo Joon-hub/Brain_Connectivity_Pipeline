@@ -1,0 +1,19 @@
+{
+  "rest_train_accuracy": 0.9856450123152709,
+  "task_test_accuracy": 0.8963362068965517,
+  "task_balanced_accuracy": 0.8963362068965517,
+  "task_top_5_accuracy": 0.9707112068965518,
+  "accuracy_drop": 0.08930880541871922,
+  "hyperparameters": {
+    "C": 0.5097584006216225,
+    "max_iter": 200,
+    "solver": "saga",
+    "multi_class": "ovr"
+  },
+  "n_rest_subjects": 224,
+  "n_task_subjects": 200,
+  "n_rest_samples": 51968,
+  "n_task_samples": 46400,
+  "n_regions": 232,
+  "n_binary_classifiers": 232
+}

@@ -1,0 +1,591 @@
+
+
+# ===============================================================================
+# GLOBAL SETTINGS
+# ===============================================================================
+
+data:
+  # Data paths
+  # input_dir: "data/raw/"
+  # output_dir: "data/results/FC_analysis"
+  region_info: "data/processed/region_info.csv"
+  
+  # Dataset selection
+  dataset: "rest"                                  # 'rest' (PIOP2-224 subjects) or 'task' (PIOP1-200 subjects)
+  
+  # Hemisphere configuration
+  hemisphere_split: "atlas_based"                  # Split based on region naming convention
+  return_matrices: true                            # Return full connectivity matrices
+  include_bilateral: false                         # Exclude bilateral regions (focus on pure L/R)
+
+reproducibility:
+  random_state: 42
+  numpy_seed: 42
+  python_seed: 42
+  optuna_seed: 42                                  # For Optuna sampler
+  use_deterministic: true
+  save_env_info: true                              # Log Python version, library versions
+
+logging:
+  level: "INFO"                                    # DEBUG, INFO, WARNING, ERROR
+  log_to_file: true
+  log_to_console: true
+  log_dir: "logs"
+
+computation:
+  n_jobs: -1                                       # -1 uses all CPU cores
+  memory_efficient: true
+  use_gpu: false                                   # Not applicable for LogisticRegression
+
+
+# ===============================================================================
+# PREPROCESSING
+# ===============================================================================
+# Two-stage preprocessing:
+#   Stage 1: Diagonal imputation + Fisher Z (applied ONCE to full dataset)
+#   Stage 2: StandardScaler (applied to full data for Optuna, then per-fold for CV)
+# ===============================================================================
+
+preprocessing:
+  # --- STAGE 1: Pre-CV Transformations ---
+  # Applied once to entire dataset before any splitting
+  
+  diagonal_imputation:
+    enabled: true
+    strategy: "region_mean"                        # RECOMMENDED: Best performance
+    # Options:
+    #   - 'zero': Set diagonal to 0.0 (simple, removes self-correlation)
+    #   - 'region_mean': Mean of non-diagonal values in same row (BEST)
+    #   - 'network_mean': Mean within same functional network (requires network labels)
+    #   - 'global_mean': Mean of all off-diagonal values (simple fallback)
+    
+  fisher_z_transformation:
+    enabled: true                                  # CRITICAL: Pearson r → Fisher Z
+    clip_values: true                              # Prevent arctanh(±1) = ±∞
+    clip_range: [-0.999, 0.999]                    # Safe range for arctanh
+    
+  # --- STAGE 2: Standardization ---
+  # Behavior depends on context:
+  #   - For Optuna: Fit on full dataset (fast exploration)
+  #   - For CV: Fit on training fold, transform test fold (leak-free)
+  
+  standardization:
+    enabled: true
+    for_optuna: true                               # Scale full dataset for hyperparameter tuning
+    per_fold: true                                 # Re-scale within each CV fold (prevents leakage)
+    method: "StandardScaler"                       # Mean=0, Std=1
+    with_mean: true
+    with_std: true
+  
+  # --- OPTIONAL: Feature Selection ---
+  # Currently not used, but available for future experiments
+  
+  feature_selection:
+    enabled: false
+    method: null                                   # 'variance_threshold', 'mutual_info', 'select_k_best'
+    variance_threshold: 0.01                       # Remove low-variance features
+    k_best: 100                                    # Select top K features (if using select_k_best)
+
+
+# ===============================================================================
+# CROSS-VALIDATION
+# ===============================================================================
+
+cross_validation:
+  strategy: "GroupKFold"                           # CRITICAL: Prevents subject leakage
+  n_folds: 5                                       # 5 folds for production, 3 for testing
+  random_state: 42
+  
+  # GroupKFold behavior:
+  #   - Ensures all samples from same subject stay in same fold
+  #   - No shuffle (groups must be contiguous)
+  #   - No stratification (handled by group structure)
+  
+  validation:
+    check_leakage: true                            # Verify no subjects in both train and test
+    verify_fold_sizes: true                        # Log fold sample counts
+
+
+# ===============================================================================
+# MODEL CONFIGURATION
+# ===============================================================================
+
+model:
+  type: "LogisticRegression"
+  
+  # --- Default Parameters ---
+  # Used when hyperparameter optimization is disabled
+  
+  default_params:
+    # Regularization
+    C: 1.0                                         # Inverse regularization strength (higher = less regularization)
+    penalty: "l2"                                  # L2 regularization (ridge)
+    
+    # Optimization
+    solver: "lbfgs"                                # Options: 'lbfgs', 'newton-cg', 'sag', 'saga'
+    max_iter: 1000                                 # Maximum iterations for convergence
+    tol: 0.0001                                    # Convergence tolerance
+    
+    # Multiclass strategy
+    multi_class: "multinomial"                     # Softmax (multinomial) classifier
+    
+    # Other settings
+    class_weight: null                             # null or 'balanced' (use null for balanced data)
+    warm_start: false                              # Don't reuse previous solution
+    fit_intercept: true                            # Include intercept term
+    n_jobs: -1                                     # Parallel jobs
+    verbose: 0                                     # Silence iteration logs
+
+
+# ===============================================================================
+# HYPERPARAMETER OPTIMIZATION
+# ===============================================================================
+# Strategy-specific optimization for Multinomial, OvR, and OvO
+# ===============================================================================
+
+hyperparameter_optimization:
+  # --- Global Optimization Settings ---
+  enabled: true                                    # Set false to use default_params
+  method: "optuna"                                 # Currently only Optuna supported
+  
+  # --- Evaluation Method ---
+  # How Optuna evaluates hyperparameters (same for all strategies)
+  evaluation:
+    method: "simple_split"                         # Fast 80/20 split (no nested CV)
+    test_size: 0.2
+    stratify: true                                 # Maintain class balance
+    random_state: 42
+  
+  # --- Pruning ---
+  # Stop unpromising trials early to save computation
+  pruning:
+    enabled: true
+    patience: 10                                   # Stop if no improvement after N trials
+    min_delta: 0.001                               # Minimum improvement to count as progress
+  
+  # ============================================================================
+  # MULTINOMIAL (Softmax) - BASELINE APPROACH
+  # ============================================================================
+  # Best for: Overall classification, interpretable coefficients
+  # Computational cost: MEDIUM (single 116-class model)
+  # Expected accuracy: 91-92% (resting-state), 81-82% (task)
+  # ============================================================================
+  
+  multinomial:
+    n_trials: 100                                  # Thorough exploration (RECOMMENDED)
+    sampler: "TPE"                                 # Tree-structured Parzen Estimator
+    direction: "maximize"                          # Maximize accuracy
+    timeout: 7200                                  # 2-hour timeout (optional)
+    
+    search_space:
+      C:
+        type: "float"
+        range: [0.0001, 100.0]                     # WIDE range for 116-class problem
+        log: true                                  # Log scale (0.0001, 0.001, 0.01, 0.1, 1, 10, 100)
+      
+      max_iter:
+        type: "categorical"
+        choices: [500, 1000, 2000, 5000]           # Ensure convergence
+      
+      solver:
+        type: "categorical"
+        choices: ["newton-cg", "lbfgs", "saga"]    # Best solvers for multinomial
+        # newton-cg: Fast for multinomial, handles L2 well
+        # lbfgs: Memory efficient, good default
+        # saga: Supports L1/elasticnet (not used here but flexible)
+    
+    # Optuna study settings
+    show_progress_bar: false
+    verbose: true
+    log_trials: true                               # Log each trial's performance
+    save_study: true                               # Save study object for later analysis
+    study_name: "multinomial_optimization"
+  
+  # ============================================================================
+  # ONE-VS-REST (OvR) - PER-REGION DISCRIMINABILITY
+  # ============================================================================
+  # Best for: Identifying which regions have unique connectivity signatures
+  # Computational cost: HIGH (N=116 binary classifiers per hemisphere)
+  # Expected accuracy: ~91-92% (similar to multinomial)
+  # Key insight: Per-region interpretability
+  # ============================================================================
+  
+  one_vs_rest:
+    n_trials: 75                                   # Fewer trials (OvR is slower)
+    sampler: "TPE"
+    direction: "maximize"
+    timeout: 10800                                 # 3-hour timeout
+    
+    search_space:
+      C:
+        type: "float"
+        range: [0.001, 50.0]                       # Slightly narrower than multinomial
+        log: true
+      
+      max_iter:
+        type: "categorical"
+        choices: [500, 1000, 2000]                 # OvR needs more iterations
+      
+      solver:
+        type: "categorical"
+        choices: ["lbfgs", "saga"]                 # Best for binary classification
+        # lbfgs: Default, fast for L2
+        # saga: Alternative if convergence issues
+    
+    show_progress_bar: false
+    verbose: true
+    log_trials: true
+    save_study: true
+    study_name: "ovr_optimization"
+    
+    # OvR-specific settings
+    n_jobs_ovr: -1                                 # Parallelize across 116 binary classifiers
+    verbose_ovr: 0                                 # Reduce logging noise
+  
+  # ============================================================================
+  # ONE-VS-ONE (OvO) - PAIRWISE CONFUSABILITY
+  # ============================================================================
+  # Best for: Detailed error analysis, finding confusable region pairs
+  # Computational cost: VERY HIGH (N*(N-1)/2 = 6,670 binary classifiers!)
+  # Expected accuracy: ~90-91% (slightly lower due to voting)
+  # Key insight: Which specific pairs are hard to distinguish
+  # ============================================================================
+  
+  one_vs_one:
+    n_trials: 50                                   # Minimal trials (OvO is very slow)
+    sampler: "TPE"
+    direction: "maximize"
+    timeout: 14400                                 # 4-hour timeout
+    
+    search_space:
+      C:
+        type: "float"
+        range: [0.01, 20.0]                        # Focused range (faster)
+        log: true
+      
+      max_iter:
+        type: "categorical"
+        choices: [500, 1000]                       # Fewer options (save time)
+      
+      solver:
+        type: "categorical"
+        choices: ["lbfgs"]                         # Only lbfgs (fastest for binary)
+    
+    show_progress_bar: false
+    verbose: true
+    log_trials: true
+    save_study: true
+    study_name: "ovo_optimization"
+    
+    # OvO-specific settings
+    n_jobs_ovo: -1                                 # Parallelize across 6,670 classifiers
+    verbose_ovo: 0                                 # Silence per-classifier logs
+
+
+# ===============================================================================
+# TASK TESTING (Generalization from Rest to Task)
+# ===============================================================================
+# Train final model on ALL resting-state data, test on Gender Stroop task data
+# Reveals functional reorganization during cognitive tasks
+# ===============================================================================
+
+task_testing:
+  enabled: false                                   # Set true to enable task testing
+  
+  # Final model training
+  final_model:
+    use_best_hyperparams: true                     # Use hyperparameters from Optuna
+    retrain_on_full_data: true                     # Train on all 224 rest subjects
+    
+  # Task data configuration
+  test_data:
+    dataset: "task"                                # PIOP1 Gender Stroop (200 subjects)
+    expected_accuracy_drop: 0.10                   # ~10-11% drop is normal and expected
+    
+  # What to save
+  save_predictions: true                           # Task predictions
+  save_probabilities: true                         # Prediction probabilities (or decision_function for OvO)
+  save_confusion_matrix: true                      # Task confusion matrix
+  save_per_region_metrics: true                   # Per-region accuracy on task
+  save_network_metrics: true                       # Network-level accuracy on task
+  save_final_model: true                           # Trained model + scaler (for reproducibility)
+  
+  # Expected patterns (documented from your research)
+  expected_patterns:
+    motor_reorganization: true                     # Motor regions (pallidum, putamen) show high errors
+    sensory_stability: true                        # Sensory regions remain stable
+    cognitive_engagement: true                     # Cognitive control networks engage during task
+
+
+# ===============================================================================
+# EVALUATION METRICS
+# ===============================================================================
+
+evaluation:
+  # Overall metrics
+  metrics:
+    - "accuracy"                                   # Overall accuracy
+    - "balanced_accuracy"                          # Account for class imbalance (if any)
+    - "top_5_accuracy"                             # Top-5 predictions correct
+    - "top_10_accuracy"                            # Top-10 predictions correct
+  
+  # Detailed metrics
+  compute_per_region: true                         # Region-level accuracy, precision, recall
+  compute_network_level: true                      # Network-level aggregated metrics
+  
+  # Confusion matrix
+  confusion_matrix:
+    compute: true
+    normalize: false                               # Options: false, 'true', 'pred', 'all'
+    save_raw: true                                 # Save unnormalized counts
+    save_normalized: true                          # Also save normalized version
+  
+  # What to save
+  save_outputs:
+    predictions: true                              # CV fold predictions
+    probabilities: true                            # Prediction probabilities (multinomial, OvR)
+    decision_functions: true                       # Decision functions (OvO)
+    models: false                                  # Don't save fold models (large files)
+    fold_indices: true                             # Which samples in which fold
+    true_labels: true                              # Ground truth labels
+  
+  # Error analysis
+  error_analysis:
+    enabled: true
+    save_misclassifications: true                  # Which samples were misclassified
+    analyze_confusion_patterns: true               # Common confusion pairs
+    hemisphere_symmetry_analysis: true             # Cross-hemisphere confusion
+
+
+# ===============================================================================
+# OUTPUT STRUCTURE
+# ===============================================================================
+
+output:
+  # Directory structure
+  create_subdirectories: true
+  subdirectory_structure:
+    - "multinomial"                                # Multinomial results
+    - "ovr"                                        # One-vs-Rest results
+    - "ovo"                                        # One-vs-One results
+    - "comparison"                                 # Cross-strategy comparison
+    - "task_testing"                               # Task generalization results (if enabled)
+  
+  # Naming conventions
+  use_timestamps: false                            # Set true to append timestamps
+  timestamp_format: "%Y%m%d_%H%M%S"
+  
+  # File formats
+  file_formats:
+    metrics: "json"                                # Overall metrics (JSON for readability)
+    predictions: "npy"                             # Numpy arrays (compact)
+    probabilities: "npy"
+    decision_functions: "npy"
+    per_region_metrics: "csv"                      # CSV for easy analysis
+    network_metrics: "csv"
+    confusion_matrix: "npy"                        # Both .npy (raw) and .png (visualization)
+  
+  # Compression (optional, for large files)
+  compression:
+    enabled: false
+    format: "gzip"                                 # Options: 'gzip', 'bz2', 'xz'
+
+
+# ===============================================================================
+# VISUALIZATION
+# ===============================================================================
+
+visualization:
+  # Confusion matrix
+  confusion_matrix:
+    enabled: true
+    format: "png"
+    dpi: 300                                       # High-resolution
+    figsize: [20, 20]                              # Large enough for 116×116 matrix
+    cmap: "YlOrRd"                                 # Colormap
+    show_network_boundaries: true                  # Draw lines between networks
+    annotate_high_errors: true                     # Highlight high-confusion pairs
+    
+  # Per-region accuracy
+  per_region_accuracy:
+    enabled: true
+    format: "png"
+    dpi: 300
+    figsize: [16, 10]
+    sort_by: "network"                             # Options: 'network', 'accuracy', 'region_id'
+    color_by_network: true                         # Color bars by functional network
+    
+  # Network-level accuracy
+  network_accuracy:
+    enabled: true
+    format: "png"
+    dpi: 300
+    figsize: [12, 8]
+    style: "barplot"                               # Options: 'barplot', 'boxplot'
+    
+  # Additional visualizations
+  additional:
+    accuracy_by_fold: true                         # Line plot of fold accuracies
+    learning_curves: false                         # Not applicable for logistic regression
+    feature_importance: false                      # Could implement for coefficient magnitudes
+
+
+# ===============================================================================
+# HEMISPHERE COMPARISON
+# ===============================================================================
+
+hemisphere_comparison:
+  enabled: true
+  
+  # Statistical tests
+  statistical_tests:
+    - "paired_ttest"                               # Compare fold accuracies (L vs R)
+    - "pearsonr"                                   # Correlate per-region accuracies
+    - "wilcoxon"                                   # Non-parametric alternative
+  
+  alpha: 0.05                                      # Significance threshold
+  bonferroni_correction: false                     # Adjust for multiple comparisons
+  
+  # Visualizations
+  visualizations:
+    - "accuracy_comparison"                        # Bar plot (L vs R)
+    - "per_region_scatter"                         # Scatter plot of accuracies
+    - "network_comparison"                         # Network-level comparison
+    - "confusion_heatmap"                          # Side-by-side confusion matrices
+  
+  # What to compare
+  compare_metrics:
+    - "accuracy"
+    # - "balanced_accuracy"
+    - "per_region_accuracy"
+    - "network_accuracy"
+    - "top_5_accuracy"
+
+
+# ===============================================================================
+# VALIDATION CHECKS
+# ===============================================================================
+
+validation:
+  # Data integrity
+  check_data_integrity: true                       # Verify files exist, correct shapes
+  check_nan: true                                  # Detect NaN values
+  check_inf: true                                  # Detect infinite values
+  check_dtypes: true                               # Verify data types
+  
+  # Cross-validation integrity
+  check_leakage: true                              # Verify no subject overlap between folds
+  validate_cv_splits: true                         # Confirm GroupKFold behavior
+  verify_fold_balance: true                        # Check fold size distribution
+  
+  # Class balance
+  check_class_balance: true
+  warn_imbalance_threshold: 0.1                    # Warn if any class < 10% of data
+  
+  # Preprocessing validation
+  verify_fisher_z: true                            # Check Fisher Z was applied correctly
+  verify_scaling: true                             # Check scaling statistics
+  verify_diagonal_imputation: true                 # Check diagonal values changed
+
+
+# ===============================================================================
+# ADVANCED SETTINGS
+# ===============================================================================
+
+advanced:
+  # Memory management
+  memory_efficient_mode: true                      # Use memory-efficient operations
+  batch_processing: false                          # Process in batches (not needed)
+  clear_cache: true                                # Clear intermediate results
+  
+  # Debugging
+  save_intermediate_results: true                  # Save preprocessing outputs
+  cleanup_temp_files: true                         # Remove temporary files
+  verbose_preprocessing: true                      # Log preprocessing steps
+  
+  # Performance monitoring
+  profile_performance: false                       # Profile code execution time
+  track_memory_usage: false                        # Monitor memory consumption
+  log_system_info: true                            # Log CPU, memory specs
+  
+  # Experimental features
+  use_sample_weights: false                        # Weight samples (not needed)
+  calibration: false                               # Probability calibration (post-processing)
+
+
+# ===============================================================================
+# QUICK REFERENCE: TYPICAL USAGE
+# ===============================================================================
+#
+# --- TESTING MODE (Quick validation) ---
+# 
+# python scripts/hemisphere/02_train_hemisphere_multinomial.py \
+#     --hemisphere left \
+#     --sample 10 \
+#     --tune_hyperparams \
+#     --optuna_trials 10 \
+#     --n_folds 3
+#
+# --- PRODUCTION MODE (Full dataset) ---
+#
+# # 1. Multinomial (Baseline)
+# python scripts/hemisphere/02_train_hemisphere_multinomial.py \
+#     --hemisphere both \
+#     --tune_hyperparams \
+#     --optuna_trials 100
+#
+# # 2. One-vs-Rest
+# python scripts/hemisphere/03_train_hemisphere_ovr.py \
+#     --hemisphere both \
+#     --tune_hyperparams \
+#     --optuna_trials 75
+#
+# # 3. One-vs-One (if needed)
+# python scripts/hemisphere/04_train_hemisphere_ovo.py \
+#     --hemisphere both \
+#     --tune_hyperparams \
+#     --optuna_trials 50
+#
+# # 4. Task Testing (after finding best hyperparameters)
+# python scripts/hemisphere/02_train_hemisphere_multinomial.py \
+#     --hemisphere both \
+#     --test_on_task
+#
+# ===============================================================================
+#
+# --- EXPECTED RESULTS ---
+#
+# Resting-State (Training):
+#   - Multinomial: 91-92% accuracy
+#   - OvR: 91-92% accuracy
+#   - OvO: 90-91% accuracy
+#
+# Task Data (Testing):
+#   - ~10-11% accuracy drop (expected functional reorganization)
+#   - Motor regions show highest errors (pallidum, putamen)
+#   - Sensory regions remain stable
+#
+# Optimal Hyperparameters (likely):
+#   - C: 0.1 - 1.0
+#   - max_iter: 1000-2000
+#   - solver: "lbfgs" or "newton-cg"
+#
+# ===============================================================================
+#
+# --- COMPUTATIONAL REQUIREMENTS ---
+#
+# Estimated Runtimes (modern CPU, all subjects):
+#   - Multinomial + Optuna (100 trials): 30-45 minutes
+#   - OvR + Optuna (75 trials): 2-3 hours
+#   - OvO + Optuna (50 trials): 4-6 hours
+#
+# Memory Requirements:
+#   - Multinomial: 4-8 GB
+#   - OvR: 8-16 GB
+#   - OvO: 16-32 GB
+#
+# Disk Space:
+#   - Results per hemisphere: ~100-500 MB
+#   - Models (if saved): ~1-5 GB
+#
+# ===============================================================================

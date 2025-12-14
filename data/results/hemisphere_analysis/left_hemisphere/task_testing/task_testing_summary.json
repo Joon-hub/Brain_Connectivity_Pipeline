@@ -1,13 +1,14 @@
 {
-  "rest_train_accuracy": 0.9773322044334976,
-  "task_test_accuracy": 0.8693103448275862,
-  "task_balanced_accuracy": 0.869310344827586,
-  "task_top_5_accuracy": 0.9703879310344827,
-  "accuracy_drop": 0.10802185960591137,
+  "rest_train_accuracy": 1.0,
+  "task_test_accuracy": 0.8358620689655173,
+  "task_balanced_accuracy": 0.8358620689655173,
+  "task_top_5_accuracy": 0.9541379310344827,
+  "accuracy_drop": 0.1641379310344827,
   "hyperparameters": {
-    "C": 0.24637685958997463,
+    "C": 7.687405824506018,
     "max_iter": 200,
-    "solver": "saga"
+    "solver": "lbfgs",
+    "multi_class": "ovo"
   },
   "n_rest_subjects": 224,
   "n_task_subjects": 200,

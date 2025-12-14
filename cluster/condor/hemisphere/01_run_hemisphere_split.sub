@@ -14,9 +14,9 @@ request_memory = 16GB
 request_disk = 5GB
 
 # Log files
-output = logs/hemisphere_split.out
-error = logs/hemisphere_split.err
-log = logs/hemisphere_split.log
+output = logs/01_hemisphere_split.out
+error = logs/01_hemisphere_split.err
+log = logs/01_hemisphere_split.log
 
 # Single job - processes both datasets
 queue 1

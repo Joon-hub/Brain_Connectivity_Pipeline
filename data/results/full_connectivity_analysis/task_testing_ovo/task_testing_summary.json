@@ -1,0 +1,16 @@
+{
+  "rest_train_accuracy": 1.0,
+  "task_test_accuracy": 0.8304956896551724,
+  "task_balanced_accuracy": 0.8304956896551725,
+  "accuracy_drop": 0.1695043103448276,
+  "hyperparameters": {
+    "C": 9.600341441672175,
+    "max_iter": 500,
+    "solver": "lbfgs",
+    "multi_class": "ovo"
+  },
+  "n_rest_subjects": 224,
+  "n_task_subjects": 200,
+  "n_regions": 232,
+  "n_pairwise_classifiers": 26796
+}

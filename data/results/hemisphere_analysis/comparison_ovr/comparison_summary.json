@@ -1,0 +1,11 @@
+{
+  "model_type": "one_vs_rest",
+  "left_accuracy": 0.9226447044334976,
+  "right_accuracy": 0.9208358990147784,
+  "difference": 0.0018088054187191949,
+  "ttest_p_value": 0.37440882371196393,
+  "left_task_accuracy": 0.8756896551724138,
+  "right_task_accuracy": 0.8710344827586207,
+  "left_accuracy_drop": 0.08982758620689657,
+  "right_accuracy_drop": 0.0906342364532019
+}

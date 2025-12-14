@@ -1,0 +1,20 @@
+{
+  "n_errors_multi": 2126,
+  "n_errors_ovr": 2010,
+  "n_errors_both_multi_ovr": 1592,
+  "n_errors_only_multi": 534,
+  "n_errors_only_ovr": 418,
+  "n_correct_both_multi_ovr": 23440,
+  "mcnemar_statistic_multi_ovr": 418.0,
+  "mcnemar_pvalue_multi_ovr": 0.0001904188010268982,
+  "contingency_table_multi_ovr": [
+    [
+      23440,
+      418
+    ],
+    [
+      534,
+      1592
+    ]
+  ]
+}

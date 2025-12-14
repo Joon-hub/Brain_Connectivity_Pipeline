@@ -1,0 +1,26 @@
+{
+  "accuracy": 0.9208358990147784,
+  "balanced_accuracy": 0.9208358990147782,
+  "error_rate": 0.07916410098522164,
+  "precision": 0.9218675277062208,
+  "recall": 0.9208358990147784,
+  "f1_score": 0.9209915046058741,
+  "cohen_kappa": 0.9201475155279503,
+  "matthews_corrcoef": 0.9201549815742723,
+  "top_5_accuracy": 0.9828355911330049,
+  "top_10_accuracy": 0.991879618226601,
+  "best_hyperparameters": {
+    "C": 0.1440391093220847,
+    "max_iter": 200,
+    "solver": "saga",
+    "_optuna_best_score": 0.9390032711179527,
+    "_optuna_n_trials": 50,
+    "_optuna_time_seconds": 1078.0491757392883
+  },
+  "preprocessing": {
+    "diagonal_strategy": "region_mean",
+    "fisher_z_applied": true,
+    "standardize_per_fold": true
+  },
+  "model_type": "one_vs_rest"
+}

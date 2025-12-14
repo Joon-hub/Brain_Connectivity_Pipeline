@@ -1,0 +1,72 @@
+================================================================================
+STRATEGY COMPARISON SUMMARY REPORT
+RIGHT HEMISPHERE
+================================================================================
+
+1. OVERALL PERFORMANCE COMPARISON
+--------------------------------------------------------------------------------
+           Metric  Multinomial      OvR  OvR - Multinomial
+         Accuracy     0.913562 0.920836           0.007274
+Balanced Accuracy     0.913562 0.920836           0.007274
+        Precision     0.916881 0.921868           0.004986
+           Recall     0.913562 0.920836           0.007274
+         F1 Score     0.914947 0.920992           0.006045
+
+2. KEY FINDINGS
+--------------------------------------------------------------------------------
+Overall Accuracy:
+  - Multinomial: 0.9136
+  - One-vs-Rest: 0.9208
+  - Difference: +0.0073
+
+Per-Region Analysis:
+  - Regions analyzed: 116
+  - Mean multinomial accuracy: 0.9136
+  - Mean OvR accuracy: 0.9208
+  - Mean OvR advantage: 0.0073
+  - Multinomial vs OvR correlation: r = 0.9869, p = 0.0000
+
+3. ERROR PATTERN ANALYSIS
+--------------------------------------------------------------------------------
+Total samples: 25984
+
+Error Distribution (Multinomial vs OvR):
+  - Correct in both: 23360 (89.90%)
+  - Error only in Multinomial: 567 (2.18%)
+  - Error only in OvR: 378 (1.45%)
+  - Error in both: 1679 (6.46%)
+
+McNemar's Test (Multinomial vs OvR):
+  - Statistic: 378.0000
+  - p-value: 0.0000
+  - Result: Strategies differ significantly (p < 0.05)
+
+4. TOP REGIONS WITH OVR ADVANTAGE
+--------------------------------------------------------------------------------
+pCAU-rh: +0.0402 (Multi: 0.8973, OvR: 0.9375)
+lAMY-rh: +0.0402 (Multi: 0.7812, OvR: 0.8214)
+RH_ContB_PFCmp_1: +0.0357 (Multi: 0.9286, OvR: 0.9643)
+RH_SomMotA_10: +0.0312 (Multi: 0.9509, OvR: 0.9821)
+RH_SalVentAttnB_PFCmp_1: +0.0312 (Multi: 0.9286, OvR: 0.9598)
+THA-DA-rh: +0.0312 (Multi: 0.8036, OvR: 0.8348)
+aPUT-rh: +0.0268 (Multi: 0.9554, OvR: 0.9821)
+RH_SomMotB_Cent_1: +0.0268 (Multi: 0.9241, OvR: 0.9509)
+RH_ContA_IPS_1: +0.0268 (Multi: 0.9464, OvR: 0.9732)
+RH_ContA_PFCl_1: +0.0268 (Multi: 0.9464, OvR: 0.9732)
+
+5. TOP REGIONS WITH OVR DISADVANTAGE
+--------------------------------------------------------------------------------
+RH_DefaultA_PFCm_2: -0.0893 (Multi: 0.6786, OvR: 0.5893)
+pGP-rh: -0.0714 (Multi: 0.5491, OvR: 0.4777)
+THA-DP-rh: -0.0536 (Multi: 0.7188, OvR: 0.6652)
+aGP-rh: -0.0446 (Multi: 0.5759, OvR: 0.5312)
+RH_LimbicA_TempPole_3: -0.0312 (Multi: 0.7768, OvR: 0.7455)
+RH_SalVentAttnA_PrC_1: -0.0179 (Multi: 0.8393, OvR: 0.8214)
+RH_ContA_Cingm_1: -0.0179 (Multi: 0.6295, OvR: 0.6116)
+RH_ContB_PFCld_1: -0.0134 (Multi: 0.9018, OvR: 0.8884)
+RH_TempPar_2: -0.0134 (Multi: 0.9375, OvR: 0.9241)
+RH_DefaultA_IPL_1: -0.0134 (Multi: 0.9241, OvR: 0.9107)
+
+================================================================================
+END OF REPORT
+================================================================================

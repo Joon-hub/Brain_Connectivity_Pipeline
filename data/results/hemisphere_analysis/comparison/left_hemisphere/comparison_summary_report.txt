@@ -1,0 +1,72 @@
+================================================================================
+STRATEGY COMPARISON SUMMARY REPORT
+LEFT HEMISPHERE
+================================================================================
+
+1. OVERALL PERFORMANCE COMPARISON
+--------------------------------------------------------------------------------
+           Metric  Multinomial      OvR  OvR - Multinomial
+         Accuracy     0.918180 0.922645           0.004464
+Balanced Accuracy     0.918180 0.922645           0.004464
+        Precision     0.920063 0.923374           0.003311
+           Recall     0.918180 0.922645           0.004464
+         F1 Score     0.918957 0.922775           0.003819
+
+2. KEY FINDINGS
+--------------------------------------------------------------------------------
+Overall Accuracy:
+  - Multinomial: 0.9182
+  - One-vs-Rest: 0.9226
+  - Difference: +0.0045
+
+Per-Region Analysis:
+  - Regions analyzed: 116
+  - Mean multinomial accuracy: 0.9182
+  - Mean OvR accuracy: 0.9226
+  - Mean OvR advantage: 0.0045
+  - Multinomial vs OvR correlation: r = 0.9866, p = 0.0000
+
+3. ERROR PATTERN ANALYSIS
+--------------------------------------------------------------------------------
+Total samples: 25984
+
+Error Distribution (Multinomial vs OvR):
+  - Correct in both: 23440 (90.21%)
+  - Error only in Multinomial: 534 (2.06%)
+  - Error only in OvR: 418 (1.61%)
+  - Error in both: 1592 (6.13%)
+
+McNemar's Test (Multinomial vs OvR):
+  - Statistic: 418.0000
+  - p-value: 0.0002
+  - Result: Strategies differ significantly (p < 0.05)
+
+4. TOP REGIONS WITH OVR ADVANTAGE
+--------------------------------------------------------------------------------
+LH_ContA_IPS_1: +0.0446 (Multi: 0.9420, OvR: 0.9866)
+LH_DefaultA_PFCm_1: +0.0402 (Multi: 0.9107, OvR: 0.9509)
+LH_DefaultB_Temp_4: +0.0312 (Multi: 0.9375, OvR: 0.9688)
+LH_DefaultA_IPL_1: +0.0268 (Multi: 0.9688, OvR: 0.9955)
+LH_SomMotA_4: +0.0268 (Multi: 0.9554, OvR: 0.9821)
+LH_SalVentAttnA_Ins_1: +0.0268 (Multi: 0.9420, OvR: 0.9688)
+aCAU-lh: +0.0268 (Multi: 0.9241, OvR: 0.9509)
+LH_DorsAttnB_FEF_1: +0.0268 (Multi: 0.9062, OvR: 0.9330)
+LH_SalVentAttnA_FrMed_2: +0.0268 (Multi: 0.9643, OvR: 0.9911)
+LH_SalVentAttnA_FrOper_2: +0.0268 (Multi: 0.9598, OvR: 0.9866)
+
+5. TOP REGIONS WITH OVR DISADVANTAGE
+--------------------------------------------------------------------------------
+pGP-lh: -0.0759 (Multi: 0.6295, OvR: 0.5536)
+aGP-lh: -0.0670 (Multi: 0.5580, OvR: 0.4911)
+LH_DefaultB_Temp_2: -0.0402 (Multi: 0.8795, OvR: 0.8393)
+THA-DP-lh: -0.0402 (Multi: 0.7277, OvR: 0.6875)
+LH_ContA_Cingm_1: -0.0312 (Multi: 0.7500, OvR: 0.7188)
+pHIP-lh: -0.0312 (Multi: 0.7366, OvR: 0.7054)
+LH_ContA_PFCl_1: -0.0268 (Multi: 0.9688, OvR: 0.9420)
+LH_LimbicA_TempPole_2: -0.0268 (Multi: 0.7857, OvR: 0.7589)
+LH_LimbicA_TempPole_4: -0.0268 (Multi: 0.6875, OvR: 0.6607)
+LH_ContB_PFClv_2: -0.0223 (Multi: 0.8661, OvR: 0.8438)
+
+================================================================================
+END OF REPORT
+================================================================================

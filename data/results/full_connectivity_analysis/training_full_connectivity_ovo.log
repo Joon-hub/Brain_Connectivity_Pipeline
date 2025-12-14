@@ -1,0 +1,86 @@
+2025-12-14 02:38:39,658 - __main__ - INFO - ================================================================================
+2025-12-14 02:38:39,658 - __main__ - INFO - FULL BRAIN CONNECTIVITY CLASSIFICATION (ONE-VS-ONE)
+2025-12-14 02:38:39,658 - __main__ - INFO - 232 Regions | 224 Subjects | 26,796 Pairwise Classifiers
+2025-12-14 02:38:39,658 - __main__ - INFO - ================================================================================
+2025-12-14 02:38:39,658 - __main__ - INFO - 
+================================================================================
+2025-12-14 02:38:39,658 - __main__ - INFO - TRAINING FULL BRAIN CONNECTIVITY (232 REGIONS) - ONE-VS-ONE
+2025-12-14 02:38:39,658 - __main__ - INFO - ================================================================================
+
+2025-12-14 02:38:41,698 - __main__ - INFO - Data: 224 subjects, 232 regions, 26796 pairwise classifiers
+2025-12-14 02:38:44,680 - __main__ - INFO - 
+Applying diagonal imputation (strategy: region_mean)...
+2025-12-14 02:38:44,695 - __main__ - INFO -   Original diagonal range: [1.0000, 1.0000]
+2025-12-14 02:38:45,040 - __main__ - INFO -   Replaced diagonal with row means
+2025-12-14 02:38:45,041 - __main__ - INFO -   New diagonal range: [-0.1471, 0.2325]
+2025-12-14 02:38:45,041 - __main__ - INFO - 
+Applying Fisher Z-transformation...
+2025-12-14 02:38:45,290 - __main__ - INFO -   Value range after Fisher Z: [-1.3984, 2.0494]
+2025-12-14 02:38:45,379 - __main__ - INFO - 
+================================================================================
+2025-12-14 02:38:45,379 - __main__ - INFO - HYPERPARAMETER OPTIMIZATION WITH OPTUNA (ONE-VS-ONE)
+2025-12-14 02:38:45,379 - __main__ - INFO - ================================================================================
+2025-12-14 02:38:45,379 - __main__ - INFO -   Classes: 232, Pairwise classifiers: 26796
+2025-12-14 10:51:17,643 - __main__ - INFO - Best params: C=9.600341, solver=lbfgs, score=0.8719
+2025-12-14 10:51:17,644 - __main__ - INFO - ================================================================================
+
+2025-12-14 10:51:17,644 - __main__ - INFO - 
+================================================================================
+2025-12-14 10:51:17,644 - __main__ - INFO - CROSS-VALIDATION (ONE-VS-ONE) - 26796 pairwise classifiers per fold
+2025-12-14 10:51:17,644 - __main__ - INFO - ================================================================================
+
+2025-12-14 10:51:17,658 - __main__ - INFO - Fold 1/5
+2025-12-14 10:51:17,680 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
+2025-12-14 11:03:53,004 - __main__ - INFO -   Accuracy: 0.8687, Time: 755.35s
+
+2025-12-14 11:03:53,006 - __main__ - INFO - Fold 2/5
+2025-12-14 11:03:53,036 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
+2025-12-14 11:16:21,104 - __main__ - INFO -   Accuracy: 0.8743, Time: 748.10s
+
+2025-12-14 11:16:21,106 - __main__ - INFO - Fold 3/5
+2025-12-14 11:16:21,118 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
+2025-12-14 11:28:53,299 - __main__ - INFO -   Accuracy: 0.8699, Time: 752.19s
+
+2025-12-14 11:28:53,301 - __main__ - INFO - Fold 4/5
+2025-12-14 11:28:53,313 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
+2025-12-14 11:41:26,437 - __main__ - INFO -   Accuracy: 0.8678, Time: 753.14s
+
+2025-12-14 11:41:26,438 - __main__ - INFO - Fold 5/5
+2025-12-14 11:41:26,449 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
+2025-12-14 11:54:09,818 - __main__ - INFO -   Accuracy: 0.8630, Time: 763.38s
+
+2025-12-14 11:54:09,819 - __main__ - INFO - CV completed in 3772.17s
+
+2025-12-14 11:54:10,814 - __main__ - INFO - OVERALL: Accuracy=0.8688, Balanced=0.8688
+2025-12-14 11:54:16,931 - __main__ - INFO - 
+================================================================================
+2025-12-14 11:54:16,931 - __main__ - INFO - TESTING ON TASK DATA (GENDER STROOP) - ONE-VS-ONE
+2025-12-14 11:54:16,931 - __main__ - INFO - ================================================================================
+2025-12-14 11:54:18,777 - __main__ - INFO -   Rest: 224 subjects, 232 regions, 26796 pairwise classifiers
+2025-12-14 11:54:21,898 - __main__ - INFO - 
+Applying diagonal imputation (strategy: region_mean)...
+2025-12-14 11:54:21,905 - __main__ - INFO -   Original diagonal range: [1.0000, 1.0000]
+2025-12-14 11:54:22,250 - __main__ - INFO -   Replaced diagonal with row means
+2025-12-14 11:54:22,250 - __main__ - INFO -   New diagonal range: [-0.1471, 0.2325]
+2025-12-14 11:54:22,250 - __main__ - INFO - 
+Applying Fisher Z-transformation...
+2025-12-14 11:54:22,484 - __main__ - INFO -   Value range after Fisher Z: [-1.3984, 2.0494]
+2025-12-14 11:54:27,055 - __main__ - INFO - 
+Applying diagonal imputation (strategy: region_mean)...
+2025-12-14 11:54:27,062 - __main__ - INFO -   Original diagonal range: [1.0000, 1.0000]
+2025-12-14 11:54:27,369 - __main__ - INFO -   Replaced diagonal with row means
+2025-12-14 11:54:27,370 - __main__ - INFO -   New diagonal range: [-0.1952, 0.3499]
+2025-12-14 11:54:27,370 - __main__ - INFO - 
+Applying Fisher Z-transformation...
+2025-12-14 11:54:27,575 - __main__ - INFO -   Value range after Fisher Z: [-1.3363, 1.9912]
+2025-12-14 12:03:14,787 - __main__ - INFO -   OvO model trained in 527.12s (26796 classifiers)
+2025-12-14 12:29:59,300 - __main__ - INFO - 
+Rest accuracy: 1.0000, Task accuracy: 0.8305, Drop: 0.1695
+2025-12-14 12:29:59,438 - __main__ - INFO - 
+================================================================================
+2025-12-14 12:29:59,438 - __main__ - INFO - TRAINING COMPLETED (ONE-VS-ONE)
+2025-12-14 12:29:59,438 - __main__ - INFO - ================================================================================
+2025-12-14 12:29:59,438 - __main__ - INFO - CV Accuracy: 0.8688
+2025-12-14 12:29:59,438 - __main__ - INFO - Pairwise Classifiers: 26796
+2025-12-14 12:29:59,438 - __main__ - INFO - Task Accuracy: 0.8305
+2025-12-14 12:29:59,438 - __main__ - INFO - Results saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/full_connectivity_analysis/ovo

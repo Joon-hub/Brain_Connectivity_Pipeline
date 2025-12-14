@@ -37,6 +37,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import optuna
 from optuna.samplers import TPESampler
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+
+warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
 
 # Add project root to path
@@ -64,7 +68,7 @@ from src.visualization.hemisphere_viz import (
 
 def setup_logging(output_dir: Path, hemisphere: str) -> logging.Logger:
     """Set up logging configuration."""
-    log_file = output_dir / f"training_{hemisphere}_hemisphere.log"
+    log_file = output_dir / f"training_{hemisphere}_hemisphere_multinomial.log"
     
     logging.basicConfig(
         level=logging.INFO,
