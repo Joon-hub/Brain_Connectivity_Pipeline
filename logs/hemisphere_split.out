@@ -1,0 +1,231 @@
+==========================================
+Hemisphere Data Split Pipeline
+Host: cpu43 | Start: Wed Dec 10 04:57:25 PM CET 2025
+CPUs: 4 | Memory: 2.0Ti
+==========================================
+Checking virtual environment at: /home/sjoon/projects/brain_connectivity_classifier/masterthesis_venv2/bin/activate
+✓ Virtual environment activated successfully
+
+Starting hemisphere data split...
+
+
+============================================================
+PROCESSING: PIOP2_restingstate.csv
+============================================================
+
+============================================================
+LOADING DATA
+============================================================
+[INFO] Reading: data/raw/PIOP2_restingstate.csv
+[INFO] Shape: (224, 26797)
+[INFO] Subjects: 224
+
+============================================================
+EXTRACTING REGIONS
+============================================================
+[INFO] Connectivity columns found: 26796
+[INFO] Total unique regions: 232
+[INFO] First 5: ['LH_VisCent_ExStr_2', 'LH_VisCent_ExStr_1', 'LH_VisCent_Striate_1', 'LH_VisCent_ExStr_3', 'LH_VisCent_ExStr_4']
+[INFO] Last 5: ['aGP-lh', 'aPUT-lh', 'pPUT-lh', 'aCAU-lh', 'pCAU-lh']
+
+============================================================
+BUILDING CONNECTIVITY MAP
+============================================================
+[INFO] Connectivity map created for 224 subjects
+
+============================================================
+TRANSFORMING TO LONG FORMAT
+============================================================
+[INFO] Creating 224 subjects × 232 regions = 51968 rows
+[INFO] Transformed shape: (51968, 234)
+[INFO] Expected: (51968, 234)
+[INFO] Missing values: 0
+
+============================================================
+IDENTIFYING HEMISPHERES
+============================================================
+[INFO] LEFT HEMISPHERE: 116 total
+[INFO]   Cortical (LH_): 100
+[INFO]   Subcortical (-lh): 16
+[INFO] RIGHT HEMISPHERE: 116 total
+[INFO]   Cortical (RH_): 100
+[INFO]   Subcortical (-rh): 16
+[INFO] 
+First 5 left: ['LH_VisCent_ExStr_2', 'LH_VisCent_ExStr_1', 'LH_VisCent_Striate_1', 'LH_VisCent_ExStr_3', 'LH_VisCent_ExStr_4']
+[INFO] Last 5 left: ['aGP-lh', 'aPUT-lh', 'pPUT-lh', 'aCAU-lh', 'pCAU-lh']
+[INFO] First 5 right: ['RH_VisCent_ExStr_1', 'RH_VisCent_ExStr_2', 'RH_VisCent_Striate_1', 'RH_VisCent_ExStr_3', 'RH_VisCent_ExStr_4']
+[INFO] Last 5 right: ['aGP-rh', 'aPUT-rh', 'pPUT-rh', 'aCAU-rh', 'pCAU-rh']
+
+============================================================
+SPLITTING BY HEMISPHERE
+============================================================
+[INFO] Left hemisphere shape: (25984, 118)
+[INFO] Right hemisphere shape: (25984, 118)
+
+============================================================
+TRANSFORMING LEFT TO WIDE FORMAT
+============================================================
+[INFO] Upper triangle connections: 6670
+[INFO] Expected: 6670
+[INFO] Processing 224 subjects...
+[INFO]   Progress: 1000/6670 connections processed
+[INFO]   Progress: 2000/6670 connections processed
+[INFO]   Progress: 3000/6670 connections processed
+[INFO]   Progress: 4000/6670 connections processed
+[INFO]   Progress: 5000/6670 connections processed
+[INFO]   Progress: 6000/6670 connections processed
+[INFO] Wide format shape: (224, 6671)
+[INFO] Expected: (224, 6671)
+[INFO] Missing values: 0
+
+============================================================
+TRANSFORMING RIGHT TO WIDE FORMAT
+============================================================
+[INFO] Upper triangle connections: 6670
+[INFO] Expected: 6670
+[INFO] Processing 224 subjects...
+[INFO]   Progress: 1000/6670 connections processed
+[INFO]   Progress: 2000/6670 connections processed
+[INFO]   Progress: 3000/6670 connections processed
+[INFO]   Progress: 4000/6670 connections processed
+[INFO]   Progress: 5000/6670 connections processed
+[INFO]   Progress: 6000/6670 connections processed
+[INFO] Wide format shape: (224, 6671)
+[INFO] Expected: (224, 6671)
+[INFO] Missing values: 0
+
+============================================================
+SAVING FILES
+============================================================
+[INFO] ✓ Saved: data/processed/hemispheres/LH_Piop2_Restingstate.csv
+[INFO]   Shape: (224, 6671)
+[INFO]   First connection: LH_VisCent_ExStr_2~LH_VisCent_ExStr_1
+[INFO]   Last connection: aCAU-lh~pCAU-lh
+[INFO] ✓ Saved: data/processed/hemispheres/RH_Piop2_Restingstate.csv
+[INFO]   Shape: (224, 6671)
+[INFO]   First connection: RH_VisCent_ExStr_1~RH_VisCent_ExStr_2
+[INFO]   Last connection: aCAU-rh~pCAU-rh
+
+============================================================
+PROCESSING: PIOP1_gstroop.csv
+============================================================
+
+============================================================
+LOADING DATA
+============================================================
+[INFO] Reading: data/raw/PIOP1_gstroop.csv
+[INFO] Shape: (200, 26797)
+[INFO] Subjects: 200
+
+============================================================
+EXTRACTING REGIONS
+============================================================
+[INFO] Connectivity columns found: 26796
+[INFO] Total unique regions: 232
+[INFO] First 5: ['LH_VisCent_ExStr_2', 'LH_VisCent_ExStr_1', 'LH_VisCent_Striate_1', 'LH_VisCent_ExStr_3', 'LH_VisCent_ExStr_4']
+[INFO] Last 5: ['aGP-lh', 'aPUT-lh', 'pPUT-lh', 'aCAU-lh', 'pCAU-lh']
+
+============================================================
+BUILDING CONNECTIVITY MAP
+============================================================
+[INFO] Connectivity map created for 200 subjects
+
+============================================================
+TRANSFORMING TO LONG FORMAT
+============================================================
+[INFO] Creating 200 subjects × 232 regions = 46400 rows
+[INFO] Transformed shape: (46400, 234)
+[INFO] Expected: (46400, 234)
+[INFO] Missing values: 0
+
+============================================================
+IDENTIFYING HEMISPHERES
+============================================================
+[INFO] LEFT HEMISPHERE: 116 total
+[INFO]   Cortical (LH_): 100
+[INFO]   Subcortical (-lh): 16
+[INFO] RIGHT HEMISPHERE: 116 total
+[INFO]   Cortical (RH_): 100
+[INFO]   Subcortical (-rh): 16
+[INFO] 
+First 5 left: ['LH_VisCent_ExStr_2', 'LH_VisCent_ExStr_1', 'LH_VisCent_Striate_1', 'LH_VisCent_ExStr_3', 'LH_VisCent_ExStr_4']
+[INFO] Last 5 left: ['aGP-lh', 'aPUT-lh', 'pPUT-lh', 'aCAU-lh', 'pCAU-lh']
+[INFO] First 5 right: ['RH_VisCent_ExStr_1', 'RH_VisCent_ExStr_2', 'RH_VisCent_Striate_1', 'RH_VisCent_ExStr_3', 'RH_VisCent_ExStr_4']
+[INFO] Last 5 right: ['aGP-rh', 'aPUT-rh', 'pPUT-rh', 'aCAU-rh', 'pCAU-rh']
+
+============================================================
+SPLITTING BY HEMISPHERE
+============================================================
+[INFO] Left hemisphere shape: (23200, 118)
+[INFO] Right hemisphere shape: (23200, 118)
+
+============================================================
+TRANSFORMING LEFT TO WIDE FORMAT
+============================================================
+[INFO] Upper triangle connections: 6670
+[INFO] Expected: 6670
+[INFO] Processing 200 subjects...
+[INFO]   Progress: 1000/6670 connections processed
+[INFO]   Progress: 2000/6670 connections processed
+[INFO]   Progress: 3000/6670 connections processed
+[INFO]   Progress: 4000/6670 connections processed
+[INFO]   Progress: 5000/6670 connections processed
+[INFO]   Progress: 6000/6670 connections processed
+[INFO] Wide format shape: (200, 6671)
+[INFO] Expected: (200, 6671)
+[INFO] Missing values: 0
+
+============================================================
+TRANSFORMING RIGHT TO WIDE FORMAT
+============================================================
+[INFO] Upper triangle connections: 6670
+[INFO] Expected: 6670
+[INFO] Processing 200 subjects...
+[INFO]   Progress: 1000/6670 connections processed
+[INFO]   Progress: 2000/6670 connections processed
+[INFO]   Progress: 3000/6670 connections processed
+[INFO]   Progress: 4000/6670 connections processed
+[INFO]   Progress: 5000/6670 connections processed
+[INFO]   Progress: 6000/6670 connections processed
+[INFO] Wide format shape: (200, 6671)
+[INFO] Expected: (200, 6671)
+[INFO] Missing values: 0
+
+============================================================
+SAVING FILES
+============================================================
+[INFO] ✓ Saved: data/processed/hemispheres/LH_Piop1_Gstroop.csv
+[INFO]   Shape: (200, 6671)
+[INFO]   First connection: LH_VisCent_ExStr_2~LH_VisCent_ExStr_1
+[INFO]   Last connection: aCAU-lh~pCAU-lh
+[INFO] ✓ Saved: data/processed/hemispheres/RH_Piop1_Gstroop.csv
+[INFO]   Shape: (200, 6671)
+[INFO]   First connection: RH_VisCent_ExStr_1~RH_VisCent_ExStr_2
+[INFO]   Last connection: aCAU-rh~pCAU-rh
+
+============================================================
+PIPELINE COMPLETE!
+============================================================
+Processed 2 dataset(s)
+Generated 4 output file(s):
+  ✓ data/processed/hemispheres/LH_Piop2_Restingstate.csv
+  ✓ data/processed/hemispheres/RH_Piop2_Restingstate.csv
+  ✓ data/processed/hemispheres/LH_Piop1_Gstroop.csv
+  ✓ data/processed/hemispheres/RH_Piop1_Gstroop.csv
+============================================================
+
+
+==========================================
+✓ Hemisphere split completed successfully
+
+Output files generated:
+total 104M
+-rw-r--r-- 1 sjoon BnB 25M Dec 10 19:46 LH_Piop1_Gstroop.csv
+-rw-r--r-- 1 sjoon BnB 28M Dec 10 18:31 LH_Piop2_Restingstate.csv
+-rw-rw---- 1 sjoon BnB 28M Dec  7 23:18 LH_PIOP2_RestingState.csv
+-rw-r--r-- 1 sjoon BnB 25M Dec 10 19:46 RH_Piop1_Gstroop.csv
+-rw-r--r-- 1 sjoon BnB 28M Dec 10 18:31 RH_Piop2_Restingstate.csv
+-rw-rw---- 1 sjoon BnB 28M Dec  7 23:18 RH_PIOP2_RestingState.csv
+Duration: 10161 seconds
+Completed: Wed Dec 10 07:46:46 PM CET 2025
+==========================================

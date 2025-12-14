@@ -1,0 +1,42 @@
+
+RESULTS SUMMARY
+======================================================================
+
+Experiment: logistic_regression_diagonal_precision
+Model: LogisticRegression
+
+Data:
+  Training subjects: 10
+  Brain regions: 232
+  Chance level: 0.0043
+
+Configuration:
+  Diagonal strategy: diagonal_precision
+  CV folds: 3
+  Fisher Z transform: Enabled
+  Random seed: 42
+
+Cross-Validation Results:
+  Validation accuracy: 0.7687 ± 0.0620
+  Training accuracy: 1.0000 ± 0.0000
+  Full Training Accuracy: 1.0000 (overfitted)
+  Improvement over chance: 178.3x
+
+Task Data (Gender Stroop):
+  Test subjects: 10
+  Test accuracy: 0.8185
+  CV validation → Task drop: -0.0499
+
+======================================================================
+
+Output Locations:
+  Experiment: results/experiments/logistic_regression_diagonal_precision
+  Models: results/experiments/logistic_regression_diagonal_precision/models
+  Metrics: results/experiments/logistic_regression_diagonal_precision/metrics
+  Figures: results/experiments/logistic_regression_diagonal_precision/figures
+  Predictions: results/experiments/logistic_regression_diagonal_precision/predictions
+
+Execution Time: 2.1m
+Completed: 2025-12-10 19:57:29
+
+======================================================================

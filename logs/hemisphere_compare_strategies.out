@@ -1,0 +1,150 @@
+=== Hemisphere Training | Host: cpu44 | Sat Dec 13 05:23:43 PM CET 2025 | CPUs: 32 ===
+✓ Environment ready. Starting training...
+2025-12-13 17:30:11,191 - __main__ - INFO - ================================================================================
+2025-12-13 17:30:11,293 - __main__ - INFO - STRATEGY COMPARISON ANALYSIS
+2025-12-13 17:30:11,293 - __main__ - INFO - ================================================================================
+2025-12-13 17:30:11,293 - __main__ - INFO - 
+Configuration:
+2025-12-13 17:30:11,293 - __main__ - INFO -   Hemisphere: both
+2025-12-13 17:30:11,293 - __main__ - INFO -   Results directory: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis
+2025-12-13 17:30:11,293 - __main__ - INFO -   Output directory: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/comparison
+2025-12-13 17:30:11,293 - __main__ - INFO -   Include OvO: False
+2025-12-13 17:30:11,293 - __main__ - INFO - 
+================================================================================
+2025-12-13 17:30:11,293 - __main__ - INFO - COMPARING STRATEGIES - LEFT HEMISPHERE
+2025-12-13 17:30:11,293 - __main__ - INFO - ================================================================================
+
+2025-12-13 17:30:11,295 - __main__ - INFO - Loading strategy results...
+2025-12-13 17:30:11,513 - __main__ - INFO -   Loading MULTINOMIAL results from: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/multinomial
+2025-12-13 17:30:13,019 - __main__ - INFO -     Successfully loaded MULTINOMIAL results
+2025-12-13 17:30:13,019 - __main__ - INFO -   Loading OVR results from: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/ovr
+2025-12-13 17:30:14,475 - __main__ - INFO -     Successfully loaded OVR results
+2025-12-13 17:30:14,475 - __main__ - INFO - 
+Comparing overall performance metrics...
+2025-12-13 17:30:14,478 - __main__ - INFO - 
+Overall Performance Comparison:
+2025-12-13 17:30:15,248 - __main__ - INFO - 
+           Metric  Multinomial      OvR  OvR - Multinomial
+         Accuracy     0.918180 0.922645           0.004464
+Balanced Accuracy     0.918180 0.922645           0.004464
+        Precision     0.920063 0.923374           0.003311
+           Recall     0.918180 0.922645           0.004464
+         F1 Score     0.918957 0.922775           0.003819
+2025-12-13 17:30:15,248 - __main__ - INFO - 
+Comparing per-region performance...
+2025-12-13 17:30:15,251 - __main__ - INFO -   Multinomial vs OvR correlation: r = 0.9866, p = 0.0000
+2025-12-13 17:30:15,252 - __main__ - INFO -   Multinomial vs OvR paired t-test: t = 2.5509, p = 0.0121
+2025-12-13 17:30:15,252 - __main__ - INFO -   Mean multinomial accuracy: 0.9182
+2025-12-13 17:30:15,252 - __main__ - INFO -   Mean OvR accuracy: 0.9226
+2025-12-13 17:30:15,252 - __main__ - INFO -   Mean OvR advantage: 0.0045
+2025-12-13 17:30:15,252 - __main__ - INFO - 
+Analyzing error patterns...
+2025-12-13 17:30:15,253 - __main__ - INFO -   Multinomial errors: 2126 (8.18%)
+2025-12-13 17:30:15,253 - __main__ - INFO -   OvR errors: 2010 (7.74%)
+2025-12-13 17:30:15,253 - __main__ - INFO - 
+Error Overlap (Multinomial vs OvR):
+2025-12-13 17:30:15,253 - __main__ - INFO -   Errors in both: 1592 (6.13%)
+2025-12-13 17:30:15,253 - __main__ - INFO -   Errors only in multinomial: 534 (2.06%)
+2025-12-13 17:30:15,253 - __main__ - INFO -   Errors only in OvR: 418 (1.61%)
+2025-12-13 17:30:15,253 - __main__ - INFO -   Correct in both: 23440 (90.21%)
+2025-12-13 17:30:17,609 - __main__ - INFO - 
+McNemar's Test (Multinomial vs OvR):
+2025-12-13 17:30:17,609 - __main__ - INFO -   Statistic: 418.0000
+2025-12-13 17:30:17,609 - __main__ - INFO -   p-value: 0.0002
+2025-12-13 17:30:17,609 - __main__ - INFO - 
+Saving comparison results...
+2025-12-13 17:30:18,331 - __main__ - INFO - 
+Creating comparison visualizations...
+2025-12-13 17:30:18,331 - __main__ - INFO -   Creating overall metrics comparison...
+2025-12-13 17:30:21,747 - __main__ - INFO -   Creating per-region scatter plots...
+2025-12-13 17:30:22,539 - __main__ - INFO -   Creating advantage distribution plots...
+2025-12-13 17:30:23,117 - __main__ - INFO -   Creating error overlap visualization...
+2025-12-13 17:30:23,673 - __main__ - INFO -   Creating top advantage regions plot...
+2025-12-13 17:30:24,522 - __main__ - INFO -   Creating network-level comparison...
+2025-12-13 17:30:25,216 - __main__ - INFO -   All visualizations created successfully
+2025-12-13 17:30:25,216 - __main__ - INFO - 
+Generating summary report...
+2025-12-13 17:30:25,367 - __main__ - INFO -   Summary report saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/comparison/left_hemisphere/comparison_summary_report.txt
+2025-12-13 17:30:25,367 - __main__ - INFO - 
+All comparison results saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/comparison/left_hemisphere
+2025-12-13 17:30:25,367 - __main__ - INFO - 
+================================================================================
+2025-12-13 17:30:25,367 - __main__ - INFO - COMPARING STRATEGIES - RIGHT HEMISPHERE
+2025-12-13 17:30:25,367 - __main__ - INFO - ================================================================================
+
+2025-12-13 17:30:25,515 - __main__ - INFO - Loading strategy results...
+2025-12-13 17:30:25,647 - __main__ - INFO -   Loading MULTINOMIAL results from: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/right_hemisphere/multinomial
+2025-12-13 17:30:27,426 - __main__ - INFO -     Successfully loaded MULTINOMIAL results
+2025-12-13 17:30:27,427 - __main__ - INFO -   Loading OVR results from: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/right_hemisphere/ovr
+2025-12-13 17:30:29,154 - __main__ - INFO -     Successfully loaded OVR results
+2025-12-13 17:30:29,154 - __main__ - INFO - 
+Comparing overall performance metrics...
+2025-12-13 17:30:29,156 - __main__ - INFO - 
+Overall Performance Comparison:
+2025-12-13 17:30:29,157 - __main__ - INFO - 
+           Metric  Multinomial      OvR  OvR - Multinomial
+         Accuracy     0.913562 0.920836           0.007274
+Balanced Accuracy     0.913562 0.920836           0.007274
+        Precision     0.916881 0.921868           0.004986
+           Recall     0.913562 0.920836           0.007274
+         F1 Score     0.914947 0.920992           0.006045
+2025-12-13 17:30:29,158 - __main__ - INFO - 
+Comparing per-region performance...
+2025-12-13 17:30:29,160 - __main__ - INFO -   Multinomial vs OvR correlation: r = 0.9869, p = 0.0000
+2025-12-13 17:30:29,161 - __main__ - INFO -   Multinomial vs OvR paired t-test: t = 4.1552, p = 0.0001
+2025-12-13 17:30:29,161 - __main__ - INFO -   Mean multinomial accuracy: 0.9136
+2025-12-13 17:30:29,161 - __main__ - INFO -   Mean OvR accuracy: 0.9208
+2025-12-13 17:30:29,162 - __main__ - INFO -   Mean OvR advantage: 0.0073
+2025-12-13 17:30:29,162 - __main__ - INFO - 
+Analyzing error patterns...
+2025-12-13 17:30:29,162 - __main__ - INFO -   Multinomial errors: 2246 (8.64%)
+2025-12-13 17:30:29,162 - __main__ - INFO -   OvR errors: 2057 (7.92%)
+2025-12-13 17:30:29,162 - __main__ - INFO - 
+Error Overlap (Multinomial vs OvR):
+2025-12-13 17:30:29,162 - __main__ - INFO -   Errors in both: 1679 (6.46%)
+2025-12-13 17:30:29,162 - __main__ - INFO -   Errors only in multinomial: 567 (2.18%)
+2025-12-13 17:30:29,162 - __main__ - INFO -   Errors only in OvR: 378 (1.45%)
+2025-12-13 17:30:29,162 - __main__ - INFO -   Correct in both: 23360 (89.90%)
+2025-12-13 17:30:29,162 - __main__ - INFO - 
+McNemar's Test (Multinomial vs OvR):
+2025-12-13 17:30:29,162 - __main__ - INFO -   Statistic: 378.0000
+2025-12-13 17:30:29,162 - __main__ - INFO -   p-value: 0.0000
+2025-12-13 17:30:29,162 - __main__ - INFO - 
+Saving comparison results...
+2025-12-13 17:30:29,773 - __main__ - INFO - 
+Creating comparison visualizations...
+2025-12-13 17:30:29,773 - __main__ - INFO -   Creating overall metrics comparison...
+2025-12-13 17:30:30,352 - __main__ - INFO -   Creating per-region scatter plots...
+2025-12-13 17:30:31,093 - __main__ - INFO -   Creating advantage distribution plots...
+2025-12-13 17:30:31,654 - __main__ - INFO -   Creating error overlap visualization...
+2025-12-13 17:30:32,191 - __main__ - INFO -   Creating top advantage regions plot...
+2025-12-13 17:30:32,929 - __main__ - INFO -   Creating network-level comparison...
+2025-12-13 17:30:33,594 - __main__ - INFO -   All visualizations created successfully
+2025-12-13 17:30:33,594 - __main__ - INFO - 
+Generating summary report...
+2025-12-13 17:30:33,733 - __main__ - INFO -   Summary report saved: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/comparison/right_hemisphere/comparison_summary_report.txt
+2025-12-13 17:30:33,733 - __main__ - INFO - 
+All comparison results saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/comparison/right_hemisphere
+2025-12-13 17:30:33,733 - __main__ - INFO - 
+================================================================================
+2025-12-13 17:30:33,734 - __main__ - INFO - COMPARING LEFT VS RIGHT HEMISPHERES
+2025-12-13 17:30:33,734 - __main__ - INFO - ================================================================================
+
+2025-12-13 17:30:33,863 - __main__ - INFO - Hemisphere Performance Comparison:
+2025-12-13 17:30:33,863 - __main__ - INFO -   Left Multinomial: 0.9182
+2025-12-13 17:30:33,863 - __main__ - INFO -   Right Multinomial: 0.9136
+2025-12-13 17:30:33,863 - __main__ - INFO -   Left OvR: 0.9226
+2025-12-13 17:30:33,863 - __main__ - INFO -   Right OvR: 0.9208
+2025-12-13 17:30:34,353 - __main__ - INFO -   Hemisphere comparison saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/comparison/hemisphere_comparison
+2025-12-13 17:30:34,353 - __main__ - INFO - 
+================================================================================
+2025-12-13 17:30:34,353 - __main__ - INFO - STRATEGY COMPARISON COMPLETED SUCCESSFULLY
+2025-12-13 17:30:34,353 - __main__ - INFO - ================================================================================
+
+==========================================
+✓ Training completed successfully
+Results: data/results/hemisphere_analysis/both_hemisphere/compare_strategies
+
+Duration: 426 seconds (7 minutes)
+Completed: Sat Dec 13 05:30:49 PM CET 2025
+==========================================
