@@ -15,7 +15,7 @@
     "solver": "lbfgs",
     "_optuna_best_score": 0.9289974985568598,
     "_optuna_n_trials": 50,
-    "_optuna_time_seconds": 1203.053787469864
+    "_optuna_time_seconds": 1205.9652485847473
   },
   "preprocessing": {
     "diagonal_strategy": "region_mean",

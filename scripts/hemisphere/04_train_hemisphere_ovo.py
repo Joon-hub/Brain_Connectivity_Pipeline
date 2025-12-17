@@ -35,15 +35,12 @@ from sklearn.multiclass import OneVsOneClassifier
 from sklearn.model_selection import GroupKFold, train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
-import matplotlib.pyplot as plt
-import seaborn as sns
 import optuna
 from optuna.samplers import TPESampler
 import warnings
 from sklearn.exceptions import ConvergenceWarning
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
-
 
 
 # Add project root to path
@@ -61,11 +58,6 @@ from src.evaluation.hemisphere_metrics import (
     compute_per_region_metrics,
     compute_network_level_metrics,
     create_confusion_matrix
-)
-from src.visualization.hemisphere_viz import (
-    plot_confusion_matrix,
-    plot_per_region_accuracy,
-    plot_network_accuracy
 )
 
 
@@ -383,20 +375,6 @@ def preprocess_fold_data(
     
     ONLY StandardScaler (diagonal imputation and Fisher Z already done).
     This ensures no data leakage - scaler is fit on training data only.
-    
-    Parameters
-    ----------
-    X_train : np.ndarray
-        Training features (already Fisher Z transformed)
-    X_test : np.ndarray
-        Test features (already Fisher Z transformed)
-    logger : logging.Logger
-        Logger instance
-    
-    Returns
-    -------
-    X_train_scaled, X_test_scaled : tuple
-        Scaled features
     """
     
     logger.info(f"  Preprocessing fold data (StandardScaler only)...")
@@ -426,30 +404,7 @@ def optimize_hyperparameters_optuna(
     n_jobs: int,
     logger: logging.Logger
 ) -> dict:
-    """
-    Optimize hyperparameters using Optuna on SCALED full dataset.
-    
-    NOTE: X should already be scaled with StandardScaler fit on full dataset.
-    This is for Optuna exploration only - final CV will re-scale properly within folds.
-    
-    Parameters
-    ----------
-    X : np.ndarray
-        Full feature matrix (already scaled)
-    y : np.ndarray
-        Full labels
-    n_trials : int
-        Number of Optuna trials
-    random_state : int
-        Random state
-    logger : logging.Logger
-        Logger instance
-    
-    Returns
-    -------
-    best_params : dict
-        Best hyperparameters
-    """
+    """Optimize hyperparameters using Optuna on SCALED full dataset."""
     
     logger.info("\n" + "="*80)
     logger.info("HYPERPARAMETER OPTIMIZATION WITH OPTUNA (ONE-VS-ONE)")
@@ -560,27 +515,7 @@ def test_on_task_data(
     sample: int,
     logger: logging.Logger
 ) -> dict:
-    """
-    Train final OvO model on ALL rest data, then test on task data.
-    
-    This reveals how well the OvO model generalizes from resting-state to task-based connectivity.
-    
-    Parameters
-    ----------
-    hemisphere : str
-        'left' or 'right'
-    C, max_iter, solver : model hyperparameters
-    random_state, n_jobs : training parameters
-    diagonal_strategy : preprocessing parameter
-    data_dir, output_dir : paths
-    sample : number of subjects (or None for all)
-    logger : logging instance
-    
-    Returns
-    -------
-    task_results : dict
-        Results from task testing
-    """
+    """Train final OvO model on ALL rest data, then test on task data."""
     
     logger.info("\n" + "="*80)
     logger.info("TESTING ON TASK DATA (GENDER STROOP) - ONE-VS-ONE")
@@ -588,10 +523,7 @@ def test_on_task_data(
     logger.info(f"Training final OvO model on ALL resting-state data")
     logger.info(f"Then testing on task data to measure generalization\n")
     
-    # =========================================================================
     # STEP 1: Load and preprocess RESTING-STATE data (training)
-    # =========================================================================
-    
     logger.info("Step 1: Loading resting-state data (TRAINING)...")
     rest_data = load_hemisphere_data(
         data_dir=data_dir,
@@ -627,15 +559,12 @@ def test_on_task_data(
     
     logger.info(f"  Rest features: {X_rest.shape}")
     
-    # =========================================================================
     # STEP 2: Load and preprocess TASK data (testing)
-    # =========================================================================
-    
     logger.info("\nStep 2: Loading task data (TESTING)...")
     task_data = load_hemisphere_data(
         data_dir=data_dir,
         hemisphere=hemisphere,
-        dataset='task',  # This loads PIOP1 Gender Stroop data
+        dataset='task',
         return_matrix=True,
         validate=True
     )
@@ -666,10 +595,7 @@ def test_on_task_data(
     
     logger.info(f"  Task features: {X_task.shape}")
     
-    # =========================================================================
     # STEP 3: Train final OvO model on ALL rest data
-    # =========================================================================
-    
     logger.info("\nStep 3: Training final OvO model on ALL resting-state data...")
     
     # Scale rest data
@@ -702,10 +628,7 @@ def test_on_task_data(
     rest_accuracy = accuracy_score(y_rest, y_rest_pred)
     logger.info(f"  Rest data accuracy (training set): {rest_accuracy:.4f}")
     
-    # =========================================================================
     # STEP 4: Test on task data
-    # =========================================================================
-    
     logger.info("\nStep 4: Testing on task data...")
     
     # Scale task data using REST scaler (important!)
@@ -723,10 +646,7 @@ def test_on_task_data(
     except:
         y_task_proba = None
     
-    # =========================================================================
     # STEP 5: Compute metrics
-    # =========================================================================
-    
     logger.info("\nStep 5: Computing task metrics...")
     
     task_metrics = compute_classification_metrics(
@@ -753,11 +673,8 @@ def test_on_task_data(
         n_classes=len(np.unique(y_task))
     )
     
-    # =========================================================================
     # STEP 6: Save results
-    # =========================================================================
-    
-    task_output_dir = output_dir / f"{hemisphere}_hemisphere" / "task_testing"
+    task_output_dir = output_dir / f"{hemisphere}_hemisphere" / "task_testing_ovo"
     task_output_dir.mkdir(parents=True, exist_ok=True)
     
     logger.info(f"\nSaving task testing results to: {task_output_dir}")
@@ -801,32 +718,7 @@ def test_on_task_data(
     with open(task_output_dir / 'final_scaler.pkl', 'wb') as f:
         pickle.dump(scaler_final, f)
     
-    # Generate visualizations
-    logger.info("\nGenerating task testing visualizations...")
-    
-    plot_confusion_matrix(
-        confusion_mat=task_confusion,
-        region_info=task_data['region_info'],
-        save_path=task_output_dir / 'task_confusion_matrix.png',
-        title=f'{hemisphere.capitalize()} - Task Testing Confusion Matrix (OvO)'
-    )
-    
-    plot_per_region_accuracy(
-        per_region_metrics=task_per_region,
-        save_path=task_output_dir / 'task_per_region_accuracy.png',
-        title=f'{hemisphere.capitalize()} - Task Testing Per-Region Accuracy (OvO)'
-    )
-    
-    plot_network_accuracy(
-        network_metrics=task_network,
-        save_path=task_output_dir / 'task_network_accuracy.png',
-        title=f'{hemisphere.capitalize()} - Task Testing Network Accuracy (OvO)'
-    )
-    
-    # =========================================================================
     # STEP 7: Report results
-    # =========================================================================
-    
     logger.info("\n" + "="*80)
     logger.info("TASK TESTING RESULTS (ONE-VS-ONE)")
     logger.info("="*80)
@@ -855,18 +747,7 @@ def train_single_hemisphere(
     args: argparse.Namespace,
     logger: logging.Logger
 ) -> dict:
-    """
-    Train One-vs-One model for a single hemisphere.
-    
-    PREPROCESSING FLOW:
-    1. Load connectivity matrices
-    2. Diagonal imputation (ONCE)
-    3. Fisher Z transformation (ONCE)
-    4. Flatten to features
-    5. [If tuning] Scale with StandardScaler → Run Optuna
-    6. Cross-validation (scale within each fold properly)
-    7. [If test_on_task] Train final OvO model on all rest data → Test on task data
-    """
+    """Train One-vs-One model for a single hemisphere."""
     
     logger.info(f"\n{'='*80}")
     logger.info(f"TRAINING {hemisphere.upper()} HEMISPHERE (ONE-VS-ONE)")
@@ -902,10 +783,7 @@ def train_single_hemisphere(
     logger.info(f"  Regions: {n_regions}")
     logger.info(f"  Connectivity shape: {connectivity.shape}")
     
-    # ==========================================================================
     # PREPROCESSING (BEFORE CV)
-    # ==========================================================================
-    
     logger.info("\n" + "="*80)
     logger.info("PREPROCESSING (BEFORE CROSS-VALIDATION)")
     logger.info("="*80)
@@ -947,10 +825,7 @@ def train_single_hemisphere(
     logger.info("\n✓ Preprocessing completed")
     logger.info("="*80)
     
-    # ==========================================================================
     # HYPERPARAMETER OPTIMIZATION (IF ENABLED)
-    # ==========================================================================
-    
     if args.tune_hyperparams:
         # Scale full dataset for Optuna
         logger.info("\nScaling full dataset for Optuna optimization...")
@@ -989,10 +864,7 @@ def train_single_hemisphere(
         logger.info(f"\nUsing fixed hyperparameters:")
         logger.info(f"  C: {C}, max_iter: {max_iter}, solver: {solver}\n")
     
-    # ==========================================================================
     # CROSS-VALIDATION (WITH PROPER FOLD-WISE SCALING)
-    # ==========================================================================
-    
     logger.info(f"\n{'='*80}")
     logger.info(f"CROSS-VALIDATION WITH FOLD-WISE SCALING (ONE-VS-ONE)")
     logger.info(f"{'='*80}")
@@ -1197,34 +1069,9 @@ def train_single_hemisphere(
         with open(output_dir / 'fold_models.pkl', 'wb') as f:
             pickle.dump(fold_models, f)
     
-    # Visualizations
-    logger.info("\nGenerating visualizations...")
-    
-    plot_confusion_matrix(
-        confusion_mat=confusion_mat,
-        region_info=region_info,
-        save_path=output_dir / 'confusion_matrix.png',
-        title=f'{hemisphere.capitalize()} Hemisphere - Confusion Matrix (OvO)'
-    )
-    
-    plot_per_region_accuracy(
-        per_region_metrics=per_region_metrics,
-        save_path=output_dir / 'per_region_accuracy.png',
-        title=f'{hemisphere.capitalize()} Hemisphere - Per-Region Accuracy (OvO)'
-    )
-    
-    plot_network_accuracy(
-        network_metrics=network_metrics,
-        save_path=output_dir / 'network_accuracy.png',
-        title=f'{hemisphere.capitalize()} Hemisphere - Network-Level Accuracy (OvO)'
-    )
-    
     logger.info(f"All results saved to: {output_dir}")
     
-    # ==========================================================================
     # TASK TESTING (IF ENABLED)
-    # ==========================================================================
-    
     task_results = None
     if args.test_on_task:
         task_results = test_on_task_data(

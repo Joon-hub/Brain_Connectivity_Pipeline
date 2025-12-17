@@ -15,7 +15,7 @@
     "solver": "saga",
     "_optuna_best_score": 0.9403502020396383,
     "_optuna_n_trials": 50,
-    "_optuna_time_seconds": 1473.342148065567
+    "_optuna_time_seconds": 1477.5415546894073
   },
   "preprocessing": {
     "diagonal_strategy": "region_mean",

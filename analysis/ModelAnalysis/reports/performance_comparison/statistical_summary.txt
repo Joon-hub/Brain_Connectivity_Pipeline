@@ -1,0 +1,42 @@
+================================================================================
+STATISTICAL SUMMARY: PERFORMANCE COMPARISON
+================================================================================
+
+1. BEST CV ACCURACY:
+   Model: FULL - OVR
+   CV Accuracy: 0.9317
+
+2. BEST TASK ACCURACY:
+   Model: FULL - OVR
+   Task Accuracy: 0.8963
+
+3. BEST GENERALIZATION (smallest accuracy drop):
+   Model: FULL - MULTINOMIAL
+   Accuracy Drop: 0.0317 (3.4%)
+
+4. LARGEST REORGANIZATION (largest accuracy drop):
+   Model: RIGHT - OVO
+   Accuracy Drop: 0.0517 (5.9%)
+
+5. STRATEGY COMPARISON (averaged across data types):
+   MULTINOMIAL  | CV: 0.9186 | Task: 0.8749 | Drop: 0.0437
+   OVR          | CV: 0.9251 | Task: 0.8810 | Drop: 0.0440
+   OVO          | CV: 0.8752 | Task: 0.8300 | Drop: 0.0452
+
+6. DATA TYPE COMPARISON (averaged across strategies):
+   FULL         | CV: 0.9082 | Task: 0.8731 | Drop: 0.0351
+   LEFT         | CV: 0.9074 | Task: 0.8603 | Drop: 0.0471
+   RIGHT        | CV: 0.9032 | Task: 0.8526 | Drop: 0.0507
+
+7. IMPROVEMENT OVER CHANCE:
+   FULL   MULTINOMIAL  | 214.4x chance (0.0043)
+   FULL   OVR          | 216.2x chance (0.0043)
+   FULL   OVO          | 201.6x chance (0.0043)
+   LEFT   MULTINOMIAL  | 106.5x chance (0.0086)
+   LEFT   OVR          | 107.0x chance (0.0086)
+   LEFT   OVO          | 102.2x chance (0.0086)
+   RIGHT  MULTINOMIAL  | 106.0x chance (0.0086)
+   RIGHT  OVR          | 106.8x chance (0.0086)
+   RIGHT  OVO          | 101.5x chance (0.0086)
+
+================================================================================
