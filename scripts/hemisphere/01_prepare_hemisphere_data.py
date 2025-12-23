@@ -201,27 +201,25 @@ class HemisphereSplitter:
         
         return left_regions, right_regions
     
-    def split_by_hemisphere(self, df_transformed: pd.DataFrame, 
-                           left_regions: List[str], 
-                           right_regions: List[str]) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        Split the long format dataframe into left and right hemisphere subsets.
-        """
+    def split_by_hemisphere(self, df_transformed, left_regions, right_regions):
         self.print_separator("SPLITTING BY HEMISPHERE")
+
+        # 1. Strictly define columns: ONLY subject, target region, and the features for THAT hemi
+        left_cols = ['subject', 'region'] + left_regions
+        right_cols = ['subject', 'region'] + right_regions
         
-        # Filter rows and columns for left hemisphere
-        left_columns = ['subject', 'region'] + [reg for reg in self.regions_ordered if reg in left_regions]
-        df_left = df_transformed[df_transformed['region'].isin(left_regions)].copy()
-        df_left = df_left[left_columns]
+        # 2. Filter Rows AND Columns simultaneously
+        df_left = df_transformed.loc[df_transformed['region'].isin(left_regions), left_cols].copy()
+        df_right = df_transformed.loc[df_transformed['region'].isin(right_regions), right_cols].copy()
         
-        # Filter rows and columns for right hemisphere
-        right_columns = ['subject', 'region'] + [reg for reg in self.regions_ordered if reg in right_regions]
-        df_right = df_transformed[df_transformed['region'].isin(right_regions)].copy()
-        df_right = df_right[right_columns]
-        
-        self.log(f"Left hemisphere shape: {df_left.shape}")
-        self.log(f"Right hemisphere shape: {df_right.shape}")
-        
+        # 3. Double Check: Print counts to console
+        for name, df in [("Left", df_left), ("Right", df_right)]:
+            found_wrong = [c for c in df.columns if ('RH_' in c if name=="Left" else 'LH_' in c)]
+            if found_wrong:
+                print(f"[ERROR] {name} file contains {len(found_wrong)} regions from the wrong hemisphere!")
+            else:
+                print(f"[SUCCESS] {name} file is pure.")
+                
         return df_left, df_right
     
     def create_upper_triangle_columns(self, regions: List[str]) -> List[str]:

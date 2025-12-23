@@ -639,6 +639,8 @@ def test_on_task_data(
     # Predict on task data
     y_task_pred = final_model.predict(X_task_scaled)
     y_task_proba = final_model.predict_proba(X_task_scaled)
+    y_rest_pred = final_model.predict(X_rest_scaled)
+    y_rest_proba = final_model.predict_proba(X_rest_scaled)
     
     # STEP 5: Compute metrics
     logger.info("\nStep 5: Computing task metrics...")
@@ -664,7 +666,12 @@ def test_on_task_data(
     task_confusion = create_confusion_matrix(
         y_true=y_task,
         y_pred=y_task_pred,
-        n_classes=len(np.unique(y_task))
+        n_classes=len(np.unique(y_task)))
+
+    rest_confusion = create_confusion_matrix(
+        y_true=y_rest,
+        y_pred=y_rest_pred,
+        n_classes=len(np.unique(y_rest))
     )
     
     # STEP 6: Save results
@@ -673,7 +680,12 @@ def test_on_task_data(
     
     logger.info(f"\nSaving task testing results to: {task_output_dir}")
     
-    # Save predictions
+    # Save predictions as numpy arrays
+    np.save(task_output_dir / 'rest_predictions.npy', y_rest_pred)
+    np.save(task_output_dir / 'rest_probabilities.npy', y_rest_proba)
+    np.save(task_output_dir / 'rest_true_labels.npy', y_rest)
+    np.save(task_output_dir / 'rest_confusion_matrix.npy', rest_confusion)
+    
     np.save(task_output_dir / 'task_predictions.npy', y_task_pred)
     np.save(task_output_dir / 'task_probabilities.npy', y_task_proba)
     np.save(task_output_dir / 'task_true_labels.npy', y_task)
@@ -1029,7 +1041,7 @@ def train_single_hemisphere(
         n_classes=n_classes
     )
     
-    # Save results
+    # Save results as numpy arrays
     logger.info("\nSaving results...")
     
     np.save(output_dir / 'cv_predictions.npy', all_predictions)
@@ -1037,7 +1049,8 @@ def train_single_hemisphere(
     np.save(output_dir / 'cv_true_labels.npy', all_true_labels)
     np.save(output_dir / 'cv_fold_indices.npy', all_fold_indices)
     np.save(output_dir / 'confusion_matrix.npy', confusion_mat)
-    
+
+    # Save results
     with open(output_dir / 'overall_metrics.json', 'w') as f:
         json.dump(overall_metrics, f, indent=2)
     

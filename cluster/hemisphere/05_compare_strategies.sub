@@ -1,0 +1,22 @@
+# HTCondor Submit File for Hemisphere Data Splitting
+universe = vanilla
+executable = cluster/condor/hemisphere/05_compare_strategies.sh
+
+getenv = True
+initialdir = /home/sjoon/projects/brain_connectivity_classifier/
+
+should_transfer_files = IF_NEEDED
+when_to_transfer_output = ON_EXIT
+
+# Resources for Job 
+request_cpus = 32             
+request_memory = 128GB
+request_disk = 5GB
+
+# Log files
+output = logs/05_hemisphere_compare_strategies.out
+error = logs/05_hemisphere_compare_strategies.err
+log = logs/05_hemisphere_compare_strategies.log
+
+# Single job - processes both datasets
+queue 1

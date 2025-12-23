@@ -1,0 +1,28 @@
+# Job configuration
+universe        = vanilla
+executable      = CONDOR/scripts/run_main_pipeline.sh
+arguments       = --experiment-name Exp_LR_RM_bestparam --use-best-params --stage 1 --n-splits 3
+
+# Environment setup
+getenv          = True
+initialdir      = /home/sjoon/projects/brain_connectivity_classifier/
+
+# Jobname
+jobname = Exp_LR_RM_bestparam
+
+# Resource requests
+request_cpus    = 4
+request_memory  = 8GB
+request_disk    = 5GB
+
+# File transfer
+should_transfer_files = IF_NEEDED
+when_to_transfer_output = ON_EXIT
+
+# Log files
+output = logs/$(jobname).$(Cluster).$(Process).out
+error = logs/$(jobname).$(Cluster).$(Process).err
+log = logs/$(jobname).$(Cluster).$(Process).log
+
+# Submit 1 job
+queue 1

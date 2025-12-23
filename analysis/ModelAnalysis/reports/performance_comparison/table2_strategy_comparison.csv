@@ -1,4 +1,0 @@
-strategy,cv_accuracy_mean,cv_accuracy_std,task_accuracy_mean,task_accuracy_std,accuracy_drop_mean,accuracy_drop_std
-MULTINOMIAL,0.9186,0.0053,0.8749,0.0154,0.0437,0.0104
-OVO,0.8752,0.0063,0.83,0.0062,0.0452,0.0067
-OVR,0.9251,0.0058,0.881,0.0135,0.044,0.0076

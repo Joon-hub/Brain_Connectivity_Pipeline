@@ -1,4 +1,0 @@
-data_type,cv_accuracy_mean,cv_accuracy_std,task_accuracy_mean,task_accuracy_std,accuracy_drop_mean,accuracy_drop_std
-Full,0.9082,0.0344,0.8731,0.0369,0.0351,0.0033
-Left,0.9074,0.0226,0.8603,0.0214,0.0471,0.0017
-Right,0.9032,0.0245,0.8526,0.0254,0.0507,0.001

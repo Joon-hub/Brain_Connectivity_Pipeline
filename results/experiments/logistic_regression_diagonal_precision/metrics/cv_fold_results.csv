@@ -1,4 +1,0 @@
-fold,train_accuracy,val_accuracy,n_train_subjects,n_val_subjects,n_train_samples,n_val_samples
-1,1.0,0.6810344827586207,6,4,1392,928
-2,1.0,0.8089080459770115,7,3,1624,696
-3,1.0,0.8160919540229885,7,3,1624,696

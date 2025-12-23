@@ -1,0 +1,386 @@
+2025-12-22 12:38:28,004 - __main__ - INFO - ================================================================================
+2025-12-22 12:38:28,004 - __main__ - INFO - HEMISPHERE-SPECIFIC CLASSIFICATION (ONE-VS-REST)
+2025-12-22 12:38:28,005 - __main__ - INFO - Preprocessing: Diagonal imputation + Fisher Z → StandardScaler
+2025-12-22 12:38:28,005 - __main__ - INFO - Model: One-vs-Rest (OvR) - N binary classifiers
+2025-12-22 12:38:28,005 - __main__ - INFO - Optuna: Runs on scaled full dataset
+2025-12-22 12:38:28,006 - __main__ - INFO - CV: Independent scaling per fold
+2025-12-22 12:38:28,006 - __main__ - INFO - ================================================================================
+2025-12-22 12:38:28,006 - __main__ - WARNING - 
+⚠️  TESTING MODE: 10 subjects only
+
+2025-12-22 12:38:28,006 - __main__ - INFO - 
+================================================================================
+2025-12-22 12:38:28,006 - __main__ - INFO - TRAINING LEFT HEMISPHERE (ONE-VS-REST)
+2025-12-22 12:38:28,006 - __main__ - INFO - ================================================================================
+
+2025-12-22 12:38:28,008 - __main__ - INFO - Loading hemisphere-specific data...
+2025-12-22 12:38:28,009 - src.hemisphere.hemisphere_utils - INFO - Loading left hemisphere data from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
+2025-12-22 12:38:28,601 - src.hemisphere.hemisphere_utils - INFO -   Subjects: 224
+2025-12-22 12:38:28,602 - src.hemisphere.hemisphere_utils - INFO -   Connections: 6670
+2025-12-22 12:38:28,618 - src.hemisphere.hemisphere_utils - INFO - Extracting region info from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
+2025-12-22 12:38:29,054 - src.hemisphere.hemisphere_utils - INFO - Extracted 116 regions for left hemisphere
+2025-12-22 12:38:29,054 - src.hemisphere.hemisphere_utils - INFO -   Regions: 116
+2025-12-22 12:38:29,054 - src.hemisphere.hemisphere_utils - INFO - Converting to full connectivity matrices...
+2025-12-22 12:38:29,103 - src.hemisphere.hemisphere_utils - INFO -   Matrix shape: (224, 116, 116)
+2025-12-22 12:38:29,406 - src.hemisphere.hemisphere_utils - INFO - Connectivity validation completed
+2025-12-22 12:38:29,406 - src.hemisphere.hemisphere_utils - INFO - Successfully loaded left hemisphere data
+2025-12-22 12:38:29,410 - __main__ - INFO - 
+============================================================
+2025-12-22 12:38:29,410 - __main__ - INFO - SAMPLING MODE ACTIVATED
+2025-12-22 12:38:29,410 - __main__ - INFO - ============================================================
+2025-12-22 12:38:29,410 - __main__ - INFO - Selecting first 10 subjects out of 224 available
+2025-12-22 12:38:29,411 - __main__ - INFO - Selected subjects: sub-0001_P2, sub-0002_P2, sub-0003_P2, sub-0004_P2, sub-0005_P2, sub-0006_P2, sub-0007_P2, sub-0008_P2, sub-0009_P2, sub-0011_P2
+2025-12-22 12:38:29,411 - __main__ - INFO - Sampled connectivity shape: (10, 116, 116)
+2025-12-22 12:38:29,411 - __main__ - INFO - Sampled subjects: 10
+2025-12-22 12:38:29,411 - __main__ - INFO - ============================================================
+
+2025-12-22 12:38:29,411 - __main__ - WARNING - ⚠️  TESTING MODE: Using first 10 subjects only
+2025-12-22 12:38:29,411 - __main__ - INFO - Data loaded:
+2025-12-22 12:38:29,411 - __main__ - INFO -   Subjects: 10
+2025-12-22 12:38:29,411 - __main__ - INFO -   Regions: 116
+2025-12-22 12:38:29,411 - __main__ - INFO -   Connectivity shape: (10, 116, 116)
+2025-12-22 12:38:29,411 - __main__ - INFO - 
+================================================================================
+2025-12-22 12:38:29,411 - __main__ - INFO - PREPROCESSING (BEFORE CROSS-VALIDATION)
+2025-12-22 12:38:29,412 - __main__ - INFO - ================================================================================
+2025-12-22 12:38:29,412 - __main__ - INFO - 
+Applying diagonal imputation (strategy: region_mean)...
+2025-12-22 12:38:29,412 - __main__ - INFO -   Original diagonal range: [1.0000, 1.0000]
+2025-12-22 12:38:29,412 - __main__ - INFO -   Original diagonal mean: 1.0000
+2025-12-22 12:38:29,418 - __main__ - INFO -   Replaced diagonal with row means
+2025-12-22 12:38:29,418 - __main__ - INFO -   New diagonal range: [-0.1180, 0.1810]
+2025-12-22 12:38:29,419 - __main__ - INFO -   New diagonal mean: 0.0315
+2025-12-22 12:38:29,419 - __main__ - INFO - 
+Applying Fisher Z-transformation...
+2025-12-22 12:38:29,422 - __main__ - INFO -   Value range after Fisher Z: [-1.0284, 1.4364]
+2025-12-22 12:38:29,422 - __main__ - INFO -   Mean: 0.0366, Std: 0.2931
+2025-12-22 12:38:29,423 - __main__ - INFO - 
+Preparing classification data (flattening to features)...
+2025-12-22 12:38:29,423 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2025-12-22 12:38:29,423 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(-0.008901612424537042), np.float64(0.027939234799402014), np.float64(0.009805427197523572), np.float64(-0.0315809333362432), np.float64(-0.008620041552882787)]
+2025-12-22 12:38:29,423 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2025-12-22 12:38:29,425 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2025-12-22 12:38:29,425 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2025-12-22 12:38:29,426 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (1160, 116)
+2025-12-22 12:38:29,426 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (1160,)
+2025-12-22 12:38:29,426 - src.hemisphere.hemisphere_utils - INFO -   Groups: (1160,)
+2025-12-22 12:38:29,427 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2025-12-22 12:38:29,427 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 10
+2025-12-22 12:38:29,427 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.028, 1.436]
+2025-12-22 12:38:29,428 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.036, std: 0.293
+2025-12-22 12:38:29,428 - __main__ - INFO - Classification data prepared:
+2025-12-22 12:38:29,428 - __main__ - INFO -   Samples (X): (1160, 116)
+2025-12-22 12:38:29,428 - __main__ - INFO -   Labels (y): (1160,)
+2025-12-22 12:38:29,428 - __main__ - INFO -   Classes: 116
+2025-12-22 12:38:29,428 - __main__ - INFO - 
+✓ Preprocessing completed
+2025-12-22 12:38:29,428 - __main__ - INFO - ================================================================================
+2025-12-22 12:38:29,428 - __main__ - INFO - 
+Scaling full dataset for Optuna optimization...
+2025-12-22 12:38:29,430 - __main__ - INFO -   Scaled data - mean: -0.0000, std: 1.0000
+2025-12-22 12:38:29,430 - __main__ - INFO - 
+================================================================================
+2025-12-22 12:38:29,430 - __main__ - INFO - HYPERPARAMETER OPTIMIZATION WITH OPTUNA (ONE-VS-REST)
+2025-12-22 12:38:29,431 - __main__ - INFO - ================================================================================
+2025-12-22 12:38:29,431 - __main__ - INFO - Running Optuna on SCALED full dataset
+2025-12-22 12:38:29,431 - __main__ - INFO -   Trials: 3
+2025-12-22 12:38:29,431 - __main__ - INFO -   Samples: 1160
+2025-12-22 12:38:29,431 - __main__ - INFO -   Features: 116
+2025-12-22 12:38:29,431 - __main__ - INFO -   Classes: 116
+2025-12-22 12:38:29,431 - __main__ - INFO -   NOTE: Data already scaled, using simple train/val split
+2025-12-22 12:38:29,431 - __main__ - INFO - 
+Starting Optuna optimization...
+2025-12-22 12:40:46,597 - __main__ - INFO - 
+Optuna optimization completed in 137.16s
+2025-12-22 12:40:46,597 - __main__ - INFO - 
+✓ Best hyperparameters found:
+2025-12-22 12:40:46,597 - __main__ - INFO -   • C: 2.136833
+2025-12-22 12:40:46,597 - __main__ - INFO -   • max_iter: 200
+2025-12-22 12:40:46,597 - __main__ - INFO -   • solver: saga
+2025-12-22 12:40:46,597 - __main__ - INFO -   • Best validation score: 0.9052
+2025-12-22 12:40:46,597 - __main__ - INFO - 
+Top 5 trials:
+2025-12-22 12:40:46,603 - __main__ - INFO -   1. Trial 2: score=0.9052, C=2.1368, solver=saga, max_iter=200
+2025-12-22 12:40:46,603 - __main__ - INFO -   2. Trial 0: score=0.6293, C=0.0315, solver=lbfgs, max_iter=200
+2025-12-22 12:40:46,604 - __main__ - INFO -   3. Trial 1: score=0.2586, C=0.0017, solver=saga, max_iter=200
+2025-12-22 12:40:46,604 - __main__ - INFO - ================================================================================
+
+2025-12-22 12:40:46,604 - __main__ - INFO - 
+================================================================================
+2025-12-22 12:40:46,604 - __main__ - INFO - CROSS-VALIDATION WITH FOLD-WISE SCALING (ONE-VS-REST)
+2025-12-22 12:40:46,605 - __main__ - INFO - ================================================================================
+2025-12-22 12:40:46,605 - __main__ - INFO - Using hyperparameters: C=2.136833, solver=saga, max_iter=200
+2025-12-22 12:40:46,605 - __main__ - INFO - Running 3-fold GroupKFold cross-validation...
+2025-12-22 12:40:46,605 - __main__ - INFO - Note: StandardScaler fit independently on each fold's training data
+
+2025-12-22 12:40:46,606 - __main__ - INFO - Fold 1/3
+2025-12-22 12:40:46,606 - __main__ - INFO -   Train samples: 696, Test samples: 464
+2025-12-22 12:40:46,607 - __main__ - INFO -   Train subjects: 6, Test subjects: 4
+2025-12-22 12:40:46,607 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
+2025-12-22 12:40:46,607 - __main__ - INFO -   Input shapes - Train: (696, 116), Test: (464, 116)
+2025-12-22 12:40:46,609 - __main__ - INFO -   Scaled shapes - Train: (696, 116), Test: (464, 116)
+2025-12-22 12:40:46,609 - __main__ - INFO -   Training OvR with C=2.136833, solver=saga...
+2025-12-22 12:40:59,980 - __main__ - INFO -   Predicting on test set...
+2025-12-22 12:41:00,003 - __main__ - INFO -   Fold accuracy: 0.7586
+2025-12-22 12:41:00,004 - __main__ - INFO -   Fold balanced accuracy: 0.7586
+2025-12-22 12:41:00,004 - __main__ - INFO -   Fold time: 13.40s
+
+2025-12-22 12:41:00,004 - __main__ - INFO - Fold 2/3
+2025-12-22 12:41:00,004 - __main__ - INFO -   Train samples: 812, Test samples: 348
+2025-12-22 12:41:00,005 - __main__ - INFO -   Train subjects: 7, Test subjects: 3
+2025-12-22 12:41:00,005 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
+2025-12-22 12:41:00,005 - __main__ - INFO -   Input shapes - Train: (812, 116), Test: (348, 116)
+2025-12-22 12:41:00,007 - __main__ - INFO -   Scaled shapes - Train: (812, 116), Test: (348, 116)
+2025-12-22 12:41:00,007 - __main__ - INFO -   Training OvR with C=2.136833, solver=saga...
+2025-12-22 12:41:16,093 - __main__ - INFO -   Predicting on test set...
+2025-12-22 12:41:16,181 - __main__ - INFO -   Fold accuracy: 0.7241
+2025-12-22 12:41:16,181 - __main__ - INFO -   Fold balanced accuracy: 0.7241
+2025-12-22 12:41:16,181 - __main__ - INFO -   Fold time: 16.18s
+
+2025-12-22 12:41:16,182 - __main__ - INFO - Fold 3/3
+2025-12-22 12:41:16,182 - __main__ - INFO -   Train samples: 812, Test samples: 348
+2025-12-22 12:41:16,182 - __main__ - INFO -   Train subjects: 7, Test subjects: 3
+2025-12-22 12:41:16,182 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
+2025-12-22 12:41:16,182 - __main__ - INFO -   Input shapes - Train: (812, 116), Test: (348, 116)
+2025-12-22 12:41:16,183 - __main__ - INFO -   Scaled shapes - Train: (812, 116), Test: (348, 116)
+2025-12-22 12:41:16,184 - __main__ - INFO -   Training OvR with C=2.136833, solver=saga...
+2025-12-22 12:41:32,284 - __main__ - INFO -   Predicting on test set...
+2025-12-22 12:41:32,307 - __main__ - INFO -   Fold accuracy: 0.7557
+2025-12-22 12:41:32,307 - __main__ - INFO -   Fold balanced accuracy: 0.7557
+2025-12-22 12:41:32,307 - __main__ - INFO -   Fold time: 16.13s
+
+2025-12-22 12:41:32,307 - __main__ - INFO - Cross-validation completed in 45.70s
+
+2025-12-22 12:41:32,308 - __main__ - INFO - Computing overall metrics...
+2025-12-22 12:41:32,309 - src.evaluation.hemisphere_metrics - INFO - Computing classification metrics...
+2025-12-22 12:41:32,322 - src.evaluation.hemisphere_metrics - INFO -   Accuracy: 0.7474
+2025-12-22 12:41:32,322 - src.evaluation.hemisphere_metrics - INFO -   Balanced Accuracy: 0.7474
+2025-12-22 12:41:32,322 - src.evaluation.hemisphere_metrics - INFO -   F1 Score: 0.7695
+2025-12-22 12:41:32,323 - __main__ - INFO - 
+OVERALL RESULTS (LEFT HEMISPHERE - ONE-VS-REST):
+2025-12-22 12:41:32,324 - __main__ - INFO -   Mean CV Accuracy: 0.7474
+2025-12-22 12:41:32,324 - __main__ - INFO -   Mean CV Balanced Accuracy: 0.7474
+2025-12-22 12:41:32,324 - __main__ - INFO -   Top-5 Accuracy: 0.9267241379310345
+2025-12-22 12:41:32,324 - __main__ - INFO - 
+  Hyperparameters (from Optuna):
+2025-12-22 12:41:32,324 - __main__ - INFO -     C: 2.136833, solver: saga, max_iter: 200
+2025-12-22 12:41:32,324 - __main__ - INFO -     Optuna validation score: 0.9052
+2025-12-22 12:41:32,324 - __main__ - INFO - 
+Computing per-region metrics...
+2025-12-22 12:41:32,324 - src.evaluation.hemisphere_metrics - INFO - Computing per-region metrics...
+2025-12-22 12:41:32,324 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 116 regions
+2025-12-22 12:41:32,334 - src.evaluation.hemisphere_metrics - INFO -   Mean per-region accuracy: 0.7474
+2025-12-22 12:41:32,334 - src.evaluation.hemisphere_metrics - INFO -   Std per-region accuracy: 0.1989
+2025-12-22 12:41:32,335 - src.evaluation.hemisphere_metrics - INFO -   Min per-region accuracy: 0.2000
+2025-12-22 12:41:32,335 - src.evaluation.hemisphere_metrics - INFO -   Max per-region accuracy: 1.0000
+2025-12-22 12:41:32,335 - __main__ - INFO - Computing network-level metrics...
+2025-12-22 12:41:32,335 - src.evaluation.hemisphere_metrics - INFO - Computing network-level metrics...
+2025-12-22 12:41:32,336 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 18 networks
+2025-12-22 12:41:32,366 - src.evaluation.hemisphere_metrics - INFO -   Mean network accuracy: 0.7453
+2025-12-22 12:41:32,366 - src.evaluation.hemisphere_metrics - INFO -   Best network: SalVentAttnA (accuracy=0.9143)
+2025-12-22 12:41:32,367 - src.evaluation.hemisphere_metrics - INFO -   Worst network: TempPar (accuracy=0.4500)
+2025-12-22 12:41:32,367 - __main__ - INFO - Creating confusion matrix...
+2025-12-22 12:41:32,367 - src.evaluation.hemisphere_metrics - INFO - Creating confusion matrix...
+2025-12-22 12:41:32,369 - src.evaluation.hemisphere_metrics - INFO -   Confusion matrix shape: (116, 116)
+2025-12-22 12:41:32,369 - src.evaluation.hemisphere_metrics - INFO -   Total predictions: 1160
+2025-12-22 12:41:32,369 - src.evaluation.hemisphere_metrics - INFO -   Correct predictions (diagonal): 867
+2025-12-22 12:41:32,369 - __main__ - INFO - 
+Saving results...
+2025-12-22 12:41:32,390 - __main__ - INFO - All results saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/ovr
+2025-12-22 12:41:32,392 - __main__ - INFO - 
+================================================================================
+2025-12-22 12:41:32,392 - __main__ - INFO - TRAINING COMPLETED SUCCESSFULLY (ONE-VS-REST)
+2025-12-22 12:41:32,392 - __main__ - INFO - ================================================================================
+2025-12-22 13:48:40,126 - __main__ - INFO - ================================================================================
+2025-12-22 13:48:40,126 - __main__ - INFO - HEMISPHERE-SPECIFIC CLASSIFICATION (ONE-VS-REST)
+2025-12-22 13:48:40,126 - __main__ - INFO - Preprocessing: Diagonal imputation + Fisher Z → StandardScaler
+2025-12-22 13:48:40,126 - __main__ - INFO - Model: One-vs-Rest (OvR) - N binary classifiers
+2025-12-22 13:48:40,126 - __main__ - INFO - Optuna: Runs on scaled full dataset
+2025-12-22 13:48:40,126 - __main__ - INFO - CV: Independent scaling per fold
+2025-12-22 13:48:40,127 - __main__ - INFO - ================================================================================
+2025-12-22 13:48:40,127 - __main__ - WARNING - 
+⚠️  TESTING MODE: 10 subjects only
+
+2025-12-22 13:48:40,127 - __main__ - INFO - 
+================================================================================
+2025-12-22 13:48:40,127 - __main__ - INFO - TRAINING LEFT HEMISPHERE (ONE-VS-REST)
+2025-12-22 13:48:40,127 - __main__ - INFO - ================================================================================
+
+2025-12-22 13:48:40,127 - __main__ - INFO - Loading hemisphere-specific data...
+2025-12-22 13:48:40,127 - src.hemisphere.hemisphere_utils - INFO - Loading left hemisphere data from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
+2025-12-22 13:48:40,684 - src.hemisphere.hemisphere_utils - INFO -   Subjects: 224
+2025-12-22 13:48:40,684 - src.hemisphere.hemisphere_utils - INFO -   Connections: 6670
+2025-12-22 13:48:40,707 - src.hemisphere.hemisphere_utils - INFO - Extracting region info from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
+2025-12-22 13:48:41,076 - src.hemisphere.hemisphere_utils - INFO - Extracted 116 regions for left hemisphere
+2025-12-22 13:48:41,076 - src.hemisphere.hemisphere_utils - INFO -   Regions: 116
+2025-12-22 13:48:41,076 - src.hemisphere.hemisphere_utils - INFO - Converting to full connectivity matrices...
+2025-12-22 13:48:41,132 - src.hemisphere.hemisphere_utils - INFO -   Matrix shape: (224, 116, 116)
+2025-12-22 13:48:41,278 - src.hemisphere.hemisphere_utils - INFO - Connectivity validation completed
+2025-12-22 13:48:41,279 - src.hemisphere.hemisphere_utils - INFO - Successfully loaded left hemisphere data
+2025-12-22 13:48:41,281 - __main__ - INFO - 
+============================================================
+2025-12-22 13:48:41,281 - __main__ - INFO - SAMPLING MODE ACTIVATED
+2025-12-22 13:48:41,281 - __main__ - INFO - ============================================================
+2025-12-22 13:48:41,281 - __main__ - INFO - Selecting first 10 subjects out of 224 available
+2025-12-22 13:48:41,281 - __main__ - INFO - Selected subjects: sub-0001_P2, sub-0002_P2, sub-0003_P2, sub-0004_P2, sub-0005_P2, sub-0006_P2, sub-0007_P2, sub-0008_P2, sub-0009_P2, sub-0011_P2
+2025-12-22 13:48:41,281 - __main__ - INFO - Sampled connectivity shape: (10, 116, 116)
+2025-12-22 13:48:41,281 - __main__ - INFO - Sampled subjects: 10
+2025-12-22 13:48:41,282 - __main__ - INFO - ============================================================
+
+2025-12-22 13:48:41,282 - __main__ - WARNING - ⚠️  TESTING MODE: Using first 10 subjects only
+2025-12-22 13:48:41,282 - __main__ - INFO - Data loaded:
+2025-12-22 13:48:41,282 - __main__ - INFO -   Subjects: 10
+2025-12-22 13:48:41,282 - __main__ - INFO -   Regions: 116
+2025-12-22 13:48:41,282 - __main__ - INFO -   Connectivity shape: (10, 116, 116)
+2025-12-22 13:48:41,282 - __main__ - INFO - 
+================================================================================
+2025-12-22 13:48:41,282 - __main__ - INFO - PREPROCESSING (BEFORE CROSS-VALIDATION)
+2025-12-22 13:48:41,283 - __main__ - INFO - ================================================================================
+2025-12-22 13:48:41,283 - __main__ - INFO - 
+Applying diagonal imputation (strategy: region_mean)...
+2025-12-22 13:48:41,283 - __main__ - INFO -   Original diagonal range: [1.0000, 1.0000]
+2025-12-22 13:48:41,283 - __main__ - INFO -   Original diagonal mean: 1.0000
+2025-12-22 13:48:41,289 - __main__ - INFO -   Replaced diagonal with row means
+2025-12-22 13:48:41,289 - __main__ - INFO -   New diagonal range: [-0.1180, 0.1810]
+2025-12-22 13:48:41,289 - __main__ - INFO -   New diagonal mean: 0.0315
+2025-12-22 13:48:41,289 - __main__ - INFO - 
+Applying Fisher Z-transformation...
+2025-12-22 13:48:41,292 - __main__ - INFO -   Value range after Fisher Z: [-1.0284, 1.4364]
+2025-12-22 13:48:41,292 - __main__ - INFO -   Mean: 0.0366, Std: 0.2931
+2025-12-22 13:48:41,293 - __main__ - INFO - 
+Preparing classification data (flattening to features)...
+2025-12-22 13:48:41,293 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2025-12-22 13:48:41,293 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(-0.008901612424537042), np.float64(0.027939234799402014), np.float64(0.009805427197523572), np.float64(-0.0315809333362432), np.float64(-0.008620041552882787)]
+2025-12-22 13:48:41,293 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2025-12-22 13:48:41,295 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2025-12-22 13:48:41,295 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2025-12-22 13:48:41,296 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (1160, 116)
+2025-12-22 13:48:41,296 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (1160,)
+2025-12-22 13:48:41,296 - src.hemisphere.hemisphere_utils - INFO -   Groups: (1160,)
+2025-12-22 13:48:41,296 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2025-12-22 13:48:41,296 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 10
+2025-12-22 13:48:41,297 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.028, 1.436]
+2025-12-22 13:48:41,297 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.036, std: 0.293
+2025-12-22 13:48:41,297 - __main__ - INFO - Classification data prepared:
+2025-12-22 13:48:41,297 - __main__ - INFO -   Samples (X): (1160, 116)
+2025-12-22 13:48:41,297 - __main__ - INFO -   Labels (y): (1160,)
+2025-12-22 13:48:41,298 - __main__ - INFO -   Classes: 116
+2025-12-22 13:48:41,298 - __main__ - INFO - 
+✓ Preprocessing completed
+2025-12-22 13:48:41,298 - __main__ - INFO - ================================================================================
+2025-12-22 13:48:41,298 - __main__ - INFO - 
+Scaling full dataset for Optuna optimization...
+2025-12-22 13:48:41,299 - __main__ - INFO -   Scaled data - mean: -0.0000, std: 1.0000
+2025-12-22 13:48:41,299 - __main__ - INFO - 
+================================================================================
+2025-12-22 13:48:41,299 - __main__ - INFO - HYPERPARAMETER OPTIMIZATION WITH OPTUNA (ONE-VS-REST)
+2025-12-22 13:48:41,299 - __main__ - INFO - ================================================================================
+2025-12-22 13:48:41,299 - __main__ - INFO - Running Optuna on SCALED full dataset
+2025-12-22 13:48:41,299 - __main__ - INFO -   Trials: 3
+2025-12-22 13:48:41,300 - __main__ - INFO -   Samples: 1160
+2025-12-22 13:48:41,300 - __main__ - INFO -   Features: 116
+2025-12-22 13:48:41,300 - __main__ - INFO -   Classes: 116
+2025-12-22 13:48:41,300 - __main__ - INFO -   NOTE: Data already scaled, using simple train/val split
+2025-12-22 13:48:41,300 - __main__ - INFO - 
+Starting Optuna optimization...
+2025-12-22 13:50:47,078 - __main__ - INFO - 
+Optuna optimization completed in 125.78s
+2025-12-22 13:50:47,078 - __main__ - INFO - 
+✓ Best hyperparameters found:
+2025-12-22 13:50:47,078 - __main__ - INFO -   • C: 2.136833
+2025-12-22 13:50:47,078 - __main__ - INFO -   • max_iter: 200
+2025-12-22 13:50:47,078 - __main__ - INFO -   • solver: saga
+2025-12-22 13:50:47,078 - __main__ - INFO -   • Best validation score: 0.9052
+2025-12-22 13:50:47,078 - __main__ - INFO - 
+Top 5 trials:
+2025-12-22 13:50:47,087 - __main__ - INFO -   1. Trial 2: score=0.9052, C=2.1368, solver=saga, max_iter=200
+2025-12-22 13:50:47,087 - __main__ - INFO -   2. Trial 0: score=0.6293, C=0.0315, solver=lbfgs, max_iter=200
+2025-12-22 13:50:47,088 - __main__ - INFO -   3. Trial 1: score=0.2586, C=0.0017, solver=saga, max_iter=200
+2025-12-22 13:50:47,088 - __main__ - INFO - ================================================================================
+
+2025-12-22 13:50:47,088 - __main__ - INFO - 
+================================================================================
+2025-12-22 13:50:47,088 - __main__ - INFO - CROSS-VALIDATION WITH FOLD-WISE SCALING (ONE-VS-REST)
+2025-12-22 13:50:47,088 - __main__ - INFO - ================================================================================
+2025-12-22 13:50:47,089 - __main__ - INFO - Using hyperparameters: C=2.136833, solver=saga, max_iter=200
+2025-12-22 13:50:47,089 - __main__ - INFO - Running 3-fold GroupKFold cross-validation...
+2025-12-22 13:50:47,089 - __main__ - INFO - Note: StandardScaler fit independently on each fold's training data
+
+2025-12-22 13:50:47,089 - __main__ - INFO - Fold 1/3
+2025-12-22 13:50:47,090 - __main__ - INFO -   Train samples: 696, Test samples: 464
+2025-12-22 13:50:47,090 - __main__ - INFO -   Train subjects: 6, Test subjects: 4
+2025-12-22 13:50:47,090 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
+2025-12-22 13:50:47,090 - __main__ - INFO -   Input shapes - Train: (696, 116), Test: (464, 116)
+2025-12-22 13:50:47,092 - __main__ - INFO -   Scaled shapes - Train: (696, 116), Test: (464, 116)
+2025-12-22 13:50:47,092 - __main__ - INFO -   Training OvR with C=2.136833, solver=saga...
+2025-12-22 13:50:59,995 - __main__ - INFO -   Predicting on test set...
+2025-12-22 13:51:00,078 - __main__ - INFO -   Fold accuracy: 0.7586
+2025-12-22 13:51:00,078 - __main__ - INFO -   Fold balanced accuracy: 0.7586
+2025-12-22 13:51:00,078 - __main__ - INFO -   Fold time: 12.99s
+
+2025-12-22 13:51:00,078 - __main__ - INFO - Fold 2/3
+2025-12-22 13:51:00,079 - __main__ - INFO -   Train samples: 812, Test samples: 348
+2025-12-22 13:51:00,079 - __main__ - INFO -   Train subjects: 7, Test subjects: 3
+2025-12-22 13:51:00,079 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
+2025-12-22 13:51:00,079 - __main__ - INFO -   Input shapes - Train: (812, 116), Test: (348, 116)
+2025-12-22 13:51:00,080 - __main__ - INFO -   Scaled shapes - Train: (812, 116), Test: (348, 116)
+2025-12-22 13:51:00,080 - __main__ - INFO -   Training OvR with C=2.136833, solver=saga...
+2025-12-22 13:51:14,905 - __main__ - INFO -   Predicting on test set...
+2025-12-22 13:51:14,931 - __main__ - INFO -   Fold accuracy: 0.7241
+2025-12-22 13:51:14,931 - __main__ - INFO -   Fold balanced accuracy: 0.7241
+2025-12-22 13:51:14,931 - __main__ - INFO -   Fold time: 14.85s
+
+2025-12-22 13:51:14,932 - __main__ - INFO - Fold 3/3
+2025-12-22 13:51:14,932 - __main__ - INFO -   Train samples: 812, Test samples: 348
+2025-12-22 13:51:14,941 - __main__ - INFO -   Train subjects: 7, Test subjects: 3
+2025-12-22 13:51:14,941 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
+2025-12-22 13:51:14,941 - __main__ - INFO -   Input shapes - Train: (812, 116), Test: (348, 116)
+2025-12-22 13:51:14,943 - __main__ - INFO -   Scaled shapes - Train: (812, 116), Test: (348, 116)
+2025-12-22 13:51:14,943 - __main__ - INFO -   Training OvR with C=2.136833, solver=saga...
+2025-12-22 13:51:30,492 - __main__ - INFO -   Predicting on test set...
+2025-12-22 13:51:30,517 - __main__ - INFO -   Fold accuracy: 0.7557
+2025-12-22 13:51:30,517 - __main__ - INFO -   Fold balanced accuracy: 0.7557
+2025-12-22 13:51:30,517 - __main__ - INFO -   Fold time: 15.58s
+
+2025-12-22 13:51:30,517 - __main__ - INFO - Cross-validation completed in 43.43s
+
+2025-12-22 13:51:30,519 - __main__ - INFO - Computing overall metrics...
+2025-12-22 13:51:30,519 - src.evaluation.hemisphere_metrics - INFO - Computing classification metrics...
+2025-12-22 13:51:30,606 - src.evaluation.hemisphere_metrics - INFO -   Accuracy: 0.7474
+2025-12-22 13:51:30,606 - src.evaluation.hemisphere_metrics - INFO -   Balanced Accuracy: 0.7474
+2025-12-22 13:51:30,607 - src.evaluation.hemisphere_metrics - INFO -   F1 Score: 0.7695
+2025-12-22 13:51:30,607 - __main__ - INFO - 
+OVERALL RESULTS (LEFT HEMISPHERE - ONE-VS-REST):
+2025-12-22 13:51:30,607 - __main__ - INFO -   Mean CV Accuracy: 0.7474
+2025-12-22 13:51:30,607 - __main__ - INFO -   Mean CV Balanced Accuracy: 0.7474
+2025-12-22 13:51:30,607 - __main__ - INFO -   Top-5 Accuracy: 0.9267241379310345
+2025-12-22 13:51:30,607 - __main__ - INFO - 
+  Hyperparameters (from Optuna):
+2025-12-22 13:51:30,607 - __main__ - INFO -     C: 2.136833, solver: saga, max_iter: 200
+2025-12-22 13:51:30,607 - __main__ - INFO -     Optuna validation score: 0.9052
+2025-12-22 13:51:30,607 - __main__ - INFO - 
+Computing per-region metrics...
+2025-12-22 13:51:30,608 - src.evaluation.hemisphere_metrics - INFO - Computing per-region metrics...
+2025-12-22 13:51:30,608 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 116 regions
+2025-12-22 13:51:30,655 - src.evaluation.hemisphere_metrics - INFO -   Mean per-region accuracy: 0.7474
+2025-12-22 13:51:30,658 - src.evaluation.hemisphere_metrics - INFO -   Std per-region accuracy: 0.1989
+2025-12-22 13:51:30,659 - src.evaluation.hemisphere_metrics - INFO -   Min per-region accuracy: 0.2000
+2025-12-22 13:51:30,659 - src.evaluation.hemisphere_metrics - INFO -   Max per-region accuracy: 1.0000
+2025-12-22 13:51:30,660 - __main__ - INFO - Computing network-level metrics...
+2025-12-22 13:51:30,660 - src.evaluation.hemisphere_metrics - INFO - Computing network-level metrics...
+2025-12-22 13:51:30,662 - src.evaluation.hemisphere_metrics - INFO -   Computing metrics for 18 networks
+2025-12-22 13:51:30,720 - src.evaluation.hemisphere_metrics - INFO -   Mean network accuracy: 0.7453
+2025-12-22 13:51:30,720 - src.evaluation.hemisphere_metrics - INFO -   Best network: SalVentAttnA (accuracy=0.9143)
+2025-12-22 13:51:30,720 - src.evaluation.hemisphere_metrics - INFO -   Worst network: TempPar (accuracy=0.4500)
+2025-12-22 13:51:30,721 - __main__ - INFO - Creating confusion matrix...
+2025-12-22 13:51:30,721 - src.evaluation.hemisphere_metrics - INFO - Creating confusion matrix...
+2025-12-22 13:51:30,722 - src.evaluation.hemisphere_metrics - INFO -   Confusion matrix shape: (116, 116)
+2025-12-22 13:51:30,722 - src.evaluation.hemisphere_metrics - INFO -   Total predictions: 1160
+2025-12-22 13:51:30,722 - src.evaluation.hemisphere_metrics - INFO -   Correct predictions (diagonal): 867
+2025-12-22 13:51:30,722 - __main__ - INFO - 
+Saving results...
+2025-12-22 13:51:30,912 - __main__ - INFO - All results saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis/left_hemisphere/ovr
+2025-12-22 13:51:30,919 - __main__ - INFO - 
+================================================================================
+2025-12-22 13:51:30,919 - __main__ - INFO - TRAINING COMPLETED SUCCESSFULLY (ONE-VS-REST)
+2025-12-22 13:51:30,919 - __main__ - INFO - ================================================================================
