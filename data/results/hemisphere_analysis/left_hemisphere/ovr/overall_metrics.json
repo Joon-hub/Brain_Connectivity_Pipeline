@@ -1,21 +1,21 @@
 {
-  "accuracy": 0.9205280172413793,
-  "balanced_accuracy": 0.9205280172413792,
-  "error_rate": 0.07947198275862066,
-  "precision": 0.9212944090678525,
-  "recall": 0.9205280172413793,
-  "f1_score": 0.9206872476691047,
-  "cohen_kappa": 0.9198369565217391,
-  "matthews_corrcoef": 0.9198415822101567,
-  "top_5_accuracy": 0.9823737684729064,
-  "top_10_accuracy": 0.9919181034482759,
+  "accuracy": 0.9226447044334976,
+  "balanced_accuracy": 0.9226447044334976,
+  "error_rate": 0.07735529556650245,
+  "precision": 0.9233737531185097,
+  "recall": 0.9226447044334976,
+  "f1_score": 0.9227752976528023,
+  "cohen_kappa": 0.921972049689441,
+  "matthews_corrcoef": 0.9219768954856747,
+  "top_5_accuracy": 0.9837207512315271,
+  "top_10_accuracy": 0.9926493226600985,
   "best_hyperparameters": {
     "C": 0.24637685958997463,
     "max_iter": 200,
     "solver": "saga",
     "_optuna_best_score": 0.9403502020396383,
-    "_optuna_n_trials": 10,
-    "_optuna_time_seconds": 293.79249238967896
+    "_optuna_n_trials": 50,
+    "_optuna_time_seconds": 1383.494289636612
   },
   "preprocessing": {
     "diagonal_strategy": "region_mean",

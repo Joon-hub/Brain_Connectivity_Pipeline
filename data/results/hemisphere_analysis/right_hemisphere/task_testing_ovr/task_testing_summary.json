@@ -1,0 +1,17 @@
+{
+  "rest_train_accuracy": 0.9616687192118226,
+  "task_test_accuracy": 0.8710344827586207,
+  "task_balanced_accuracy": 0.8710344827586207,
+  "task_top_5_accuracy": 0.9640086206896552,
+  "accuracy_drop": 0.0906342364532019,
+  "hyperparameters": {
+    "C": 0.1440391093220847,
+    "max_iter": 200,
+    "solver": "saga",
+    "multi_class": "ovr"
+  },
+  "n_rest_subjects": 224,
+  "n_task_subjects": 200,
+  "n_rest_samples": 25984,
+  "n_task_samples": 23200
+}

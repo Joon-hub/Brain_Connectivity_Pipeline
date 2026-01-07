@@ -52,8 +52,8 @@ from src.hemisphere.hemisphere_utils import (
     load_hemisphere_data,
     prepare_classification_data
 )
-from src.core.preprocessing import ConnectivityPreprocessor
-from src.evaluation.hemisphere_metrics import (
+from src.hemisphere.hemisphere_preprocessing import ConnectivityPreprocessor
+from src.hemisphere.hemisphere_metrics import (
     compute_classification_metrics,
     compute_per_region_metrics,
     compute_network_level_metrics,

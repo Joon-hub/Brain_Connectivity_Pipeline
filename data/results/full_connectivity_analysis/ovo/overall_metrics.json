@@ -12,7 +12,7 @@
     "solver": "lbfgs",
     "_optuna_best_score": 0.8719453530883202,
     "_optuna_n_trials": 50,
-    "_optuna_time_seconds": 29552.263661384583
+    "_optuna_time_seconds": 26641.907533168793
   },
   "model_type": "one_vs_one",
   "n_pairwise_classifiers": 26796

@@ -7,7 +7,7 @@
 data:
   # Data paths
   # input_dir: "data/raw/"
-  # output_dir: "data/results/FC_analysis"
+  # output_dir: "data/results/full_connectivity_analysis/"
   region_info: "data/processed/region_info.csv"
   
   # Dataset selection

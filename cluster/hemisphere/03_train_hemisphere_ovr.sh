@@ -28,8 +28,9 @@ echo "✓ Environment ready. Starting training..."
 python scripts/hemisphere/03_train_hemisphere_ovr.py \
       --hemisphere both \
       --tune_hyperparams \
-      --optuna_trials 10 \
-      --n_folds 3 \
+      --optuna_trials 50 \
+      --n_folds 5 \
+      --test_on_task
     
 
 EXIT_CODE=$?

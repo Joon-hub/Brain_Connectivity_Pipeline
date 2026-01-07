@@ -1,6 +1,6 @@
 # HTCondor Submit File for FC Data Splitting
 universe = vanilla
-executable = cluster/condor/FC_pipeline/02_train_FC_ovr.sh
+executable = cluster/FC_pipeline/02_train_FC_ovr.sh
 
 getenv = True
 initialdir = /home/sjoon/projects/brain_connectivity_classifier/

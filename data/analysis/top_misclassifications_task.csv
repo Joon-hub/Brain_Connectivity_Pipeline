@@ -1,0 +1,16 @@
+True,Predicted,Count,True_Total,Proportion
+ContA,LimbicB,3,200,0.015
+VisCent,Putamen_post,2,200,0.01
+Thalamus_DA,Amygdala_med,2,200,0.01
+Thalamus_VP,Thalamus_DA,2,200,0.01
+DefaultB,Hippocampus_ant,2,200,0.01
+Amygdala_med,Thalamus_VP,2,200,0.01
+LimbicA,LimbicB,2,200,0.01
+DefaultB,Pallidum_post,2,200,0.01
+DorsAttnB,Caudate_ant,1,200,0.005
+DefaultB,Thalamus_DA,1,200,0.005
+SomMotB,SalVentAttnA,1,200,0.005
+Hippocampus_ant,Pallidum_post,1,200,0.005
+DefaultA,SalVentAttnB,1,200,0.005
+Putamen_ant,DorsAttnB,1,200,0.005
+Thalamus_VA,Thalamus_DA,1,200,0.005

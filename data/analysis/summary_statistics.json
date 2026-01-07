@@ -1,0 +1,26 @@
+{
+  "cv_performance": {
+    "best_accuracy": {
+      "value": 0.931707974137931,
+      "analysis": "Full Connectivity",
+      "strategy": "OVR"
+    },
+    "best_balanced_accuracy": {
+      "value": 0.931707974137931,
+      "analysis": "Full Connectivity",
+      "strategy": "OVR"
+    }
+  },
+  "task_performance": {
+    "best_accuracy": {
+      "value": 0.8963362068965517,
+      "analysis": "Full Connectivity",
+      "strategy": "OVR"
+    },
+    "best_balanced_accuracy": {
+      "value": 0.8963362068965517,
+      "analysis": "Full Connectivity",
+      "strategy": "OVR"
+    }
+  }
+}

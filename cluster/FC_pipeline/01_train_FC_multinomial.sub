@@ -1,6 +1,6 @@
 # HTCondor Submit File for FC Data Splitting
 universe = vanilla
-executable = cluster/condor/FC_pipeline/01_train_FC_multinomial.sh
+executable = cluster/FC_pipeline/01_train_FC_multinomial.sh
 
 getenv = True
 initialdir = /home/sjoon/projects/brain_connectivity_classifier/
@@ -14,9 +14,9 @@ request_memory = 128GB
 request_disk = 5GB
 
 # Log files
-output = logs/02_FC_multinomial.out
-error = logs/02_FC_multinomial.err
-log = logs/02_FC_multinomial.log
+output = logs/01_FC_multinomial.out
+error = logs/01_FC_multinomial.err
+log = logs/01_FC_multinomial.log
 
 # Single job - processes both datasets
 queue 1

@@ -1,6 +1,6 @@
 # HTCondor Submit File for Hemisphere Data Splitting
 universe = vanilla
-executable = cluster/condor/hemisphere/04_train_hemisphere_ovo.sh
+executable = cluster/hemisphere/04_train_hemisphere_ovo.sh
 
 getenv = True
 initialdir = /home/sjoon/projects/brain_connectivity_classifier/

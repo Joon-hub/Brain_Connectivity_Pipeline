@@ -1,0 +1,39 @@
+{
+  "overall_performance": {
+    "cv_accuracy": 0.9241263854679803,
+    "task_accuracy": 0.8923922413793104,
+    "accuracy_drop": 0.09781326970443349,
+    "n_regions": 232,
+    "n_samples_cv": 51968,
+    "n_samples_task": 46400
+  },
+  "error_distribution": {
+    "mean_error_rate_cv": 0.07587361453201971,
+    "std_error_rate_cv": 0.07771712243823373,
+    "mean_error_rate_task": 0.10760775862068965,
+    "std_error_rate_task": 0.10816348268783814,
+    "min_error_rate_cv": 0.0,
+    "max_error_rate_cv": 0.5401785714285714
+  },
+  "confusion_patterns": {
+    "within_network_error_prop_cv": 0.11437991377123777,
+    "cross_network_error_prop_cv": 0.8856200862287639,
+    "within_network_error_prop_task": 0.11395954336070302,
+    "cross_network_error_prop_task": 0.886040456639298
+  },
+  "error_severity_cv": {
+    "within_network": 0.1143799137712419,
+    "cross_network_same_hemi": 0.4423028151153928,
+    "cross_hemi_same_network": 0.0,
+    "cross_hemi_diff_network": 0.44331727111336516
+  },
+  "error_severity_task": {
+    "within_network": 0.11395954336070402,
+    "cross_network_same_hemi": 0.4590426597236147,
+    "cross_hemi_same_network": 0.0,
+    "cross_hemi_diff_network": 0.4269977969156814
+  },
+  "generalization": {
+    "mean_error_increase": 0.03173414408866996,
+    "median_error_increase": 0.020267857142857115,
+    "regions_improved": 
