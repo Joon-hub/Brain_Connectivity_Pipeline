@@ -1,260 +1,72 @@
-=== FC Training | Host: cpu43 | Sun Jan  4 11:51:48 PM CET 2026 | CPUs: 32 ===
+=== FC Training | Host: cpu43 | Fri Jan 16 12:20:37 PM CET 2026 | CPUs: 32 ===
 ✓ Environment ready. Starting training...
-2026-01-04 23:51:50,266 - __main__ - INFO - ================================================================================
-2026-01-04 23:51:50,267 - __main__ - INFO - FULL BRAIN CONNECTIVITY CLASSIFICATION
-2026-01-04 23:51:50,267 - __main__ - INFO - 232 Regions | 224 Subjects (PIOP2 Rest)
-2026-01-04 23:51:50,267 - __main__ - INFO - ================================================================================
-2026-01-04 23:51:50,267 - __main__ - INFO - Preprocessing: Diagonal imputation + Fisher Z → StandardScaler
-2026-01-04 23:51:50,267 - __main__ - INFO - Optuna: Runs on scaled full dataset
-2026-01-04 23:51:50,267 - __main__ - INFO - CV: Independent scaling per fold
-2026-01-04 23:51:50,267 - __main__ - INFO - Task Testing: Enabled (train on rest, test on task)
-2026-01-04 23:51:50,267 - __main__ - INFO - ================================================================================
-2026-01-04 23:51:50,267 - __main__ - INFO - 
+2026-01-16 12:20:39,378 - __main__ - INFO - ================================================================================
+2026-01-16 12:20:39,378 - __main__ - INFO - FULL BRAIN CONNECTIVITY CLASSIFICATION (CORRECTED VERSION)
+2026-01-16 12:20:39,378 - __main__ - INFO - 232 Regions | 224 Subjects (PIOP2 Rest)
+2026-01-16 12:20:39,378 - __main__ - INFO - ================================================================================
+2026-01-16 12:20:39,378 - __main__ - INFO - ================================================================================
+2026-01-16 12:20:39,378 - __main__ - INFO - Preprocessing: Diagonal imputation + Fisher Z → StandardScaler per fold
+2026-01-16 12:20:39,378 - __main__ - INFO - Hyperparameter Tuning: Enabled (Optuna INSIDE each fold, leak-free)
+2026-01-16 12:20:39,378 - __main__ - INFO -   • Trials per fold: 30
+2026-01-16 12:20:39,378 - __main__ - INFO - Task Testing: Enabled (Final Optuna on full rest data, leak-free)
+2026-01-16 12:20:39,378 - __main__ - INFO -   • Final optimization trials: 30
+2026-01-16 12:20:39,378 - __main__ - INFO -   • Most principled approach for task testing
+2026-01-16 12:20:39,378 - __main__ - INFO - ================================================================================
+2026-01-16 12:20:39,378 - __main__ - INFO - 
 ================================================================================
-2026-01-04 23:51:50,267 - __main__ - INFO - TRAINING FULL BRAIN CONNECTIVITY (232 REGIONS)
-2026-01-04 23:51:50,267 - __main__ - INFO - ================================================================================
+2026-01-16 12:20:39,378 - __main__ - INFO - TRAINING FULL BRAIN CONNECTIVITY (232 REGIONS)
+2026-01-16 12:20:39,378 - __main__ - INFO - ================================================================================
 
-2026-01-04 23:51:50,267 - __main__ - INFO - Loading full connectivity data...
+2026-01-16 12:20:39,378 - __main__ - INFO - Optuna parallel jobs: 1
+2026-01-16 12:20:39,378 - __main__ - INFO - Loading full connectivity data...
 ✓ Schema valid: 224 subjects, 26796 connections
-2026-01-04 23:51:51,882 - __main__ - INFO - Data loaded:
-2026-01-04 23:51:51,883 - __main__ - INFO -   Subjects: 224
-2026-01-04 23:51:51,883 - __main__ - INFO -   Regions: 232
-2026-01-04 23:51:51,883 - __main__ - INFO -   Connections: 26796
-2026-01-04 23:51:51,883 - __main__ - INFO - 
+2026-01-16 12:20:41,111 - __main__ - INFO - Data loaded:
+2026-01-16 12:20:41,111 - __main__ - INFO -   Subjects: 224
+2026-01-16 12:20:41,112 - __main__ - INFO -   Regions: 232
+2026-01-16 12:20:41,112 - __main__ - INFO -   Connections: 26796
+2026-01-16 12:20:41,112 - __main__ - INFO - 
 Reconstructing connectivity matrices...
-2026-01-04 23:51:54,403 - __main__ - INFO -   Connectivity shape: (224, 232, 232)
-2026-01-04 23:51:54,405 - __main__ - INFO -   Networks found: ['VisCent', 'VisPeri', 'SomMotA', 'SomMotB', 'DorsAttnA', 'DorsAttnB', 'SalVentAttnA', 'SalVentAttnB', 'LimbicB', 'LimbicA', 'ContA', 'ContB', 'ContC', 'DefaultA', 'DefaultB', 'DefaultC', 'TempPar', 'Hippocampus_ant', 'Hippocampus_post', 'Amygdala_lat', 'Amygdala_med', 'Thalamus_DP', 'Thalamus_VP', 'Thalamus_VA', 'Thalamus_DA', 'Accumbens_shell', 'Accumbens_core', 'Pallidum_post', 'Pallidum_ant', 'Putamen_ant', 'Putamen_post', 'Caudate_ant', 'Caudate_post']
-2026-01-04 23:51:54,405 - __main__ - INFO - 
+2026-01-16 12:20:43,552 - __main__ - INFO -   Connectivity shape: (224, 232, 232)
+2026-01-16 12:20:43,555 - __main__ - INFO -   Networks found: ['VisCent', 'VisPeri', 'SomMotA', 'SomMotB', 'DorsAttnA', 'DorsAttnB', 'SalVentAttnA', 'SalVentAttnB', 'LimbicB', 'LimbicA', 'ContA', 'ContB', 'ContC', 'DefaultA', 'DefaultB', 'DefaultC', 'TempPar', 'Hippocampus_ant', 'Hippocampus_post', 'Amygdala_lat', 'Amygdala_med', 'Thalamus_DP', 'Thalamus_VP', 'Thalamus_VA', 'Thalamus_DA', 'Accumbens_shell', 'Accumbens_core', 'Pallidum_post', 'Pallidum_ant', 'Putamen_ant', 'Putamen_post', 'Caudate_ant', 'Caudate_post']
+2026-01-16 12:20:43,555 - __main__ - INFO - 
 ================================================================================
-2026-01-04 23:51:54,405 - __main__ - INFO - PREPROCESSING (BEFORE CROSS-VALIDATION)
-2026-01-04 23:51:54,405 - __main__ - INFO - ================================================================================
-2026-01-04 23:51:54,405 - __main__ - INFO - 
-Applying diagonal imputation (strategy: region_mean)...
-2026-01-04 23:51:54,418 - __main__ - INFO -   Original diagonal range: [1.0000, 1.0000]
-2026-01-04 23:51:54,419 - __main__ - INFO -   Original diagonal mean: 1.0000
-2026-01-04 23:51:54,657 - __main__ - INFO -   Replaced diagonal with row means
-2026-01-04 23:51:54,658 - __main__ - INFO -   New diagonal range: [-0.1471, 0.2325]
-2026-01-04 23:51:54,658 - __main__ - INFO -   New diagonal mean: 0.0165
-2026-01-04 23:51:54,658 - __main__ - INFO - 
-Applying Fisher Z-transformation...
-2026-01-04 23:51:54,887 - __main__ - INFO -   Value range after Fisher Z: [-1.3984, 2.0494]
-2026-01-04 23:51:54,917 - __main__ - INFO -   Mean: 0.0204, Std: 0.2909
-2026-01-04 23:51:54,918 - __main__ - INFO - 
+2026-01-16 12:20:43,555 - __main__ - INFO - PREPROCESSING (BEFORE CROSS-VALIDATION)
+2026-01-16 12:20:43,555 - __main__ - INFO - ================================================================================
+2026-01-16 12:20:43,555 - __main__ - INFO - Applying diagonal imputation: region_mean
+2026-01-16 12:20:43,828 - __main__ - INFO - Applying Fisher Z-transformation
+2026-01-16 12:20:44,049 - __main__ - INFO - 
 Preparing classification data (flattening to features)...
-2026-01-04 23:51:54,919 - __main__ - INFO - Classification data prepared:
-2026-01-04 23:51:54,919 - __main__ - INFO -   Samples (X): (51968, 232)
-2026-01-04 23:51:54,919 - __main__ - INFO -   Labels (y): (51968,)
-2026-01-04 23:51:54,919 - __main__ - INFO -   Classes: 232
-2026-01-04 23:51:54,919 - __main__ - INFO -   Samples per subject: 232
-2026-01-04 23:51:54,919 - __main__ - INFO - 
+2026-01-16 12:20:44,050 - __main__ - INFO - Classification data prepared:
+2026-01-16 12:20:44,050 - __main__ - INFO -   Samples (X): (51968, 232)
+2026-01-16 12:20:44,050 - __main__ - INFO -   Labels (y): (51968,)
+2026-01-16 12:20:44,050 - __main__ - INFO -   Classes: 232
+2026-01-16 12:20:44,050 - __main__ - INFO -   Samples per subject: 232
+2026-01-16 12:20:44,050 - __main__ - INFO - 
 ✓ Preprocessing completed
-2026-01-04 23:51:54,919 - __main__ - INFO - ================================================================================
-2026-01-04 23:51:54,919 - __main__ - INFO - 
-Scaling full dataset for Optuna optimization...
-2026-01-04 23:51:55,027 - __main__ - INFO -   Scaled data - mean: 0.0000, std: 1.0000
-2026-01-04 23:51:55,027 - __main__ - INFO - 
+2026-01-16 12:20:44,050 - __main__ - INFO - ================================================================================
+2026-01-16 12:20:44,050 - __main__ - INFO - 
 ================================================================================
-2026-01-04 23:51:55,027 - __main__ - INFO - HYPERPARAMETER OPTIMIZATION WITH OPTUNA
-2026-01-04 23:51:55,027 - __main__ - INFO - ================================================================================
-2026-01-04 23:51:55,027 - __main__ - INFO - Running Optuna on SCALED full dataset
-2026-01-04 23:51:55,027 - __main__ - INFO -   Trials: 50
-2026-01-04 23:51:55,027 - __main__ - INFO -   Samples: 51968
-2026-01-04 23:51:55,027 - __main__ - INFO -   Features: 232
-2026-01-04 23:51:55,027 - __main__ - INFO -   Classes: 232
-2026-01-04 23:51:55,027 - __main__ - INFO -   NOTE: Data already scaled, using simple train/val split
-2026-01-04 23:51:55,027 - __main__ - INFO - 
-Starting Optuna optimization...
-2026-01-05 03:26:08,262 - __main__ - INFO - 
-Optuna optimization completed in 12853.23s
-2026-01-05 03:26:08,266 - __main__ - INFO - 
-✓ Best hyperparameters found:
-2026-01-05 03:26:08,266 - __main__ - INFO -   • C: 0.121104
-2026-01-05 03:26:08,266 - __main__ - INFO -   • max_iter: 200
-2026-01-05 03:26:08,266 - __main__ - INFO -   • solver: lbfgs
-2026-01-05 03:26:08,266 - __main__ - INFO -   • Best validation score: 0.9389
-2026-01-05 03:26:08,266 - __main__ - INFO - 
-Top 5 trials:
-2026-01-05 03:26:08,294 - __main__ - INFO -   1. Trial 42: score=0.9389, C=0.1211, solver=lbfgs, max_iter=200
-2026-01-05 03:26:08,294 - __main__ - INFO -   2. Trial 8: score=0.9388, C=0.1538, solver=lbfgs, max_iter=500
-2026-01-05 03:26:08,294 - __main__ - INFO -   3. Trial 41: score=0.9388, C=0.1313, solver=lbfgs, max_iter=200
-2026-01-05 03:26:08,298 - __main__ - INFO -   4. Trial 39: score=0.9388, C=0.1314, solver=lbfgs, max_iter=200
-2026-01-05 03:26:08,298 - __main__ - INFO -   5. Trial 43: score=0.9387, C=0.1578, solver=lbfgs, max_iter=200
-2026-01-05 03:26:08,298 - __main__ - INFO - ================================================================================
+2026-01-16 12:20:44,050 - __main__ - INFO - CROSS-VALIDATION WITH FOLD-WISE HYPERPARAMETER TUNING
+2026-01-16 12:20:44,050 - __main__ - INFO - ================================================================================
+2026-01-16 12:20:44,050 - __main__ - INFO - Optuna will run INSIDE each fold (30 trials per fold)
+2026-01-16 12:20:44,050 - __main__ - INFO - This prevents information leakage and provides fold-specific tuning
+2026-01-16 12:20:44,050 - __main__ - INFO - CRITICAL: Optuna receives UNSCALED data and scales within each trial
+2026-01-16 12:20:44,050 - __main__ - INFO - 
+Running 5-fold GroupKFold cross-validation...
 
-2026-01-05 03:26:08,298 - __main__ - INFO - 
-================================================================================
-2026-01-05 03:26:08,298 - __main__ - INFO - CROSS-VALIDATION WITH FOLD-WISE SCALING
-2026-01-05 03:26:08,298 - __main__ - INFO - ================================================================================
-2026-01-05 03:26:08,298 - __main__ - INFO - Using hyperparameters: C=0.121104, solver=lbfgs, max_iter=200
-2026-01-05 03:26:08,298 - __main__ - INFO - Running 5-fold GroupKFold cross-validation...
-2026-01-05 03:26:08,298 - __main__ - INFO - Note: StandardScaler fit independently on each fold's training data
-
-2026-01-05 03:26:08,325 - __main__ - INFO - Fold 1/5
-2026-01-05 03:26:08,325 - __main__ - INFO -   Train samples: 41528, Test samples: 10440
-2026-01-05 03:26:08,363 - __main__ - INFO -   Train subjects: 179, Test subjects: 45
-2026-01-05 03:26:08,363 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
-2026-01-05 03:26:08,363 - __main__ - INFO -   Input shapes - Train: (41528, 232), Test: (10440, 232)
-2026-01-05 03:26:08,442 - __main__ - INFO -   Scaled shapes - Train: (41528, 232), Test: (10440, 232)
-2026-01-05 03:26:08,443 - __main__ - INFO -   Training with C=0.121104, solver=lbfgs...
-2026-01-05 03:26:28,235 - __main__ - INFO -   Predicting on test set...
-2026-01-05 03:26:28,282 - __main__ - INFO -   Fold accuracy: 0.9240
-2026-01-05 03:26:28,282 - __main__ - INFO -   Fold balanced accuracy: 0.9240
-2026-01-05 03:26:28,282 - __main__ - INFO -   Fold time: 19.96s
-
-2026-01-05 03:26:28,283 - __main__ - INFO - Fold 2/5
-2026-01-05 03:26:28,283 - __main__ - INFO -   Train samples: 41528, Test samples: 10440
-2026-01-05 03:26:28,331 - __main__ - INFO -   Train subjects: 179, Test subjects: 45
-2026-01-05 03:26:28,331 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
-2026-01-05 03:26:28,331 - __main__ - INFO -   Input shapes - Train: (41528, 232), Test: (10440, 232)
-2026-01-05 03:26:28,451 - __main__ - INFO -   Scaled shapes - Train: (41528, 232), Test: (10440, 232)
-2026-01-05 03:26:28,452 - __main__ - INFO -   Training with C=0.121104, solver=lbfgs...
-2026-01-05 03:26:45,319 - __main__ - INFO -   Predicting on test set...
-2026-01-05 03:26:45,366 - __main__ - INFO -   Fold accuracy: 0.9283
-2026-01-05 03:26:45,367 - __main__ - INFO -   Fold balanced accuracy: 0.9283
-2026-01-05 03:26:45,367 - __main__ - INFO -   Fold time: 17.08s
-
-2026-01-05 03:26:45,368 - __main__ - INFO - Fold 3/5
-2026-01-05 03:26:45,368 - __main__ - INFO -   Train samples: 41528, Test samples: 10440
-2026-01-05 03:26:45,398 - __main__ - INFO -   Train subjects: 179, Test subjects: 45
-2026-01-05 03:26:45,399 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
-2026-01-05 03:26:45,399 - __main__ - INFO -   Input shapes - Train: (41528, 232), Test: (10440, 232)
-2026-01-05 03:26:45,521 - __main__ - INFO -   Scaled shapes - Train: (41528, 232), Test: (10440, 232)
-2026-01-05 03:26:45,521 - __main__ - INFO -   Training with C=0.121104, solver=lbfgs...
-2026-01-05 03:27:03,514 - __main__ - INFO -   Predicting on test set...
-2026-01-05 03:27:03,565 - __main__ - INFO -   Fold accuracy: 0.9214
-2026-01-05 03:27:03,565 - __main__ - INFO -   Fold balanced accuracy: 0.9214
-2026-01-05 03:27:03,565 - __main__ - INFO -   Fold time: 18.20s
-
-2026-01-05 03:27:03,566 - __main__ - INFO - Fold 4/5
-2026-01-05 03:27:03,566 - __main__ - INFO -   Train samples: 41528, Test samples: 10440
-2026-01-05 03:27:03,599 - __main__ - INFO -   Train subjects: 179, Test subjects: 45
-2026-01-05 03:27:03,599 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
-2026-01-05 03:27:03,599 - __main__ - INFO -   Input shapes - Train: (41528, 232), Test: (10440, 232)
-2026-01-05 03:27:03,716 - __main__ - INFO -   Scaled shapes - Train: (41528, 232), Test: (10440, 232)
-2026-01-05 03:27:03,717 - __main__ - INFO -   Training with C=0.121104, solver=lbfgs...
-2026-01-05 03:27:22,411 - __main__ - INFO -   Predicting on test set...
-2026-01-05 03:27:22,453 - __main__ - INFO -   Fold accuracy: 0.9249
-2026-01-05 03:27:22,454 - __main__ - INFO -   Fold balanced accuracy: 0.9249
-2026-01-05 03:27:22,454 - __main__ - INFO -   Fold time: 18.89s
-
-2026-01-05 03:27:22,455 - __main__ - INFO - Fold 5/5
-2026-01-05 03:27:22,455 - __main__ - INFO -   Train samples: 41760, Test samples: 10208
-2026-01-05 03:27:22,484 - __main__ - INFO -   Train subjects: 180, Test subjects: 44
-2026-01-05 03:27:22,485 - __main__ - INFO -   Preprocessing fold data (StandardScaler only)...
-2026-01-05 03:27:22,485 - __main__ - INFO -   Input shapes - Train: (41760, 232), Test: (10208, 232)
-2026-01-05 03:27:22,605 - __main__ - INFO -   Scaled shapes - Train: (41760, 232), Test: (10208, 232)
-2026-01-05 03:27:22,606 - __main__ - INFO -   Training with C=0.121104, solver=lbfgs...
-2026-01-05 03:27:41,678 - __main__ - INFO -   Predicting on test set...
-2026-01-05 03:27:41,716 - __main__ - INFO -   Fold accuracy: 0.9220
-2026-01-05 03:27:41,716 - __main__ - INFO -   Fold balanced accuracy: 0.9220
-2026-01-05 03:27:41,716 - __main__ - INFO -   Fold time: 19.26s
-
-2026-01-05 03:27:41,717 - __main__ - INFO - Cross-validation completed in 93.42s
-
-2026-01-05 03:27:41,742 - __main__ - INFO - Computing overall metrics...
-2026-01-05 03:27:42,421 - __main__ - INFO - 
-OVERALL RESULTS (FULL CONNECTIVITY - 232 REGIONS):
-2026-01-05 03:27:42,421 - __main__ - INFO -   Mean CV Accuracy: 0.9241
-2026-01-05 03:27:42,421 - __main__ - INFO -   Mean CV Balanced Accuracy: 0.9241
-2026-01-05 03:27:42,421 - __main__ - INFO -   Top-5 Accuracy: 0.9833358990147784
-2026-01-05 03:27:42,421 - __main__ - INFO - 
-  Hyperparameters (from Optuna):
-2026-01-05 03:27:42,421 - __main__ - INFO -     C: 0.121104, solver: lbfgs, max_iter: 200
-2026-01-05 03:27:42,421 - __main__ - INFO -     Optuna validation score: 0.9389
-2026-01-05 03:27:42,421 - __main__ - INFO - 
-Computing per-region metrics...
-2026-01-05 03:27:42,452 - __main__ - INFO - Computing network-level metrics...
-2026-01-05 03:27:42,465 - __main__ - INFO - Creating confusion matrix...
-2026-01-05 03:27:42,479 - __main__ - INFO - 
-Saving results...
-2026-01-05 03:27:42,596 - __main__ - INFO - 
-Generating visualizations...
-2026-01-05 03:27:46,203 - __main__ - INFO - All results saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/full_connectivity_analysis/multinomial
-2026-01-05 03:27:46,203 - __main__ - INFO - 
-================================================================================
-2026-01-05 03:27:46,203 - __main__ - INFO - TESTING ON TASK DATA (GENDER STROOP)
-2026-01-05 03:27:46,203 - __main__ - INFO - ================================================================================
-2026-01-05 03:27:46,203 - __main__ - INFO - Training final model on ALL resting-state data
-2026-01-05 03:27:46,203 - __main__ - INFO - Then testing on task data to measure generalization
-
-2026-01-05 03:27:46,203 - __main__ - INFO - Step 1: Loading resting-state data (TRAINING)...
-✓ Schema valid: 224 subjects, 26796 connections
-2026-01-05 03:27:47,979 - __main__ - INFO -   Rest data: 224 subjects, 232 regions
-2026-01-05 03:27:50,567 - __main__ - INFO - 
-Applying diagonal imputation (strategy: region_mean)...
-2026-01-05 03:27:50,581 - __main__ - INFO -   Original diagonal range: [1.0000, 1.0000]
-2026-01-05 03:27:50,581 - __main__ - INFO -   Original diagonal mean: 1.0000
-2026-01-05 03:27:50,813 - __main__ - INFO -   Replaced diagonal with row means
-2026-01-05 03:27:50,813 - __main__ - INFO -   New diagonal range: [-0.1471, 0.2325]
-2026-01-05 03:27:50,814 - __main__ - INFO -   New diagonal mean: 0.0165
-2026-01-05 03:27:50,814 - __main__ - INFO - 
-Applying Fisher Z-transformation...
-2026-01-05 03:27:51,043 - __main__ - INFO -   Value range after Fisher Z: [-1.3984, 2.0494]
-2026-01-05 03:27:51,073 - __main__ - INFO -   Mean: 0.0204, Std: 0.2909
-2026-01-05 03:27:51,074 - __main__ - INFO -   Rest features: (51968, 232)
-2026-01-05 03:27:51,074 - __main__ - INFO - 
-Step 2: Loading task data (TESTING)...
-✓ Schema valid: 200 subjects, 26796 connections
-2026-01-05 03:27:52,691 - __main__ - INFO -   Task data: 200 subjects
-2026-01-05 03:27:54,804 - __main__ - INFO - 
-Applying diagonal imputation (strategy: region_mean)...
-2026-01-05 03:27:54,817 - __main__ - INFO -   Original diagonal range: [1.0000, 1.0000]
-2026-01-05 03:27:54,817 - __main__ - INFO -   Original diagonal mean: 1.0000
-2026-01-05 03:27:55,026 - __main__ - INFO -   Replaced diagonal with row means
-2026-01-05 03:27:55,027 - __main__ - INFO -   New diagonal range: [-0.1952, 0.3499]
-2026-01-05 03:27:55,027 - __main__ - INFO -   New diagonal mean: 0.0157
-2026-01-05 03:27:55,027 - __main__ - INFO - 
-Applying Fisher Z-transformation...
-2026-01-05 03:27:55,226 - __main__ - INFO -   Value range after Fisher Z: [-1.3363, 1.9912]
-2026-01-05 03:27:55,253 - __main__ - INFO -   Mean: 0.0189, Std: 0.2751
-2026-01-05 03:27:55,254 - __main__ - INFO -   Task features: (46400, 232)
-2026-01-05 03:27:55,254 - __main__ - INFO - 
-Step 3: Training final model on ALL resting-state data...
-2026-01-05 03:27:55,362 - __main__ - INFO -   Scaled rest data: mean=0.0000, std=1.0000
-2026-01-05 03:28:14,142 - __main__ - INFO -   Model trained in 18.78s
-2026-01-05 03:28:14,212 - __main__ - INFO -   Rest data accuracy (training set): 0.9902
-2026-01-05 03:28:14,212 - __main__ - INFO - 
-Step 4: Testing on task data...
-2026-01-05 03:28:14,282 - __main__ - INFO -   Scaled task data: mean=-0.0059, std=0.9481
-2026-01-05 03:28:14,426 - __main__ - INFO - 
-Step 5: Computing task metrics...
-2026-01-05 03:28:15,083 - __main__ - INFO - 
-Saving task testing results to: /home/sjoon/projects/brain_connectivity_classifier/data/results/full_connectivity_analysis/task_testing
-2026-01-05 03:28:15,176 - __main__ - INFO - 
-Generating task testing visualizations...
-2026-01-05 03:28:18,675 - __main__ - INFO - 
-================================================================================
-2026-01-05 03:28:18,675 - __main__ - INFO - TASK TESTING RESULTS
-2026-01-05 03:28:18,675 - __main__ - INFO - ================================================================================
-2026-01-05 03:28:18,675 - __main__ - INFO - Rest (training) accuracy: 0.9902
-2026-01-05 03:28:18,675 - __main__ - INFO - Task (testing) accuracy:  0.8924
-2026-01-05 03:28:18,675 - __main__ - INFO - Accuracy drop:            0.0978 (9.9%)
-2026-01-05 03:28:18,675 - __main__ - INFO - Task top-5 accuracy:      0.9726
-2026-01-05 03:28:18,676 - __main__ - INFO - 
-Best task network: DefaultC (0.9605)
-2026-01-05 03:28:18,676 - __main__ - INFO - Worst task network: Amygdala_lat (0.2525)
-2026-01-05 03:28:18,676 - __main__ - INFO - ================================================================================
-
-2026-01-05 03:28:18,685 - __main__ - INFO - 
-================================================================================
-2026-01-05 03:28:18,685 - __main__ - INFO - TRAINING COMPLETED SUCCESSFULLY
-2026-01-05 03:28:18,685 - __main__ - INFO - ================================================================================
-2026-01-05 03:28:18,685 - __main__ - INFO - 
-Final Results:
-2026-01-05 03:28:18,685 - __main__ - INFO -   • CV Accuracy: 0.9241
-2026-01-05 03:28:18,685 - __main__ - INFO -   • CV Balanced Accuracy: 0.9241
-2026-01-05 03:28:18,685 - __main__ - INFO -   • Top-5 Accuracy: 0.9833358990147784
-2026-01-05 03:28:18,685 - __main__ - INFO - 
-Task Testing:
-2026-01-05 03:28:18,685 - __main__ - INFO -   • Rest (train) accuracy: 0.9902
-2026-01-05 03:28:18,685 - __main__ - INFO -   • Task (test) accuracy: 0.8924
-2026-01-05 03:28:18,685 - __main__ - INFO -   • Accuracy drop: 0.0978 (9.9%)
-2026-01-05 03:28:18,685 - __main__ - INFO - 
-Results saved to: /home/sjoon/projects/brain_connectivity_classifier/data/results/full_connectivity_analysis/multinomial
-
-==========================================
-✓ Training completed successfully
-
-Duration: 12991 seconds (216 minutes)
-Completed: Mon Jan  5 03:28:19 AM CET 2026
-==========================================
+2026-01-16 12:20:44,065 - __main__ - INFO - ================================================================================
+2026-01-16 12:20:44,065 - __main__ - INFO - Fold 1/5
+2026-01-16 12:20:44,065 - __main__ - INFO - ================================================================================
+2026-01-16 12:20:44,065 - __main__ - INFO -   Train samples: 41528, Test samples: 10440
+2026-01-16 12:20:44,084 - __main__ - INFO -   Train subjects: 179, Test subjects: 45
+2026-01-16 12:20:44,084 - __main__ - INFO - 
+  ────────────────────────────────────────────────────────────
+2026-01-16 12:20:44,084 - __main__ - INFO -   FOLD 1 - HYPERPARAMETER OPTIMIZATION
+2026-01-16 12:20:44,084 - __main__ - INFO -   ────────────────────────────────────────────────────────────
+2026-01-16 12:20:44,084 - __main__ - INFO -   Trials: 30
+2026-01-16 12:20:44,084 - __main__ - INFO -   Training samples: 41528
+2026-01-16 12:20:44,093 - __main__ - INFO -   Training subjects: 179
+2026-01-16 12:20:44,093 - __main__ - INFO -   Features: 232
+2026-01-16 12:20:44,094 - __main__ - INFO -   Classes: 232
+2026-01-16 12:20:57,016 - __main__ - INFO -     Trial   1/30: C= 0.00289 newton-cg     max_iter= 266 → Val_Acc=0.8591 ✓ NEW BEST
+2026-01-16 12:21:23,356 - __main__ - INFO -     Trial   2/30: C= 0.02035 lbfgs         max_iter= 399 → Val_Acc=0.9107 ✓ NEW BEST

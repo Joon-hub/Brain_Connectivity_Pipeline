@@ -1,13 +1,13 @@
 """
-02_train_hemisphere_multinomial.py
+02_train_hemisphere_multinomial.py (MODIFIED: Optuna inside each CV fold)
 
 Train multinomial logistic regression separately for left and right hemispheres.
 This establishes the baseline performance for hemisphere-specific classification.
 
-FINAL PREPROCESSING FLOW:
+MODIFIED PREPROCESSING FLOW:
 1. Diagonal imputation + Fisher Z BEFORE everything
-2. StandardScaler on FULL dataset for Optuna
-3. StandardScaler WITHIN each CV fold (leak-free)
+2. StandardScaler WITHIN each CV fold (leak-free)
+3. [NEW] Optuna runs WITHIN each fold on fold's training data
 
 NEW FEATURE: After CV, train final model on ALL rest data and test on task data
 
@@ -15,6 +15,9 @@ Usage:
     python scripts/hemisphere/02_train_hemisphere_multinomial.py --hemisphere left
     python scripts/hemisphere/02_train_hemisphere_multinomial.py --hemisphere right
     python scripts/hemisphere/02_train_hemisphere_multinomial.py --hemisphere both
+    
+    # With hyperparameter tuning:
+    python scripts/hemisphere/02_train_hemisphere_multinomial.py --hemisphere left --tune_hyperparams
     
     # With task testing:
     python scripts/hemisphere/02_train_hemisphere_multinomial.py --hemisphere left --test_on_task
@@ -175,14 +178,14 @@ def parse_arguments():
     parser.add_argument(
         '--tune_hyperparams',
         action='store_true',
-        help='Enable hyperparameter tuning using Optuna'
+        help='Enable hyperparameter tuning using Optuna WITHIN each fold'
     )
     
     parser.add_argument(
         '--optuna_trials',
         type=int,
         default=50,
-        help='Number of Optuna trials for hyperparameter optimization'
+        help='Number of Optuna trials for hyperparameter optimization per fold'
     )
     
     parser.add_argument(
@@ -366,7 +369,8 @@ def apply_fisher_z_transformation(
 def preprocess_fold_data(
     X_train: np.ndarray,
     X_test: np.ndarray,
-    logger: logging.Logger
+    logger: logging.Logger,
+    verbose: bool = False
 ) -> tuple:
     """
     Preprocess data within a single fold.
@@ -375,8 +379,9 @@ def preprocess_fold_data(
     This ensures no data leakage - scaler is fit on training data only.
     """
     
-    logger.info(f"  Preprocessing fold data (StandardScaler only)...")
-    logger.info(f"  Input shapes - Train: {X_train.shape}, Test: {X_test.shape}")
+    if verbose:
+        logger.info(f"  Preprocessing fold data (StandardScaler only)...")
+        logger.info(f"  Input shapes - Train: {X_train.shape}, Test: {X_test.shape}")
     
     # Standardization - fit on training data only (LEAK-FREE)
     scaler = StandardScaler()
@@ -389,29 +394,57 @@ def preprocess_fold_data(
     if np.any(np.isnan(X_test_scaled)) or np.any(np.isinf(X_test_scaled)):
         raise ValueError("Inf detected in test data after scaling")
     
-    logger.info(f"  Scaled shapes - Train: {X_train_scaled.shape}, Test: {X_test_scaled.shape}")
+    if verbose:
+        logger.info(f"  Scaled shapes - Train: {X_train_scaled.shape}, Test: {X_test_scaled.shape}")
     
     return X_train_scaled, X_test_scaled, scaler
 
 
-def optimize_hyperparameters_optuna(
-    X: np.ndarray,
-    y: np.ndarray,
+def optimize_hyperparameters_optuna_fold(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    fold_idx: int,
     n_trials: int,
     random_state: int,
-    logger: logging.Logger
+    logger: logging.Logger,
+    verbose: bool = False
 ) -> dict:
-    """Optimize hyperparameters using Optuna on SCALED full dataset."""
+    """
+    Optimize hyperparameters using Optuna within a single CV fold.
     
-    logger.info("\n" + "="*80)
-    logger.info("HYPERPARAMETER OPTIMIZATION WITH OPTUNA")
-    logger.info("="*80)
-    logger.info(f"Running Optuna on SCALED full dataset")
-    logger.info(f"  Trials: {n_trials}")
-    logger.info(f"  Samples: {len(X)}")
-    logger.info(f"  Features: {X.shape[1]}")
-    logger.info(f"  Classes: {len(np.unique(y))}")
-    logger.info(f"  NOTE: Data already scaled, using simple train/val split")
+    This prevents information leakage by only using the fold's training data.
+    
+    Parameters
+    ----------
+    X_train : np.ndarray
+        Fold's training feature matrix (already scaled)
+    y_train : np.ndarray
+        Fold's training labels
+    fold_idx : int
+        Current fold index (for logging)
+    n_trials : int
+        Number of Optuna trials
+    random_state : int
+        Random state
+    logger : logging.Logger
+        Logger instance
+    verbose : bool
+        Whether to show detailed progress
+    
+    Returns
+    -------
+    best_params : dict
+        Best hyperparameters for this fold
+    """
+    
+    if verbose:
+        logger.info(f"\n  {'─'*60}")
+        logger.info(f"  FOLD {fold_idx} - HYPERPARAMETER OPTIMIZATION")
+        logger.info(f"  {'─'*60}")
+        logger.info(f"  Trials: {n_trials}")
+        logger.info(f"  Training samples: {len(X_train)}")
+        logger.info(f"  Features: {X_train.shape[1]}")
+        logger.info(f"  Classes: {len(np.unique(y_train))}")
     
     def objective(trial):
         """Optuna objective function."""
@@ -421,14 +454,15 @@ def optimize_hyperparameters_optuna(
         max_iter = trial.suggest_categorical('max_iter', [200, 500, 1000])
         solver = trial.suggest_categorical('solver', ['lbfgs', 'saga'])
         
-        # Simple train/test split (data already scaled)
-        X_train, X_val, y_train, y_val = train_test_split(
-            X, y, test_size=0.2, random_state=random_state, stratify=y
+        # Split fold's training data into train/val
+        X_train_inner, X_val_inner, y_train_inner, y_val_inner = train_test_split(
+            X_train, y_train, test_size=0.2, random_state=random_state, stratify=y_train
         )
         
         # Train model
         model = LogisticRegression(
             C=C,
+            multi_class='multinomial',
             max_iter=max_iter,
             solver=solver,
             random_state=random_state,
@@ -436,19 +470,21 @@ def optimize_hyperparameters_optuna(
             verbose=0
         )
         
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_val)
-        score = accuracy_score(y_val, y_pred)
+        model.fit(X_train_inner, y_train_inner)
+        y_pred = model.predict(X_val_inner)
+        score = accuracy_score(y_val_inner, y_pred)
         
         return score
     
     # Create Optuna study
-    logger.info("\nStarting Optuna optimization...")
     optuna_start = time.time()
+    
+    # Suppress Optuna output unless verbose
+    optuna.logging.set_verbosity(optuna.logging.WARNING)
     
     study = optuna.create_study(
         direction='maximize',
-        sampler=TPESampler(seed=random_state)
+        sampler=TPESampler(seed=random_state + fold_idx)  # Different seed per fold
     )
     
     # Optimize
@@ -465,42 +501,60 @@ def optimize_hyperparameters_optuna(
     best_params = study.best_params
     best_score = study.best_value
     
-    logger.info(f"\nOptuna optimization completed in {optuna_time:.2f}s")
-    logger.info(f"\n✓ Best hyperparameters found:")
-    logger.info(f"  • C: {best_params['C']:.6f}")
-    logger.info(f"  • max_iter: {best_params['max_iter']}")
-    logger.info(f"  • solver: {best_params['solver']}")
-    logger.info(f"  • Best validation score: {best_score:.4f}")
-    
-    # Show top trials
-    logger.info(f"\nTop 5 trials:")
-    trials_df = study.trials_dataframe()
-    trials_df = trials_df.sort_values('value', ascending=False).head(5)
-    
-    for idx, (_, row) in enumerate(trials_df.iterrows(), 1):
-        logger.info(
-            f"  {idx}. Trial {int(row['number'])}: "
-            f"score={row['value']:.4f}, "
-            f"C={row['params_C']:.4f}, "
-            f"solver={row['params_solver']}, "
-            f"max_iter={int(row['params_max_iter'])}"
-        )
-    
-    logger.info("="*80 + "\n")
+    if verbose:
+        logger.info(f"\n  Optuna completed in {optuna_time:.2f}s")
+        logger.info(f"  Best params: C={best_params['C']:.6f}, "
+                   f"solver={best_params['solver']}, "
+                   f"max_iter={best_params['max_iter']}")
+        logger.info(f"  Best validation score: {best_score:.4f}")
+        logger.info(f"  {'─'*60}\n")
+    else:
+        logger.info(f"  Optuna: C={best_params['C']:.4f}, {best_params['solver']}, "
+                   f"max_iter={best_params['max_iter']} (val_acc={best_score:.4f}, {optuna_time:.1f}s)")
     
     # Add metadata
     best_params['_optuna_best_score'] = float(best_score)
-    best_params['_optuna_n_trials'] = n_trials
     best_params['_optuna_time_seconds'] = float(optuna_time)
     
     return best_params
 
 
+def aggregate_fold_hyperparameters(fold_best_params: list) -> dict:
+    """
+    Aggregate hyperparameters across folds for final model training.
+    
+    Uses the most common solver and median C value.
+    """
+    C_values = [p['C'] for p in fold_best_params]
+    max_iter_values = [p['max_iter'] for p in fold_best_params]
+    solvers = [p['solver'] for p in fold_best_params]
+    
+    # Most common solver
+    from collections import Counter
+    solver_counts = Counter(solvers)
+    best_solver = solver_counts.most_common(1)[0][0]
+    
+    # Most common max_iter
+    max_iter_counts = Counter(max_iter_values)
+    best_max_iter = max_iter_counts.most_common(1)[0][0]
+    
+    # Median C (more robust than mean)
+    best_C = float(np.median(C_values))
+    
+    return {
+        'C': best_C,
+        'max_iter': best_max_iter,
+        'solver': best_solver,
+        '_aggregation_method': 'median_C_mode_solver',
+        '_C_range': [float(min(C_values)), float(max(C_values))],
+        '_C_mean': float(np.mean(C_values)),
+        '_C_std': float(np.std(C_values))
+    }
+
+
 def test_on_task_data(
     hemisphere: str,
-    C: float,
-    max_iter: int,
-    solver: str,
+    best_params: dict,
     random_state: int,
     n_jobs: int,
     diagonal_strategy: str,
@@ -511,10 +565,15 @@ def test_on_task_data(
 ) -> dict:
     """Train final model on ALL rest data, then test on task data."""
     
+    C = best_params['C']
+    max_iter = best_params['max_iter']
+    solver = best_params['solver']
+    
     logger.info("\n" + "="*80)
     logger.info("TESTING ON TASK DATA (GENDER STROOP)")
     logger.info("="*80)
     logger.info(f"Training final model on ALL resting-state data")
+    logger.info(f"Using aggregated hyperparameters: C={C:.4f}, solver={solver}, max_iter={max_iter}")
     logger.info(f"Then testing on task data to measure generalization\n")
     
     # STEP 1: Load and preprocess RESTING-STATE data (training)
@@ -677,11 +736,7 @@ def test_on_task_data(
         'task_balanced_accuracy': float(task_metrics['balanced_accuracy']),
         'task_top_5_accuracy': float(task_metrics.get('top_5_accuracy', 0)),
         'accuracy_drop': float(rest_accuracy - task_metrics['accuracy']),
-        'hyperparameters': {
-            'C': float(C),
-            'max_iter': int(max_iter),
-            'solver': solver
-        },
+        'hyperparameters': best_params,
         'n_rest_subjects': int(rest_data['n_subjects']),
         'n_task_subjects': int(task_data['n_subjects']),
         'n_rest_samples': int(len(X_rest)),
@@ -808,51 +863,20 @@ def train_single_hemisphere(
     logger.info("\n✓ Preprocessing completed")
     logger.info("="*80)
     
-    # HYPERPARAMETER OPTIMIZATION (IF ENABLED)
-    if args.tune_hyperparams:
-        # Scale full dataset for Optuna
-        logger.info("\nScaling full dataset for Optuna optimization...")
-        scaler_optuna = StandardScaler()
-        X_scaled_optuna = scaler_optuna.fit_transform(X)
-        logger.info(f"  Scaled data - mean: {X_scaled_optuna.mean():.4f}, std: {X_scaled_optuna.std():.4f}")
-        
-        # Run Optuna on scaled data
-        best_params = optimize_hyperparameters_optuna(
-            X=X_scaled_optuna,
-            y=y,
-            n_trials=args.optuna_trials,
-            random_state=args.random_state,
-            logger=logger
-        )
-        
-        C = best_params['C']
-        max_iter = best_params['max_iter']
-        solver = best_params['solver']
-        
-    else:
-        # Use default parameters
-        C = args.regularization_C if args.regularization_C is not None else 1.0
-        max_iter = args.max_iter
-        solver = 'lbfgs'
-        
-        best_params = {
-            'C': C,
-            'max_iter': max_iter,
-            'solver': solver,
-            '_optuna_best_score': None,
-            '_optuna_n_trials': 0
-        }
-        
-        logger.info(f"\nUsing fixed hyperparameters:")
-        logger.info(f"  C: {C}, max_iter: {max_iter}, solver: {solver}\n")
-    
-    # CROSS-VALIDATION (WITH PROPER FOLD-WISE SCALING)
+    # CROSS-VALIDATION (WITH FOLD-WISE OPTUNA)
     logger.info(f"\n{'='*80}")
-    logger.info(f"CROSS-VALIDATION WITH FOLD-WISE SCALING")
+    logger.info(f"CROSS-VALIDATION WITH FOLD-WISE HYPERPARAMETER TUNING")
     logger.info(f"{'='*80}")
-    logger.info(f"Using hyperparameters: C={C:.6f}, solver={solver}, max_iter={max_iter}")
-    logger.info(f"Running {args.n_folds}-fold GroupKFold cross-validation...")
-    logger.info(f"Note: StandardScaler fit independently on each fold's training data\n")
+    
+    if args.tune_hyperparams:
+        logger.info(f"Optuna will run INSIDE each fold ({args.optuna_trials} trials per fold)")
+        logger.info(f"This prevents information leakage and provides fold-specific tuning")
+    else:
+        logger.info(f"Using default hyperparameters (no tuning)")
+        default_C = args.regularization_C if args.regularization_C is not None else 1.0
+        logger.info(f"  C={default_C}, solver=lbfgs, max_iter={args.max_iter}")
+    
+    logger.info(f"\nRunning {args.n_folds}-fold GroupKFold cross-validation...\n")
     
     # Set up cross-validation
     gkf = GroupKFold(n_splits=args.n_folds)
@@ -864,13 +888,16 @@ def train_single_hemisphere(
     all_fold_indices = []
     fold_models = [] if args.save_models else None
     fold_metrics = []
+    fold_best_params = []  # Store best params from each fold
     
     # CV loop
     start_time = time.time()
     
     for fold_idx, (train_idx, test_idx) in enumerate(gkf.split(X, y, groups=groups)):
         fold_start = time.time()
+        logger.info(f"{'='*80}")
         logger.info(f"Fold {fold_idx + 1}/{args.n_folds}")
+        logger.info(f"{'='*80}")
         logger.info(f"  Train samples: {len(train_idx)}, Test samples: {len(test_idx)}")
         
         # Split data (using UNSCALED X from preprocessing)
@@ -889,14 +916,46 @@ def train_single_hemisphere(
         logger.info(f"  Train subjects: {len(train_subjects)}, Test subjects: {len(test_subjects)}")
         
         # Scale within fold (LEAK-FREE)
-        X_train_scaled, X_test_scaled, _ = preprocess_fold_data(
+        logger.info(f"  Scaling data within fold...")
+        X_train_scaled, X_test_scaled, fold_scaler = preprocess_fold_data(
             X_train=X_train,
             X_test=X_test,
-            logger=logger
+            logger=logger,
+            verbose=args.verbose
         )
         
-        # Train model
-        logger.info(f"  Training with C={C:.6f}, solver={solver}...")
+        # HYPERPARAMETER TUNING (IF ENABLED) - RUNS ON FOLD'S TRAINING DATA
+        if args.tune_hyperparams:
+            best_params = optimize_hyperparameters_optuna_fold(
+                X_train=X_train_scaled,
+                y_train=y_train,
+                fold_idx=fold_idx + 1,
+                n_trials=args.optuna_trials,
+                random_state=args.random_state,
+                logger=logger,
+                verbose=args.verbose
+            )
+            
+            C = best_params['C']
+            max_iter = best_params['max_iter']
+            solver = best_params['solver']
+            
+            fold_best_params.append(best_params)
+            
+        else:
+            # Use default parameters
+            C = args.regularization_C if args.regularization_C is not None else 1.0
+            max_iter = args.max_iter
+            solver = 'lbfgs'
+            
+            best_params = {
+                'C': C,
+                'max_iter': max_iter,
+                'solver': solver
+            }
+        
+        # TRAIN MODEL WITH BEST/DEFAULT PARAMS
+        logger.info(f"  Training with C={C:.6f}, solver={solver}, max_iter={max_iter}...")
         
         model = LogisticRegression(
             C=C,
@@ -934,12 +993,17 @@ def train_single_hemisphere(
             }
         }
         
+        if args.tune_hyperparams:
+            fold_metric_dict['optuna_validation_score'] = best_params['_optuna_best_score']
+            fold_metric_dict['optuna_time'] = best_params['_optuna_time_seconds']
+        
         fold_metrics.append(fold_metric_dict)
         
         fold_time = time.time() - fold_start
-        logger.info(f"  Fold accuracy: {fold_acc:.4f}")
-        logger.info(f"  Fold balanced accuracy: {fold_bal_acc:.4f}")
-        logger.info(f"  Fold time: {fold_time:.2f}s\n")
+        logger.info(f"\n  ✓ Fold {fold_idx + 1} completed:")
+        logger.info(f"    Accuracy: {fold_acc:.4f}")
+        logger.info(f"    Balanced accuracy: {fold_bal_acc:.4f}")
+        logger.info(f"    Time: {fold_time:.2f}s\n")
         
         # Store results
         all_predictions.extend(y_pred)
@@ -951,18 +1015,53 @@ def train_single_hemisphere(
             fold_models.append({
                 'fold': fold_idx + 1,
                 'model': model,
+                'scaler': fold_scaler,
                 'train_idx': train_idx,
-                'test_idx': test_idx
+                'test_idx': test_idx,
+                'hyperparameters': best_params
             })
     
     total_time = time.time() - start_time
-    logger.info(f"Cross-validation completed in {total_time:.2f}s\n")
+    logger.info(f"{'='*80}")
+    logger.info(f"Cross-validation completed in {total_time:.2f}s")
+    logger.info(f"{'='*80}\n")
     
     # Convert to arrays
     all_predictions = np.array(all_predictions)
     all_probabilities = np.vstack(all_probabilities)
     all_true_labels = np.array(all_true_labels)
     all_fold_indices = np.array(all_fold_indices)
+    
+    # AGGREGATE FOLD HYPERPARAMETERS
+    if args.tune_hyperparams and fold_best_params:
+        logger.info("\n" + "="*80)
+        logger.info("HYPERPARAMETER AGGREGATION ACROSS FOLDS")
+        logger.info("="*80)
+        
+        # Show per-fold hyperparameters
+        logger.info("\nPer-fold best hyperparameters:")
+        for i, params in enumerate(fold_best_params, 1):
+            logger.info(f"  Fold {i}: C={params['C']:.6f}, solver={params['solver']}, "
+                       f"max_iter={params['max_iter']}, val_acc={params['_optuna_best_score']:.4f}")
+        
+        # Aggregate
+        aggregated_params = aggregate_fold_hyperparameters(fold_best_params)
+        
+        logger.info(f"\nAggregated hyperparameters (for task testing):")
+        logger.info(f"  C: {aggregated_params['C']:.6f} (median)")
+        logger.info(f"  solver: {aggregated_params['solver']} (most common)")
+        logger.info(f"  max_iter: {aggregated_params['max_iter']} (most common)")
+        logger.info(f"  C range: [{aggregated_params['_C_range'][0]:.6f}, {aggregated_params['_C_range'][1]:.6f}]")
+        logger.info(f"  C mean±std: {aggregated_params['_C_mean']:.6f} ± {aggregated_params['_C_std']:.6f}")
+        logger.info("="*80 + "\n")
+        
+        best_params = aggregated_params
+    else:
+        best_params = {
+            'C': args.regularization_C if args.regularization_C is not None else 1.0,
+            'max_iter': args.max_iter,
+            'solver': 'lbfgs'
+        }
     
     # Compute overall metrics
     logger.info("Computing overall metrics...")
@@ -973,24 +1072,35 @@ def train_single_hemisphere(
     )
     
     overall_metrics['best_hyperparameters'] = best_params
+    overall_metrics['fold_hyperparameters'] = fold_best_params if args.tune_hyperparams else None
     overall_metrics['preprocessing'] = {
         'diagonal_strategy': args.diagonal_strategy,
         'fisher_z_applied': True,
-        'standardize_per_fold': True
+        'standardize_per_fold': True,
+        'optuna_per_fold': args.tune_hyperparams
     }
     
-    logger.info(f"\nOVERALL RESULTS ({hemisphere.upper()} HEMISPHERE):")
-    logger.info(f"  Mean CV Accuracy: {overall_metrics['accuracy']:.4f}")
-    logger.info(f"  Mean CV Balanced Accuracy: {overall_metrics['balanced_accuracy']:.4f}")
-    logger.info(f"  Top-5 Accuracy: {overall_metrics.get('top_5_accuracy', 'N/A')}")
+    logger.info(f"\n{'='*80}")
+    logger.info(f"OVERALL CROSS-VALIDATION RESULTS ({hemisphere.upper()} HEMISPHERE)")
+    logger.info(f"{'='*80}")
+    logger.info(f"Mean CV Accuracy: {overall_metrics['accuracy']:.4f}")
+    logger.info(f"Mean CV Balanced Accuracy: {overall_metrics['balanced_accuracy']:.4f}")
+    logger.info(f"Top-5 Accuracy: {overall_metrics.get('top_5_accuracy', 'N/A')}")
     
     if args.tune_hyperparams:
-        logger.info(f"\n  Hyperparameters (from Optuna):")
-        logger.info(f"    C: {C:.6f}, solver: {solver}, max_iter: {max_iter}")
-        logger.info(f"    Optuna validation score: {best_params['_optuna_best_score']:.4f}")
+        logger.info(f"\nHyperparameter tuning: Enabled (Optuna per fold)")
+        logger.info(f"  Trials per fold: {args.optuna_trials}")
+        logger.info(f"  Aggregated params: C={best_params['C']:.6f}, "
+                   f"solver={best_params['solver']}, max_iter={best_params['max_iter']}")
+    else:
+        logger.info(f"\nHyperparameter tuning: Disabled")
+        logger.info(f"  Fixed params: C={best_params['C']:.6f}, "
+                   f"solver={best_params['solver']}, max_iter={best_params['max_iter']}")
+    
+    logger.info(f"{'='*80}\n")
     
     # Compute per-region metrics
-    logger.info("\nComputing per-region metrics...")
+    logger.info("Computing per-region metrics...")
     per_region_metrics = compute_per_region_metrics(
         y_true=all_true_labels,
         y_pred=all_predictions,
@@ -1043,9 +1153,7 @@ def train_single_hemisphere(
     if args.test_on_task:
         task_results = test_on_task_data(
             hemisphere=hemisphere,
-            C=C,
-            max_iter=max_iter,
-            solver=solver,
+            best_params=best_params,
             random_state=args.random_state,
             n_jobs=args.n_jobs,
             diagonal_strategy=args.diagonal_strategy,
@@ -1072,6 +1180,8 @@ def train_single_hemisphere(
         'per_region_metrics': per_region_metrics,
         'network_metrics': network_metrics,
         'output_dir': output_dir,
+        'fold_best_params': fold_best_params if args.tune_hyperparams else None,
+        'aggregated_params': best_params,
         'task_results': task_results
     }
     
@@ -1125,10 +1235,23 @@ def compare_hemispheres(left_results, right_results, output_dir, logger):
         logger.info(f"  Left accuracy drop: {summary['left_accuracy_drop']:.4f}")
         logger.info(f"  Right accuracy drop: {summary['right_accuracy_drop']:.4f}")
     
+    # Compare hyperparameters if tuning was used
+    if left_results.get('fold_best_params') and right_results.get('fold_best_params'):
+        logger.info(f"\nHyperparameter Comparison:")
+        
+        left_agg = left_results['aggregated_params']
+        right_agg = right_results['aggregated_params']
+        
+        logger.info(f"  Left:  C={left_agg['C']:.6f} (range: [{left_agg['_C_range'][0]:.6f}, {left_agg['_C_range'][1]:.6f}])")
+        logger.info(f"  Right: C={right_agg['C']:.6f} (range: [{right_agg['_C_range'][0]:.6f}, {right_agg['_C_range'][1]:.6f}])")
+        
+        summary['left_hyperparameters'] = left_agg
+        summary['right_hyperparameters'] = right_agg
+    
     with open(comparison_dir / 'comparison_summary.json', 'w') as f:
         json.dump(summary, f, indent=2)
     
-    logger.info(f"Comparison saved to: {comparison_dir}")
+    logger.info(f"\nComparison saved to: {comparison_dir}")
 
 
 def main():
@@ -1141,9 +1264,14 @@ def main():
     
     logger.info("="*80)
     logger.info("HEMISPHERE-SPECIFIC CLASSIFICATION")
-    logger.info("Preprocessing: Diagonal imputation + Fisher Z → StandardScaler")
-    logger.info("Optuna: Runs on scaled full dataset")
-    logger.info("CV: Independent scaling per fold")
+    logger.info("Preprocessing: Diagonal imputation + Fisher Z → StandardScaler per fold")
+    if args.tune_hyperparams:
+        logger.info(f"Hyperparameter Tuning: Enabled (Optuna INSIDE each fold)")
+        logger.info(f"  • Trials per fold: {args.optuna_trials}")
+        logger.info(f"  • Prevents information leakage")
+        logger.info(f"  • Fold-specific optimization")
+    else:
+        logger.info("Hyperparameter Tuning: Disabled (using defaults)")
     if args.test_on_task:
         logger.info("Task Testing: Enabled (train on rest, test on task)")
     logger.info("="*80)
@@ -1156,11 +1284,51 @@ def main():
             left_results = train_single_hemisphere('left', args, logger)
             right_results = train_single_hemisphere('right', args, logger)
             compare_hemispheres(left_results, right_results, args.output_dir, logger)
+            
+            logger.info("\n" + "="*80)
+            logger.info("TRAINING COMPLETED SUCCESSFULLY (BOTH HEMISPHERES)")
+            logger.info("="*80)
+            logger.info(f"\nLeft Hemisphere:")
+            logger.info(f"  • CV Accuracy: {left_results['overall_metrics']['accuracy']:.4f}")
+            if args.tune_hyperparams:
+                logger.info(f"  • Aggregated C: {left_results['aggregated_params']['C']:.6f}")
+            
+            logger.info(f"\nRight Hemisphere:")
+            logger.info(f"  • CV Accuracy: {right_results['overall_metrics']['accuracy']:.4f}")
+            if args.tune_hyperparams:
+                logger.info(f"  • Aggregated C: {right_results['aggregated_params']['C']:.6f}")
+            
         else:
             results = train_single_hemisphere(args.hemisphere, args, logger)
+            
+            logger.info("\n" + "="*80)
+            logger.info("TRAINING COMPLETED SUCCESSFULLY")
+            logger.info("="*80)
+            logger.info(f"\nFinal Results ({args.hemisphere.upper()} Hemisphere):")
+            logger.info(f"  • CV Accuracy: {results['overall_metrics']['accuracy']:.4f}")
+            logger.info(f"  • CV Balanced Accuracy: {results['overall_metrics']['balanced_accuracy']:.4f}")
+            logger.info(f"  • Top-5 Accuracy: {results['overall_metrics'].get('top_5_accuracy', 'N/A')}")
+            
+            if args.tune_hyperparams:
+                logger.info(f"\nFold-specific hyperparameters:")
+                for i, params in enumerate(results['fold_best_params'], 1):
+                    logger.info(f"  Fold {i}: C={params['C']:.4f}, {params['solver']}")
+                
+                agg = results['aggregated_params']
+                logger.info(f"\nAggregated hyperparameters:")
+                logger.info(f"  C={agg['C']:.4f}, solver={agg['solver']}, max_iter={agg['max_iter']}")
+            
+            if results.get('task_results'):
+                task_acc = results['task_results']['task_summary']['task_test_accuracy']
+                rest_acc = results['task_results']['task_summary']['rest_train_accuracy']
+                drop = results['task_results']['task_summary']['accuracy_drop']
+                logger.info(f"\nTask Testing:")
+                logger.info(f"  • Rest (train) accuracy: {rest_acc:.4f}")
+                logger.info(f"  • Task (test) accuracy: {task_acc:.4f}")
+                logger.info(f"  • Accuracy drop: {drop:.4f} ({drop/rest_acc*100:.1f}%)")
+            
+            logger.info(f"\nResults saved to: {results['output_dir']}")
         
-        logger.info("\n" + "="*80)
-        logger.info("TRAINING COMPLETED SUCCESSFULLY")
         logger.info("="*80)
         
     except Exception as e:

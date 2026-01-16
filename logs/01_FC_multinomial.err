@@ -1,51 +1,9 @@
-[I 2026-01-04 23:51:55,028] A new study created in memory with name: no-name-218514f6-bb49-46a4-bb38-e477676da2d3
-[I 2026-01-04 23:52:21,119] Trial 0 finished with value: 0.9311141042909371 and parameters: {'C': 0.03148911647956861, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 0 with value: 0.9311141042909371.
-[I 2026-01-04 23:58:17,970] Trial 1 finished with value: 0.8295170290552242 and parameters: {'C': 0.0017073967431528124, 'max_iter': 200, 'solver': 'saga'}. Best is trial 0 with value: 0.9311141042909371.
-[I 2026-01-05 00:10:39,859] Trial 2 finished with value: 0.9336155474312103 and parameters: {'C': 2.1368329072358767, 'max_iter': 200, 'solver': 'saga'}. Best is trial 2 with value: 0.9336155474312103.
-[I 2026-01-05 00:23:55,763] Trial 3 finished with value: 0.9344814315951511 and parameters: {'C': 0.05342937261279776, 'max_iter': 500, 'solver': 'saga'}. Best is trial 3 with value: 0.9344814315951511.
-[I 2026-01-05 00:24:16,124] Trial 4 finished with value: 0.9364056186261305 and parameters: {'C': 0.06672367170464207, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 4 with value: 0.9364056186261305.
-[I 2026-01-05 00:24:32,998] Trial 5 finished with value: 0.9372715027900712 and parameters: {'C': 0.26926469100861794, 'max_iter': 1000, 'solver': 'lbfgs'}. Best is trial 5 with value: 0.9372715027900712.
-[I 2026-01-05 00:36:27,174] Trial 6 finished with value: 0.9240908216278623 and parameters: {'C': 0.01653693718282442, 'max_iter': 500, 'solver': 'saga'}. Best is trial 5 with value: 0.9372715027900712.
-[I 2026-01-05 00:41:40,343] Trial 7 finished with value: 0.810756205503175 and parameters: {'C': 0.0013726318898045872, 'max_iter': 200, 'solver': 'saga'}. Best is trial 5 with value: 0.9372715027900712.
-[I 2026-01-05 00:42:00,072] Trial 8 finished with value: 0.9388108524148547 and parameters: {'C': 0.1537592023548176, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 00:54:19,383] Trial 9 finished with value: 0.9376563401962671 and parameters: {'C': 0.24637685958997463, 'max_iter': 200, 'solver': 'saga'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 00:54:36,997] Trial 10 finished with value: 0.9311141042909371 and parameters: {'C': 6.033178530661228, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 00:54:55,000] Trial 11 finished with value: 0.934673850298249 and parameters: {'C': 0.5203051191621613, 'max_iter': 1000, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 01:13:24,298] Trial 12 finished with value: 0.9354435251106408 and parameters: {'C': 0.4935937942089268, 'max_iter': 500, 'solver': 'saga'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 01:13:55,033] Trial 13 finished with value: 0.9094670001924187 and parameters: {'C': 0.008433492996539149, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 01:26:31,450] Trial 14 finished with value: 0.9373677121416202 and parameters: {'C': 0.2200920159492968, 'max_iter': 1000, 'solver': 'saga'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 01:26:51,496] Trial 15 finished with value: 0.931498941697133 and parameters: {'C': 1.3941165518456244, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 01:27:22,033] Trial 16 finished with value: 0.9053299980758129 and parameters: {'C': 0.007300358083644766, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 01:39:37,129] Trial 17 finished with value: 0.9381373869540119 and parameters: {'C': 0.12915629316911434, 'max_iter': 200, 'solver': 'saga'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 01:51:57,872] Trial 18 finished with value: 0.9375601308447181 and parameters: {'C': 0.1440391093220847, 'max_iter': 500, 'solver': 'saga'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 01:52:17,941] Trial 19 finished with value: 0.9318837791033289 and parameters: {'C': 1.3817635733261653, 'max_iter': 1000, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 01:52:34,768] Trial 20 finished with value: 0.931595151048682 and parameters: {'C': 9.941450502972591, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 02:04:49,947] Trial 21 finished with value: 0.9372715027900712 and parameters: {'C': 0.10178005254249566, 'max_iter': 200, 'solver': 'saga'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 02:17:04,138] Trial 22 finished with value: 0.9356359438137387 and parameters: {'C': 0.5377105883513165, 'max_iter': 200, 'solver': 'saga'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 02:29:15,275] Trial 23 finished with value: 0.9310178949393881 and parameters: {'C': 0.031017445744165456, 'max_iter': 200, 'solver': 'saga'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 02:41:26,901] Trial 24 finished with value: 0.9372715027900712 and parameters: {'C': 0.2581155932247506, 'max_iter': 200, 'solver': 'saga'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 02:53:57,770] Trial 25 finished with value: 0.937848758899365 and parameters: {'C': 0.11837641908091273, 'max_iter': 500, 'solver': 'saga'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:06:59,373] Trial 26 finished with value: 0.9333269193765634 and parameters: {'C': 0.0461885973005285, 'max_iter': 500, 'solver': 'saga'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:18:43,201] Trial 27 finished with value: 0.9223590532999808 and parameters: {'C': 0.015354150641041786, 'max_iter': 500, 'solver': 'saga'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:19:02,887] Trial 28 finished with value: 0.9381373869540119 and parameters: {'C': 0.09430513539536328, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:19:30,032] Trial 29 finished with value: 0.9304406388300943 and parameters: {'C': 0.02934645658536425, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:19:50,566] Trial 30 finished with value: 0.9332307100250145 and parameters: {'C': 0.8654520839165118, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:20:08,449] Trial 31 finished with value: 0.9381373869540119 and parameters: {'C': 0.10282866302414378, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:20:26,557] Trial 32 finished with value: 0.9375601308447181 and parameters: {'C': 0.07466566562167089, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:20:45,582] Trial 33 finished with value: 0.9375601308447181 and parameters: {'C': 0.1876186038496063, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:21:11,270] Trial 34 finished with value: 0.9273619395805273 and parameters: {'C': 0.01982291072649616, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:21:31,448] Trial 35 finished with value: 0.934866269001347 and parameters: {'C': 0.053824802473418386, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:22:00,998] Trial 36 finished with value: 0.8669424668077738 and parameters: {'C': 0.002994644044347347, 'max_iter': 1000, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:22:19,482] Trial 37 finished with value: 0.9364056186261305 and parameters: {'C': 0.07075885578910023, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:22:38,148] Trial 38 finished with value: 0.9352511064075428 and parameters: {'C': 0.45130792310097195, 'max_iter': 500, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:22:55,015] Trial 39 finished with value: 0.9388108524148547 and parameters: {'C': 0.1313913831437433, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:23:12,910] Trial 40 finished with value: 0.9364056186261305 and parameters: {'C': 0.3206785905409236, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:23:31,155] Trial 41 finished with value: 0.9388108524148547 and parameters: {'C': 0.1312978042603289, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 8 with value: 0.9388108524148547.
-[I 2026-01-05 03:23:48,919] Trial 42 finished with value: 0.9389070617664037 and parameters: {'C': 0.12110362753541154, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 42 with value: 0.9389070617664037.
-[I 2026-01-05 03:24:08,558] Trial 43 finished with value: 0.9387146430633058 and parameters: {'C': 0.1577832960637308, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 42 with value: 0.9389070617664037.
-[I 2026-01-05 03:24:26,168] Trial 44 finished with value: 0.9385222243602078 and parameters: {'C': 0.16500144754889942, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 42 with value: 0.9389070617664037.
-[I 2026-01-05 03:24:45,620] Trial 45 finished with value: 0.9361169905714836 and parameters: {'C': 0.3627735448840853, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 42 with value: 0.9389070617664037.
-[I 2026-01-05 03:25:04,097] Trial 46 finished with value: 0.9342890128920531 and parameters: {'C': 0.758549351052041, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 42 with value: 0.9389070617664037.
-[I 2026-01-05 03:25:29,857] Trial 47 finished with value: 0.9332307100250145 and parameters: {'C': 0.0436055016047587, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 42 with value: 0.9389070617664037.
-[I 2026-01-05 03:25:47,973] Trial 48 finished with value: 0.9383298056571099 and parameters: {'C': 0.199805148126149, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 42 with value: 0.9389070617664037.
-[I 2026-01-05 03:26:08,261] Trial 49 finished with value: 0.9360207812199346 and parameters: {'C': 0.06707470470067135, 'max_iter': 200, 'solver': 'lbfgs'}. Best is trial 42 with value: 0.9389070617664037.
+[I 2026-01-16 12:20:44,095] A new study created in memory with name: no-name-a4e57f18-3e3b-447c-89a0-ca2e9b1ad8ec
+/home/sjoon/projects/brain_connectivity_classifier/masterthesis_venv2/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:1272: FutureWarning: 'multi_class' was deprecated in version 1.5 and will be removed in 1.8. From then on, it will always use 'multinomial'. Leave it to its default value to avoid this warning.
+  warnings.warn(
+[I 2026-01-16 12:20:57,017] Trial 0 finished with value: 0.8590756704980843 and parameters: {'C': 0.0028854813096126047, 'max_iter': 266, 'solver': 'newton-cg'}. Best is trial 0 with value: 0.8590756704980843.
+/home/sjoon/projects/brain_connectivity_classifier/masterthesis_venv2/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:1272: FutureWarning: 'multi_class' was deprecated in version 1.5 and will be removed in 1.8. From then on, it will always use 'multinomial'. Leave it to its default value to avoid this warning.
+  warnings.warn(
+[I 2026-01-16 12:21:23,358] Trial 1 finished with value: 0.9106800766283525 and parameters: {'C': 0.02034961622498155, 'max_iter': 399, 'solver': 'lbfgs'}. Best is trial 1 with value: 0.9106800766283525.
+/home/sjoon/projects/brain_connectivity_classifier/masterthesis_venv2/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:1272: FutureWarning: 'multi_class' was deprecated in version 1.5 and will be removed in 1.8. From then on, it will always use 'multinomial'. Leave it to its default value to avoid this warning.
+  warnings.warn(

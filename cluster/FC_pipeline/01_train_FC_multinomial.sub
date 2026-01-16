@@ -10,7 +10,7 @@ when_to_transfer_output = ON_EXIT
 
 # Resources for Job 
 request_cpus = 32             
-request_memory = 128GB
+request_memory = 192GB
 request_disk = 5GB
 
 # Log files

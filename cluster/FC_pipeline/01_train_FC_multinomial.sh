@@ -26,14 +26,26 @@ FC="multinomial"
 echo "✓ Environment ready. Starting training..."
 
 
-# Run Training
+# Run script with hyperparameter tuning
 python scripts/full_connectivity/01_train_FC_multinomial.py \
-      --tune_hyperparams \
-      --optuna_trials 50 \
-      --n_folds 5 \
-      --test_on_task
-    
+    --tune_hyperparams \
+    --test_on_task \
+    --optuna_trials 30 \
+    --final_optuna_trials 30 \
+    --n_folds 5 \
+    --n_jobs -1 \
+    --optuna_n_jobs 1 \
+    --diagonal_strategy region_mean \
+    --verbose
 
+# Run script without hyperparameter tuning (using defaults)
+# python scripts/full_connectivity/01_train_FC_multinomial.py \
+#     --test_on_task \
+#     --n_folds 3 \
+#     --n_jobs -1 \
+#     --diagonal_strategy region_mean \
+#     --regularization_C 0.03 \
+#     --verbose
 
 EXIT_CODE=$?
 
