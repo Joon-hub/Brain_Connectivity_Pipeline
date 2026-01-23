@@ -1,119 +1,45 @@
-000 (10224635.000.000) 2026-01-04 18:36:31 Job submitted from host: <10.0.8.14:9618?addrs=10.0.8.14-9618&alias=head2.htc.inm7.de&noUDP&sock=schedd_317342_cb8b>
+000 (10229416.000.000) 2026-01-17 14:49:07 Job submitted from host: <10.0.8.14:9618?addrs=10.0.8.14-9618&alias=head2.htc.inm7.de&noUDP&sock=schedd_317342_cb8b>
 ...
-001 (10224635.000.000) 2026-01-04 18:36:32 Job executing on host: <10.0.9.44:9618?addrs=10.0.9.44-9618&alias=cpu44.htc.inm7.de&noUDP&sock=startd_4087_eba8>
+001 (10229416.000.000) 2026-01-17 14:49:07 Job executing on host: <10.0.9.44:9618?addrs=10.0.9.44-9618&alias=cpu44.htc.inm7.de&noUDP&sock=startd_4087_eba8>
 ...
-006 (10224635.000.000) 2026-01-04 18:36:34 Image size of job updated: 2
+006 (10229416.000.000) 2026-01-17 14:49:16 Image size of job updated: 2
 	6  -  MemoryUsage of job (MB)
-	5528  -  ResidentSetSize of job (KB)
+	5520  -  ResidentSetSize of job (KB)
 ...
-005 (10224635.000.000) 2026-01-04 18:36:34 Job terminated.
-	(1) Normal termination (return value 1)
-		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
-		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
-		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
-		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
-	0  -  Run Bytes Sent By Job
-	0  -  Run Bytes Received By Job
-	0  -  Total Bytes Sent By Job
-	0  -  Total Bytes Received By Job
-	Partitionable Resources :    Usage  Request Allocated 
-	   Cpus                 :                32        32 
-	   Disk (KB)            :        2  5242880  24829514 
-	   Memory (MB)          :        6   131072    131072 
-
-	Job terminated of its own accord at 2026-01-04T17:36:34Z with exit-code 1.
+006 (10229416.000.000) 2026-01-17 14:54:17 Image size of job updated: 1813596
+	589  -  MemoryUsage of job (MB)
+	602936  -  ResidentSetSize of job (KB)
 ...
-000 (10224636.000.000) 2026-01-04 18:38:52 Job submitted from host: <10.0.8.14:9618?addrs=10.0.8.14-9618&alias=head2.htc.inm7.de&noUDP&sock=schedd_317342_cb8b>
+006 (10229416.000.000) 2026-01-17 14:59:17 Image size of job updated: 13741148
+	1480  -  MemoryUsage of job (MB)
+	1514940  -  ResidentSetSize of job (KB)
 ...
-001 (10224636.000.000) 2026-01-04 18:38:53 Job executing on host: <10.0.9.43:9618?addrs=10.0.9.43-9618&alias=cpu43.htc.inm7.de&noUDP&sock=startd_4240_dda5>
+006 (10229416.000.000) 2026-01-17 15:04:18 Image size of job updated: 13771212
+	1480  -  MemoryUsage of job (MB)
+	1514940  -  ResidentSetSize of job (KB)
 ...
-006 (10224636.000.000) 2026-01-04 18:39:01 Image size of job updated: 2
-	6  -  MemoryUsage of job (MB)
-	5424  -  ResidentSetSize of job (KB)
+006 (10229416.000.000) 2026-01-17 15:09:19 Image size of job updated: 14393780
+	1480  -  MemoryUsage of job (MB)
+	1514940  -  ResidentSetSize of job (KB)
 ...
-006 (10224636.000.000) 2026-01-04 18:39:59 Image size of job updated: 5026180
-	332  -  MemoryUsage of job (MB)
-	339104  -  ResidentSetSize of job (KB)
+006 (10229416.000.000) 2026-01-17 15:19:19 Image size of job updated: 14483112
+	1629  -  MemoryUsage of job (MB)
+	1667708  -  ResidentSetSize of job (KB)
 ...
-005 (10224636.000.000) 2026-01-04 18:39:59 Job terminated.
+005 (10229416.000.000) 2026-01-17 16:14:13 Job terminated.
 	(1) Normal termination (return value 0)
-		Usr 0 00:10:45, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 21:31:12, Sys 0 00:00:06  -  Run Remote Usage
 		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
-		Usr 0 00:10:45, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 21:31:12, Sys 0 00:00:06  -  Total Remote Usage
 		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
 	0  -  Run Bytes Sent By Job
 	0  -  Run Bytes Received By Job
 	0  -  Total Bytes Sent By Job
 	0  -  Total Bytes Received By Job
 	Partitionable Resources :    Usage  Request Allocated 
-	   Cpus                 :                32        32 
-	   Disk (KB)            :        2  5242880  24829510 
-	   Memory (MB)          :      332   131072    131072 
+	   Cpus                 :    15.50       16        16 
+	   Disk (KB)            :     2     5242880  24829514 
+	   Memory (MB)          :  1629        8192      8192 
 
-	Job terminated of its own accord at 2026-01-04T17:39:59Z with exit-code 0.
-...
-000 (10224653.000.000) 2026-01-04 23:52:37 Job submitted from host: <10.0.8.14:9618?addrs=10.0.8.14-9618&alias=head2.htc.inm7.de&noUDP&sock=schedd_317342_cb8b>
-...
-001 (10224653.000.000) 2026-01-04 23:52:37 Job executing on host: <10.0.9.47:9618?addrs=10.0.9.47-9618&alias=cpu47.htc.inm7.de&noUDP&sock=startd_3371_cdd8>
-...
-006 (10224653.000.000) 2026-01-04 23:52:45 Image size of job updated: 2521928
-	160  -  MemoryUsage of job (MB)
-	163192  -  ResidentSetSize of job (KB)
-...
-006 (10224653.000.000) 2026-01-04 23:57:45 Image size of job updated: 2779096
-	390  -  MemoryUsage of job (MB)
-	398540  -  ResidentSetSize of job (KB)
-...
-006 (10224653.000.000) 2026-01-05 00:02:46 Image size of job updated: 2779096
-	409  -  MemoryUsage of job (MB)
-	418356  -  ResidentSetSize of job (KB)
-...
-006 (10224653.000.000) 2026-01-05 00:07:46 Image size of job updated: 2797932
-	464  -  MemoryUsage of job (MB)
-	474484  -  ResidentSetSize of job (KB)
-...
-006 (10224653.000.000) 2026-01-05 00:12:46 Image size of job updated: 2854448
-	519  -  MemoryUsage of job (MB)
-	530820  -  ResidentSetSize of job (KB)
-...
-006 (10224653.000.000) 2026-01-05 00:17:47 Image size of job updated: 2948640
-	610  -  MemoryUsage of job (MB)
-	624628  -  ResidentSetSize of job (KB)
-...
-006 (10224653.000.000) 2026-01-05 00:42:50 Image size of job updated: 5121696
-	610  -  MemoryUsage of job (MB)
-	624628  -  ResidentSetSize of job (KB)
-...
-006 (10224653.000.000) 2026-01-05 00:47:50 Image size of job updated: 5359232
-	700  -  MemoryUsage of job (MB)
-	716036  -  ResidentSetSize of job (KB)
-...
-006 (10224653.000.000) 2026-01-05 00:57:51 Image size of job updated: 5359232
-	714  -  MemoryUsage of job (MB)
-	730528  -  ResidentSetSize of job (KB)
-...
-006 (10224653.000.000) 2026-01-05 01:07:52 Image size of job updated: 5406088
-	844  -  MemoryUsage of job (MB)
-	863744  -  ResidentSetSize of job (KB)
-...
-006 (10224653.000.000) 2026-01-05 01:09:22 Image size of job updated: 53271184
-	3411  -  MemoryUsage of job (MB)
-	3492388  -  ResidentSetSize of job (KB)
-...
-005 (10224653.000.000) 2026-01-05 01:09:22 Job terminated.
-	(1) Normal termination (return value 0)
-		Usr 0 06:37:21, Sys 0 00:00:05  -  Run Remote Usage
-		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
-		Usr 0 06:37:21, Sys 0 00:00:05  -  Total Remote Usage
-		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
-	0  -  Run Bytes Sent By Job
-	0  -  Run Bytes Received By Job
-	0  -  Total Bytes Sent By Job
-	0  -  Total Bytes Received By Job
-	Partitionable Resources :    Usage  Request Allocated 
-	   Cpus                 :    31.20       32        32 
-	   Disk (KB)            :     2     5242880  14864131 
-	   Memory (MB)          :  3411      131072    131072 
-
-	Job terminated of its own accord at 2026-01-05T00:09:22Z with exit-code 0.
+	Job terminated of its own accord at 2026-01-17T15:14:13Z with exit-code 0.
 ...

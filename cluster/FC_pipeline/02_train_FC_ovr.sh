@@ -26,12 +26,23 @@ echo "✓ Environment ready. Starting training..."
 
 
 # Run Training
-python scripts/full_connectivity/02_train_FC_ovr.py \
-      --tune_hyperparams \
-      --optuna_trials 50 \
-      --n_folds 5 \
-      --test_on_task
+python -u scripts/full_connectivity/02_train_FC_ovr.py \
+    --tune_hyperparams \
+    --optuna_trials 40 \
+    --n_folds 5 \
+    --test_on_task \
+    --diagonal_strategy random \
+    --n_jobs 8 \
+    --optuna_n_jobs 1 \
+    --verbose
       
+# python scripts/full_connectivity/02_train_FC_ovr.py \
+#     --test_on_task \
+#     --n_folds 3 \
+#     --n_jobs -1 \
+#     --diagonal_strategy random \
+#     --verbose
+    
 EXIT_CODE=$?
 
 # Summary
