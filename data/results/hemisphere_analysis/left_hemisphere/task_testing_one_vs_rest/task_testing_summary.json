@@ -1,0 +1,24 @@
+{
+  "diagonal_strategy": "random",
+  "rest_train_accuracy": 0.9532404556650246,
+  "task_test_accuracy": 0.8874568965517241,
+  "accuracy_drop": 0.06578355911330047,
+  "hyperparameters": {
+    "C": 0.02995516287491763,
+    "solver": "saga",
+    "max_iter": 1021,
+    "tol": 0.035743258330582645,
+    "_optuna_best_score": 0.9113984674329502,
+    "_optuna_time_seconds": 1030.8051512241364
+  },
+  "n_rest_subjects": 224,
+  "n_task_subjects": 200,
+  "n_regions": 116,
+  "training_time_seconds": 19.68681001663208,
+  "rest_top_3_accuracy": 0.9829125615763546,
+  "task_top_3_accuracy": 0.9529310344827586,
+  "rest_top_5_accuracy": 0.9889162561576355,
+  "task_top_5_accuracy": 0.9678879310344828,
+  "rest_top_10_accuracy": 0.9944581280788177,
+  "task_top_10_accuracy": 0.9817672413793104
+}

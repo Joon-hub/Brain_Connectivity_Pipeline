@@ -1,0 +1,97 @@
+{
+  "diagonal_strategy": "random",
+  "best_fold_hyperparameters": {
+    "C": 0.02995516287491763,
+    "solver": "saga",
+    "max_iter": 1021,
+    "tol": 0.035743258330582645,
+    "_optuna_best_score": 0.9113984674329502,
+    "_optuna_time_seconds": 1030.8051512241364
+  },
+  "best_fold_idx": 2,
+  "best_fold_val_accuracy": 0.9329501915708812,
+  "overall_metrics": {
+    "accuracy": 0.9279171798029556,
+    "n_samples": 25984,
+    "n_classes": 116,
+    "top_3_accuracy": 0.9733297413793104,
+    "top_5_accuracy": 0.9827586206896551,
+    "top_10_accuracy": 0.9916871921182266
+  },
+  "fold_metrics": [
+    {
+      "fold": 1,
+      "train_accuracy": 0.9570410325563475,
+      "val_accuracy": 0.9270114942528735,
+      "train_time": 24.01155400276184,
+      "hyperparameters": {
+        "C": 0.036490911358432215,
+        "solver": "saga",
+        "max_iter": 642,
+        "tol": 0.01734234953031785,
+        "_optuna_best_score": 0.9243295019157088,
+        "_optuna_time_seconds": 1632.0028913021088
+      }
+    },
+    {
+      "fold": 2,
+      "train_accuracy": 0.9533808514737044,
+      "val_accuracy": 0.9329501915708812,
+      "train_time": 16.84635877609253,
+      "hyperparameters": {
+        "C": 0.02995516287491763,
+        "solver": "saga",
+        "max_iter": 1021,
+        "tol": 0.035743258330582645,
+        "_optuna_best_score": 0.9113984674329502,
+        "_optuna_time_seconds": 1030.8051512241364
+      }
+    },
+    {
+      "fold": 3,
+      "train_accuracy": 0.9560778270082836,
+      "val_accuracy": 0.928544061302682,
+      "train_time": 46.24337577819824,
+      "hyperparameters": {
+        "C": 0.028338895647849936,
+        "solver": "saga",
+        "max_iter": 123,
+        "tol": 0.0031116844137621955,
+        "_optuna_best_score": 0.921455938697318,
+        "_optuna_time_seconds": 1228.0604841709137
+      }
+    },
+    {
+      "fold": 4,
+      "train_accuracy": 0.9570410325563475,
+      "val_accuracy": 0.9329501915708812,
+      "train_time": 24.262245416641235,
+      "hyperparameters": {
+        "C": 0.03906160436149783,
+        "solver": "saga",
+        "max_iter": 1052,
+        "tol": 0.016644903799777993,
+        "_optuna_best_score": 0.9236111111111112,
+        "_optuna_time_seconds": 1828.6987926959991
+      }
+    },
+    {
+      "fold": 5,
+      "train_accuracy": 0.9613505747126436,
+      "val_accuracy": 0.9179075235109718,
+      "train_time": 93.89388489723206,
+      "hyperparameters": {
+        "C": 0.04924044904589723,
+        "solver": "saga",
+        "max_iter": 1837,
+        "tol": 0.0010463403487068269,
+        "_optuna_best_score": 0.9334291187739464,
+        "_optuna_time_seconds": 3056.0233969688416
+      }
+    }
+  ],
+  "cv_time_seconds": 8984.446640729904,
+  "mean_train_accuracy": 0.9569782636614654,
+  "mean_val_accuracy": 0.9278726924416579,
+  "generalization_gap": 0.029105571219807502
+}

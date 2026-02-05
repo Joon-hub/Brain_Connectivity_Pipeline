@@ -9,9 +9,9 @@ should_transfer_files = IF_NEEDED
 when_to_transfer_output = ON_EXIT
 
 # Resources for Job 
-request_cpus = 32             
-request_memory = 128GB
-request_disk = 5GB
+request_cpus = 8             
+request_memory = 3GB
+request_disk = 2GB
 
 # Log files
 output = logs/03_hemisphere_ovr.out

@@ -1,24 +1,24 @@
 {
   "diagonal_strategy": "random",
-  "rest_train_accuracy": 0.8206781096059114,
-  "task_test_accuracy": 0.7326077586206896,
-  "accuracy_drop": 0.08807035098522176,
+  "rest_train_accuracy": 0.8315694273399015,
+  "task_test_accuracy": 0.7303663793103449,
+  "accuracy_drop": 0.1012030480295566,
   "hyperparameters": {
-    "C": 0.016387494099028347,
+    "C": 0.04439364235161713,
     "solver": "saga",
-    "max_iter": 865,
-    "tol": 0.008699037355645861,
-    "_optuna_best_score": 0.7593390804597702,
-    "_optuna_time_seconds": 1673.86186003685
+    "max_iter": 1641,
+    "tol": 0.010333828633562555,
+    "_optuna_best_score": 0.7771791187739464,
+    "_optuna_time_seconds": 12075.091308832169
   },
   "n_rest_subjects": 224,
   "n_task_subjects": 200,
   "n_regions": 232,
-  "training_time_seconds": 335.43265175819397,
-  "rest_top_3_accuracy": 0.891413947044335,
-  "task_top_3_accuracy": 0.8208836206896551,
-  "rest_top_5_accuracy": 0.919373460591133,
-  "task_top_5_accuracy": 0.8604094827586207,
-  "rest_top_10_accuracy": 0.9519704433497537,
-  "task_top_10_accuracy": 0.9076077586206897
+  "training_time_seconds": 495.96727442741394,
+  "rest_top_3_accuracy": 0.8976293103448276,
+  "task_top_3_accuracy": 0.8185991379310344,
+  "rest_top_5_accuracy": 0.922971828817734,
+  "task_top_5_accuracy": 0.8563362068965518,
+  "rest_top_10_accuracy": 0.9536830357142857,
+  "task_top_10_accuracy": 0.9019827586206897
 }
