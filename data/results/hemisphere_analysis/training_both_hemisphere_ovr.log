@@ -17470,3 +17470,320 @@ Overall Accuracy: 0.9248
 ================================================================================
 2026-02-03 03:32:41,321 - __main__ - INFO - ✓ TRAINING COMPLETED
 2026-02-03 03:32:41,321 - __main__ - INFO - ================================================================================
+2026-02-09 16:01:56,120 - __main__ - INFO - ================================================================================
+2026-02-09 16:01:56,121 - __main__ - INFO - HEMISPHERE CLASSIFICATION (ONE-VS-REST)
+2026-02-09 16:01:56,121 - __main__ - INFO - ================================================================================
+2026-02-09 16:01:56,121 - __main__ - INFO - Data: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres
+2026-02-09 16:01:56,121 - __main__ - INFO - Output: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis
+2026-02-09 16:01:56,121 - __main__ - INFO - Diagonal: random
+2026-02-09 16:01:56,121 - __main__ - INFO - Folds: 5
+2026-02-09 16:01:56,121 - __main__ - INFO - Tune: True
+2026-02-09 16:01:56,121 - __main__ - INFO - Task test: True
+2026-02-09 16:01:56,121 - __main__ - INFO - ================================================================================
+2026-02-09 16:01:56,121 - __main__ - INFO - 
+================================================================================
+2026-02-09 16:01:56,121 - __main__ - INFO - TRAINING LEFT HEMISPHERE
+2026-02-09 16:01:56,121 - __main__ - INFO - ================================================================================
+2026-02-09 16:01:56,122 - __main__ - INFO - Loading data...
+2026-02-09 16:01:56,124 - src.hemisphere.hemisphere_utils - INFO - Loading left hemisphere data from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
+2026-02-09 16:01:56,483 - src.hemisphere.hemisphere_utils - INFO -   Subjects: 224
+2026-02-09 16:01:56,484 - src.hemisphere.hemisphere_utils - INFO -   Connections: 6670
+2026-02-09 16:01:56,488 - src.hemisphere.hemisphere_utils - INFO - Extracting region info from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
+2026-02-09 16:01:56,963 - src.hemisphere.hemisphere_utils - INFO - Extracted 116 regions for left hemisphere
+2026-02-09 16:01:56,963 - src.hemisphere.hemisphere_utils - INFO -   Regions: 116
+2026-02-09 16:01:56,963 - src.hemisphere.hemisphere_utils - INFO - Converting to full connectivity matrices...
+2026-02-09 16:01:56,985 - src.hemisphere.hemisphere_utils - INFO -   Matrix shape: (224, 116, 116)
+2026-02-09 16:01:57,016 - src.hemisphere.hemisphere_utils - INFO - Connectivity validation completed
+2026-02-09 16:01:57,016 - src.hemisphere.hemisphere_utils - INFO - Successfully loaded left hemisphere data
+2026-02-09 16:01:57,020 - __main__ - INFO - Subjects: 224, Regions: 116
+2026-02-09 16:01:57,020 - __main__ - INFO - Diagonal strategy: random
+2026-02-09 16:01:57,020 - __main__ - INFO - Clipping off-diagonal to [-0.999, 0.999]
+2026-02-09 16:01:57,030 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:01:57,030 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0)]
+2026-02-09 16:01:57,035 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:01:57,069 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:01:57,070 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:01:57,070 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (25984, 116)
+2026-02-09 16:01:57,070 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (25984,)
+2026-02-09 16:01:57,070 - src.hemisphere.hemisphere_utils - INFO -   Groups: (25984,)
+2026-02-09 16:01:57,070 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:01:57,077 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 224
+2026-02-09 16:01:57,079 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-0.848, 0.948]
+2026-02-09 16:01:57,089 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.028, std: 0.266
+2026-02-09 16:01:57,089 - __main__ - INFO - 
+================================================================================
+2026-02-09 16:01:57,089 - __main__ - INFO - CROSS-VALIDATION (5 folds)
+2026-02-09 16:01:57,089 - __main__ - INFO - ================================================================================
+2026-02-09 16:01:57,098 - __main__ - INFO - 
+Fold 1/5
+2026-02-09 16:01:57,105 - __main__ - INFO -   Train: 179 subjects, Test: 45 subjects
+2026-02-09 16:01:57,173 - __main__ - INFO -   Random diagonal imputation with seed=1042
+2026-02-09 16:01:57,187 - __main__ - INFO -   Random diagonal imputation with seed=2042
+2026-02-09 16:01:57,187 - __main__ - INFO -   Applying Fisher Z-transformation...
+2026-02-09 16:01:57,240 - __main__ - INFO -   Value range after Fisher Z: [-1.2500, 1.8154]
+2026-02-09 16:01:57,240 - __main__ - INFO -   Applying Fisher Z-transformation...
+2026-02-09 16:01:57,253 - __main__ - INFO -   Value range after Fisher Z: [-1.1066, 1.5933]
+2026-02-09 16:01:57,253 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:01:57,253 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(-0.15656912879271065), np.float64(-0.13306147592176795), np.float64(0.18684950174152182), np.float64(0.48572757783821696), np.float64(-0.45265671586964273)]
+2026-02-09 16:01:57,255 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:01:57,282 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:01:57,282 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:01:57,282 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (20764, 116)
+2026-02-09 16:01:57,282 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (20764,)
+2026-02-09 16:01:57,282 - src.hemisphere.hemisphere_utils - INFO -   Groups: (20764,)
+2026-02-09 16:01:57,283 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:01:57,288 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 179
+2026-02-09 16:01:57,290 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.250, 1.815]
+2026-02-09 16:01:57,297 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.033, std: 0.291
+2026-02-09 16:01:57,297 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:01:57,297 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(0.14124941932978277), np.float64(-0.25244241183218685), np.float64(0.6305376718466176), np.float64(-0.7438975969421326), np.float64(-0.31505611028201336)]
+2026-02-09 16:01:57,298 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:01:57,305 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:01:57,305 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:01:57,305 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (5220, 116)
+2026-02-09 16:01:57,305 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (5220,)
+2026-02-09 16:01:57,305 - src.hemisphere.hemisphere_utils - INFO -   Groups: (5220,)
+2026-02-09 16:01:57,305 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:01:57,306 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 45
+2026-02-09 16:01:57,306 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.107, 1.593]
+2026-02-09 16:01:57,307 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.034, std: 0.292
+2026-02-09 16:01:57,307 - __main__ - INFO - 
+  Optimizing hyperparameters (Fold 1): 40 trials
+2026-02-09 16:01:57,430 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:01:57,430 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(0.5394927715023526), np.float64(-0.028590025625968032), np.float64(0.7319510188426191), np.float64(0.3924581476498762), np.float64(-0.6397612151022958)]
+2026-02-09 16:01:57,431 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:01:57,453 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:01:57,453 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:01:57,453 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (16588, 116)
+2026-02-09 16:01:57,453 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (16588,)
+2026-02-09 16:01:57,453 - src.hemisphere.hemisphere_utils - INFO -   Groups: (16588,)
+2026-02-09 16:01:57,453 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:01:57,458 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 143
+2026-02-09 16:01:57,459 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.250, 1.815]
+2026-02-09 16:01:57,463 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.033, std: 0.290
+2026-02-09 16:01:57,463 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:01:57,463 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(-0.15263669080694015), np.float64(-0.12820229704761651), np.float64(0.2052213917872074), np.float64(0.5221227506621918), np.float64(-0.46134970229049166)]
+2026-02-09 16:01:57,464 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:01:57,469 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:01:57,469 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:01:57,469 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (4176, 116)
+2026-02-09 16:01:57,469 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (4176,)
+2026-02-09 16:01:57,469 - src.hemisphere.hemisphere_utils - INFO -   Groups: (4176,)
+2026-02-09 16:01:57,470 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:01:57,470 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 36
+2026-02-09 16:01:57,471 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.211, 1.808]
+2026-02-09 16:01:57,471 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.031, std: 0.295
+2026-02-09 16:02:31,873 - __main__ - INFO - ================================================================================
+2026-02-09 16:02:31,873 - __main__ - INFO - HEMISPHERE CLASSIFICATION (ONE-VS-REST)
+2026-02-09 16:02:31,873 - __main__ - INFO - ================================================================================
+2026-02-09 16:02:31,873 - __main__ - INFO - Data: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres
+2026-02-09 16:02:31,873 - __main__ - INFO - Output: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis
+2026-02-09 16:02:31,873 - __main__ - INFO - Diagonal: random
+2026-02-09 16:02:31,874 - __main__ - INFO - Folds: 5
+2026-02-09 16:02:31,874 - __main__ - INFO - Tune: True
+2026-02-09 16:02:31,874 - __main__ - INFO - Task test: True
+2026-02-09 16:02:31,874 - __main__ - INFO - ================================================================================
+2026-02-09 16:02:31,874 - __main__ - INFO - 
+================================================================================
+2026-02-09 16:02:31,874 - __main__ - INFO - TRAINING LEFT HEMISPHERE
+2026-02-09 16:02:31,874 - __main__ - INFO - ================================================================================
+2026-02-09 16:02:31,874 - __main__ - INFO - Loading data...
+2026-02-09 16:02:31,875 - src.hemisphere.hemisphere_utils - INFO - Loading left hemisphere data from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
+2026-02-09 16:02:32,217 - src.hemisphere.hemisphere_utils - INFO -   Subjects: 224
+2026-02-09 16:02:32,217 - src.hemisphere.hemisphere_utils - INFO -   Connections: 6670
+2026-02-09 16:02:32,222 - src.hemisphere.hemisphere_utils - INFO - Extracting region info from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
+2026-02-09 16:02:32,701 - src.hemisphere.hemisphere_utils - INFO - Extracted 116 regions for left hemisphere
+2026-02-09 16:02:32,701 - src.hemisphere.hemisphere_utils - INFO -   Regions: 116
+2026-02-09 16:02:32,701 - src.hemisphere.hemisphere_utils - INFO - Converting to full connectivity matrices...
+2026-02-09 16:02:32,724 - src.hemisphere.hemisphere_utils - INFO -   Matrix shape: (224, 116, 116)
+2026-02-09 16:02:32,754 - src.hemisphere.hemisphere_utils - INFO - Connectivity validation completed
+2026-02-09 16:02:32,754 - src.hemisphere.hemisphere_utils - INFO - Successfully loaded left hemisphere data
+2026-02-09 16:02:32,759 - __main__ - INFO - Subjects: 224, Regions: 116
+2026-02-09 16:02:32,759 - __main__ - INFO - Diagonal strategy: random
+2026-02-09 16:02:32,759 - __main__ - INFO - Clipping off-diagonal to [-0.999, 0.999]
+2026-02-09 16:02:32,769 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:02:32,770 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0)]
+2026-02-09 16:02:32,774 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:02:32,808 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:02:32,809 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:02:32,809 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (25984, 116)
+2026-02-09 16:02:32,809 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (25984,)
+2026-02-09 16:02:32,809 - src.hemisphere.hemisphere_utils - INFO -   Groups: (25984,)
+2026-02-09 16:02:32,809 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:02:32,816 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 224
+2026-02-09 16:02:32,818 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-0.848, 0.948]
+2026-02-09 16:02:32,829 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.028, std: 0.266
+2026-02-09 16:02:32,829 - __main__ - INFO - 
+================================================================================
+2026-02-09 16:02:32,829 - __main__ - INFO - CROSS-VALIDATION (5 folds)
+2026-02-09 16:02:32,829 - __main__ - INFO - ================================================================================
+2026-02-09 16:02:32,837 - __main__ - INFO - 
+Fold 1/5
+2026-02-09 16:02:32,844 - __main__ - INFO -   Train: 179 subjects, Test: 45 subjects
+2026-02-09 16:02:32,913 - __main__ - INFO -   Random diagonal imputation with seed=1042
+2026-02-09 16:02:32,927 - __main__ - INFO -   Random diagonal imputation with seed=2042
+2026-02-09 16:02:32,927 - __main__ - INFO -   Applying Fisher Z-transformation...
+2026-02-09 16:02:32,985 - __main__ - INFO -   Value range after Fisher Z: [-1.2500, 1.8154]
+2026-02-09 16:02:32,985 - __main__ - INFO -   Applying Fisher Z-transformation...
+2026-02-09 16:02:32,998 - __main__ - INFO -   Value range after Fisher Z: [-1.1066, 1.5933]
+2026-02-09 16:02:32,998 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:02:32,998 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(-0.15656912879271065), np.float64(-0.13306147592176795), np.float64(0.18684950174152182), np.float64(0.48572757783821696), np.float64(-0.45265671586964273)]
+2026-02-09 16:02:33,000 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:02:33,027 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:02:33,027 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:02:33,027 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (20764, 116)
+2026-02-09 16:02:33,027 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (20764,)
+2026-02-09 16:02:33,027 - src.hemisphere.hemisphere_utils - INFO -   Groups: (20764,)
+2026-02-09 16:02:33,028 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:02:33,033 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 179
+2026-02-09 16:02:33,035 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.250, 1.815]
+2026-02-09 16:02:33,041 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.033, std: 0.291
+2026-02-09 16:02:33,041 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:02:33,041 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(0.14124941932978277), np.float64(-0.25244241183218685), np.float64(0.6305376718466176), np.float64(-0.7438975969421326), np.float64(-0.31505611028201336)]
+2026-02-09 16:02:33,042 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:02:33,049 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:02:33,049 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:02:33,049 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (5220, 116)
+2026-02-09 16:02:33,049 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (5220,)
+2026-02-09 16:02:33,049 - src.hemisphere.hemisphere_utils - INFO -   Groups: (5220,)
+2026-02-09 16:02:33,049 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:02:33,050 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 45
+2026-02-09 16:02:33,050 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.107, 1.593]
+2026-02-09 16:02:33,051 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.034, std: 0.292
+2026-02-09 16:02:33,051 - __main__ - INFO - 
+  Optimizing hyperparameters (Fold 1): 40 trials
+2026-02-09 16:02:33,175 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:02:33,176 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(0.5394927715023526), np.float64(-0.028590025625968032), np.float64(0.7319510188426191), np.float64(0.3924581476498762), np.float64(-0.6397612151022958)]
+2026-02-09 16:02:33,177 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:02:33,199 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:02:33,199 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:02:33,199 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (16588, 116)
+2026-02-09 16:02:33,199 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (16588,)
+2026-02-09 16:02:33,199 - src.hemisphere.hemisphere_utils - INFO -   Groups: (16588,)
+2026-02-09 16:02:33,199 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:02:33,203 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 143
+2026-02-09 16:02:33,204 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.250, 1.815]
+2026-02-09 16:02:33,209 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.033, std: 0.290
+2026-02-09 16:02:33,209 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:02:33,209 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(-0.15263669080694015), np.float64(-0.12820229704761651), np.float64(0.2052213917872074), np.float64(0.5221227506621918), np.float64(-0.46134970229049166)]
+2026-02-09 16:02:33,209 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:02:33,215 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:02:33,215 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:02:33,215 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (4176, 116)
+2026-02-09 16:02:33,215 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (4176,)
+2026-02-09 16:02:33,215 - src.hemisphere.hemisphere_utils - INFO -   Groups: (4176,)
+2026-02-09 16:02:33,215 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:02:33,216 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 36
+2026-02-09 16:02:33,216 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.211, 1.808]
+2026-02-09 16:02:33,217 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.031, std: 0.295
+2026-02-09 16:03:14,481 - __main__ - INFO -     Trial 1: Acc=0.8781 ★
+2026-02-09 16:03:32,676 - __main__ - INFO -     Trial 2: Acc=0.8254
+2026-02-09 16:04:03,935 - __main__ - INFO -     Trial 3: Acc=0.7749
+2026-02-09 16:04:43,147 - __main__ - INFO -     Trial 4: Acc=0.8321
+2026-02-09 16:05:22,271 - __main__ - INFO - ================================================================================
+2026-02-09 16:05:22,271 - __main__ - INFO - HEMISPHERE CLASSIFICATION (ONE-VS-REST)
+2026-02-09 16:05:22,271 - __main__ - INFO - ================================================================================
+2026-02-09 16:05:22,271 - __main__ - INFO - Data: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres
+2026-02-09 16:05:22,271 - __main__ - INFO - Output: /home/sjoon/projects/brain_connectivity_classifier/data/results/hemisphere_analysis
+2026-02-09 16:05:22,271 - __main__ - INFO - Diagonal: random
+2026-02-09 16:05:22,271 - __main__ - INFO - Folds: 5
+2026-02-09 16:05:22,271 - __main__ - INFO - Tune: True
+2026-02-09 16:05:22,271 - __main__ - INFO - Task test: True
+2026-02-09 16:05:22,271 - __main__ - INFO - ================================================================================
+2026-02-09 16:05:22,271 - __main__ - INFO - 
+================================================================================
+2026-02-09 16:05:22,271 - __main__ - INFO - TRAINING LEFT HEMISPHERE
+2026-02-09 16:05:22,272 - __main__ - INFO - ================================================================================
+2026-02-09 16:05:22,272 - __main__ - INFO - Loading data...
+2026-02-09 16:05:22,279 - src.hemisphere.hemisphere_utils - INFO - Loading left hemisphere data from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
+2026-02-09 16:05:22,636 - src.hemisphere.hemisphere_utils - INFO -   Subjects: 224
+2026-02-09 16:05:22,637 - src.hemisphere.hemisphere_utils - INFO -   Connections: 6670
+2026-02-09 16:05:22,641 - src.hemisphere.hemisphere_utils - INFO - Extracting region info from: /home/sjoon/projects/brain_connectivity_classifier/data/processed/hemispheres/LH_PIOP2_Restingstate.csv
+2026-02-09 16:05:23,116 - src.hemisphere.hemisphere_utils - INFO - Extracted 116 regions for left hemisphere
+2026-02-09 16:05:23,117 - src.hemisphere.hemisphere_utils - INFO -   Regions: 116
+2026-02-09 16:05:23,117 - src.hemisphere.hemisphere_utils - INFO - Converting to full connectivity matrices...
+2026-02-09 16:05:23,139 - src.hemisphere.hemisphere_utils - INFO -   Matrix shape: (224, 116, 116)
+2026-02-09 16:05:23,170 - src.hemisphere.hemisphere_utils - INFO - Connectivity validation completed
+2026-02-09 16:05:23,171 - src.hemisphere.hemisphere_utils - INFO - Successfully loaded left hemisphere data
+2026-02-09 16:05:23,175 - __main__ - INFO - Subjects: 224, Regions: 116
+2026-02-09 16:05:23,175 - __main__ - INFO - Diagonal strategy: random
+2026-02-09 16:05:23,175 - __main__ - INFO - Clipping off-diagonal to [-0.999, 0.999]
+2026-02-09 16:05:23,185 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:05:23,185 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0)]
+2026-02-09 16:05:23,189 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:05:23,223 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:05:23,224 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:05:23,224 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (25984, 116)
+2026-02-09 16:05:23,224 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (25984,)
+2026-02-09 16:05:23,224 - src.hemisphere.hemisphere_utils - INFO -   Groups: (25984,)
+2026-02-09 16:05:23,224 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:05:23,231 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 224
+2026-02-09 16:05:23,233 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-0.848, 0.948]
+2026-02-09 16:05:23,243 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.028, std: 0.266
+2026-02-09 16:05:23,243 - __main__ - INFO - 
+================================================================================
+2026-02-09 16:05:23,243 - __main__ - INFO - CROSS-VALIDATION (5 folds)
+2026-02-09 16:05:23,243 - __main__ - INFO - ================================================================================
+2026-02-09 16:05:23,252 - __main__ - INFO - 
+Fold 1/5
+2026-02-09 16:05:23,259 - __main__ - INFO -   Train: 179 subjects, Test: 45 subjects
+2026-02-09 16:05:23,328 - __main__ - INFO -   Random diagonal imputation with seed=1042
+2026-02-09 16:05:23,340 - __main__ - INFO -   Random diagonal imputation with seed=2042
+2026-02-09 16:05:23,340 - __main__ - INFO -   Applying Fisher Z-transformation...
+2026-02-09 16:05:23,395 - __main__ - INFO -   Value range after Fisher Z: [-1.2500, 1.8154]
+2026-02-09 16:05:23,395 - __main__ - INFO -   Applying Fisher Z-transformation...
+2026-02-09 16:05:23,408 - __main__ - INFO -   Value range after Fisher Z: [-1.1066, 1.5933]
+2026-02-09 16:05:23,408 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:05:23,408 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(-0.15656912879271065), np.float64(-0.13306147592176795), np.float64(0.18684950174152182), np.float64(0.48572757783821696), np.float64(-0.45265671586964273)]
+2026-02-09 16:05:23,410 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:05:23,437 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:05:23,438 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:05:23,438 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (20764, 116)
+2026-02-09 16:05:23,438 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (20764,)
+2026-02-09 16:05:23,438 - src.hemisphere.hemisphere_utils - INFO -   Groups: (20764,)
+2026-02-09 16:05:23,438 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:05:23,443 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 179
+2026-02-09 16:05:23,445 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.250, 1.815]
+2026-02-09 16:05:23,451 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.033, std: 0.291
+2026-02-09 16:05:23,451 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:05:23,451 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(0.14124941932978277), np.float64(-0.25244241183218685), np.float64(0.6305376718466176), np.float64(-0.7438975969421326), np.float64(-0.31505611028201336)]
+2026-02-09 16:05:23,452 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:05:23,459 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:05:23,459 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:05:23,459 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (5220, 116)
+2026-02-09 16:05:23,459 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (5220,)
+2026-02-09 16:05:23,459 - src.hemisphere.hemisphere_utils - INFO -   Groups: (5220,)
+2026-02-09 16:05:23,459 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:05:23,460 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 45
+2026-02-09 16:05:23,460 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.107, 1.593]
+2026-02-09 16:05:23,461 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.034, std: 0.292
+2026-02-09 16:05:23,461 - __main__ - INFO - 
+  Optimizing hyperparameters (Fold 1): 40 trials
+2026-02-09 16:05:23,583 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:05:23,583 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(0.5394927715023526), np.float64(-0.028590025625968032), np.float64(0.7319510188426191), np.float64(0.3924581476498762), np.float64(-0.6397612151022958)]
+2026-02-09 16:05:23,585 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:05:23,607 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:05:23,607 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:05:23,607 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (16588, 116)
+2026-02-09 16:05:23,607 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (16588,)
+2026-02-09 16:05:23,607 - src.hemisphere.hemisphere_utils - INFO -   Groups: (16588,)
+2026-02-09 16:05:23,607 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:05:23,611 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 143
+2026-02-09 16:05:23,612 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.250, 1.815]
+2026-02-09 16:05:23,617 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.033, std: 0.290
+2026-02-09 16:05:23,617 - src.hemisphere.hemisphere_utils - INFO -   Removing diagonal values (self-connections) before classification
+2026-02-09 16:05:23,617 - src.hemisphere.hemisphere_utils - INFO -   Original diagonal values (first subject, first 5 regions): [np.float64(-0.15263669080694015), np.float64(-0.12820229704761651), np.float64(0.2052213917872074), np.float64(0.5221227506621918), np.float64(-0.46134970229049166)]
+2026-02-09 16:05:23,617 - src.hemisphere.hemisphere_utils - INFO -   After removal (should be all zeros): [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+2026-02-09 16:05:23,623 - src.hemisphere.hemisphere_utils - INFO -   ✅ Diagonal removal verified - no features constant at 1.0
+2026-02-09 16:05:23,623 - src.hemisphere.hemisphere_utils - INFO - Prepared classification data:
+2026-02-09 16:05:23,623 - src.hemisphere.hemisphere_utils - INFO -   Features (X): (4176, 116)
+2026-02-09 16:05:23,623 - src.hemisphere.hemisphere_utils - INFO -   Labels (y): (4176,)
+2026-02-09 16:05:23,623 - src.hemisphere.hemisphere_utils - INFO -   Groups: (4176,)
+2026-02-09 16:05:23,623 - src.hemisphere.hemisphere_utils - INFO -   Unique labels: 116
+2026-02-09 16:05:23,624 - src.hemisphere.hemisphere_utils - INFO -   Unique subjects: 36
+2026-02-09 16:05:23,624 - src.hemisphere.hemisphere_utils - INFO -   Feature range: [-1.211, 1.808]
+2026-02-09 16:05:23,625 - src.hemisphere.hemisphere_utils - INFO -   Feature mean: 0.031, std: 0.295
+2026-02-09 16:06:04,882 - __main__ - INFO -     Trial 1: Acc=0.8781 ★
+2026-02-09 16:06:23,014 - __main__ - INFO -     Trial 2: Acc=0.8254
+2026-02-09 16:06:54,192 - __main__ - INFO -     Trial 3: Acc=0.7749
+2026-02-09 16:07:33,191 - __main__ - INFO -     Trial 4: Acc=0.8321

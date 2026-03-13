@@ -1,0 +1,82 @@
+{
+  "model_type": "xgboost_multiclass",
+  "diagonal_strategy": "random",
+  "best_fold_hyperparameters": {
+    "max_depth": 6,
+    "learning_rate": 0.1,
+    "n_estimators": 100,
+    "min_child_weight": 1,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "gamma": 0,
+    "reg_alpha": 0,
+    "reg_lambda": 1
+  },
+  "best_fold_idx": 1,
+  "best_fold_val_accuracy": 0.9960919540229886,
+  "overall_metrics": {
+    "accuracy": 0.9943041871921182,
+    "n_samples": 25984,
+    "n_classes": 116,
+    "top_3_accuracy": 0.9986915024630542,
+    "top_5_accuracy": 0.9992302955665024,
+    "top_10_accuracy": 0.9996536330049262
+  },
+  "fold_metrics": [
+    {
+      "fold": 1,
+      "train_accuracy": 1.0,
+      "val_accuracy": 0.9960919540229886,
+      "train_time": 26.846240758895874,
+      "hyperparameters": {
+        "max_depth": 6,
+        "learning_rate": 0.1,
+        "n_estimators": 100,
+        "min_child_weight": 1,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "gamma": 0,
+        "reg_alpha": 0,
+        "reg_lambda": 1
+      }
+    },
+    {
+      "fold": 2,
+      "train_accuracy": 1.0,
+      "val_accuracy": 0.9937931034482759,
+      "train_time": 27.49821710586548,
+      "hyperparameters": {
+        "max_depth": 6,
+        "learning_rate": 0.1,
+        "n_estimators": 100,
+        "min_child_weight": 1,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "gamma": 0,
+        "reg_alpha": 0,
+        "reg_lambda": 1
+      }
+    },
+    {
+      "fold": 3,
+      "train_accuracy": 1.0,
+      "val_accuracy": 0.9930102516309413,
+      "train_time": 26.707839250564575,
+      "hyperparameters": {
+        "max_depth": 6,
+        "learning_rate": 0.1,
+        "n_estimators": 100,
+        "min_child_weight": 1,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "gamma": 0,
+        "reg_alpha": 0,
+        "reg_lambda": 1
+      }
+    }
+  ],
+  "cv_time_seconds": 83.77984929084778,
+  "mean_train_accuracy": 1.0,
+  "mean_val_accuracy": 0.9942984363674019,
+  "generalization_gap": 0.005701563632598106
+}

@@ -426,33 +426,41 @@ def train_xgboost_classifier(
     return model
 
 
-def extract_feature_importance(
-    model: xgb.XGBClassifier,
-    n_regions: int,
-    region_info: pd.DataFrame
-) -> pd.DataFrame:
-    """Extract feature importance from XGBoost model."""
+def extract_feature_importance(model, n_regions, region_info):
+    """Extract feature importance from XGBoost model.
     
-    # Get feature importance (gain-based)
+    Each feature represents the connection strength TO a specific target region.
+    For a sample from region i, feature j represents the connection i→j.
+    """
+    print(f"DEBUG: len(region_info)={len(region_info)}, model.n_features_in_={getattr(model, 'n_features_in_', 'N/A')}")
+
     importance_gain = model.feature_importances_
     
-    # Create feature names mapping
-    feature_names = []
+    # Generate feature names: one per target region
+    # Feature i = "Connection to region i"
+    featurenames = []
     for i in range(n_regions):
-        for j in range(n_regions):
-            if i != j:
-                region_i = region_info.iloc[i]['region_name']
-                region_j = region_info.iloc[j]['region_name']
-                feature_names.append(f"{region_i}_{region_j}")
+        region_name = region_info.iloc[i]['region_name']
+        featurenames.append(f"connection_to_{region_name}")
+    
+    if len(featurenames) != len(importance_gain):
+        raise ValueError(
+            f"Feature names length {len(featurenames)} != importance length {len(importance_gain)}. "
+            f"Check n_regions={n_regions} vs model.n_features_in_={getattr(model, 'n_features_in_', 'unknown')}."
+        )
     
     importance_df = pd.DataFrame({
-        'feature': feature_names,
+        'feature': featurenames,
         'importance_gain': importance_gain
     })
-    
-    # Sort by importance
     importance_df = importance_df.sort_values('importance_gain', ascending=False)
     
+    print(f"model.n_features_in_: {getattr(model, 'n_features_in_', 'unknown')}")
+    print(f"n_regions: {n_regions}")
+    print(f"len(featurenames): {len(featurenames)}")
+    print(f"len(importance_gain): {len(importance_gain)}")
+    print(f"featurenames[:5]: {featurenames[:5] if featurenames else 'None'}")
+
     return importance_df
 
 

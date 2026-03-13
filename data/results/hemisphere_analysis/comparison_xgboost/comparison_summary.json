@@ -1,0 +1,13 @@
+{
+  "model_type": "xgboost_multiclass",
+  "left_accuracy": 0.9943041871921182,
+  "right_accuracy": 0.9946505541871922,
+  "difference": 0.0003463669950739545,
+  "ttest_p_value": 0.7619594199105475,
+  "left_best_fold": 1,
+  "right_best_fold": 2,
+  "left_task_accuracy": 0.9925862068965517,
+  "right_task_accuracy": 0.9907327586206897,
+  "left_accuracy_drop": 0.007413793103448252,
+  "right_accuracy_drop": 0.009267241379310343
+}

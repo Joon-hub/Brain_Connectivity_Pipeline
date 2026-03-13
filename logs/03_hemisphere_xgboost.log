@@ -1,0 +1,225 @@
+000 (10303792.000.000) 2026-02-09 16:02:30 Job submitted from host: <10.0.8.14:9618?addrs=10.0.8.14-9618&alias=head2.htc.inm7.de&noUDP&sock=schedd_317342_cb8b>
+...
+001 (10303792.000.000) 2026-02-09 16:02:30 Job executing on host: <10.0.9.30:9618?addrs=10.0.9.30-9618&alias=cpu30.htc.inm7.de&noUDP&sock=startd_3176_0ce0>
+...
+006 (10303792.000.000) 2026-02-09 16:02:39 Image size of job updated: 2
+	6  -  MemoryUsage of job (MB)
+	5444  -  ResidentSetSize of job (KB)
+...
+006 (10303792.000.000) 2026-02-09 16:04:43 Image size of job updated: 1047024
+	347  -  MemoryUsage of job (MB)
+	354844  -  ResidentSetSize of job (KB)
+...
+004 (10303792.000.000) 2026-02-09 16:04:43 Job was evicted.
+	(0) CPU times
+		Usr 0 00:02:18, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :        2  2097152   7738299 
+	   Memory (MB)          :      347     3072      3072 
+...
+009 (10303792.000.000) 2026-02-09 16:04:43 Job was aborted.
+	via condor_rm (by user sjoon)
+...
+000 (10303793.000.000) 2026-02-09 16:05:19 Job submitted from host: <10.0.8.14:9618?addrs=10.0.8.14-9618&alias=head2.htc.inm7.de&noUDP&sock=schedd_317342_cb8b>
+...
+001 (10303793.000.000) 2026-02-09 16:05:19 Job executing on host: <10.0.9.30:9618?addrs=10.0.9.30-9618&alias=cpu30.htc.inm7.de&noUDP&sock=startd_3176_0ce0>
+...
+006 (10303793.000.000) 2026-02-09 16:05:28 Image size of job updated: 2
+	6  -  MemoryUsage of job (MB)
+	5456  -  ResidentSetSize of job (KB)
+...
+006 (10303793.000.000) 2026-02-09 16:07:33 Image size of job updated: 1047052
+	350  -  MemoryUsage of job (MB)
+	357668  -  ResidentSetSize of job (KB)
+...
+004 (10303793.000.000) 2026-02-09 16:07:33 Job was evicted.
+	(0) CPU times
+		Usr 0 00:02:18, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     1.00        8         8 
+	   Disk (KB)            :     2     2097152   7738299 
+	   Memory (MB)          :   350        3072      3072 
+...
+009 (10303793.000.000) 2026-02-09 16:07:33 Job was aborted.
+	via condor_rm (by user sjoon)
+...
+000 (10303794.000.000) 2026-02-09 16:07:42 Job submitted from host: <10.0.8.14:9618?addrs=10.0.8.14-9618&alias=head2.htc.inm7.de&noUDP&sock=schedd_317342_cb8b>
+...
+001 (10303794.000.000) 2026-02-09 16:07:43 Job executing on host: <10.0.9.30:9618?addrs=10.0.9.30-9618&alias=cpu30.htc.inm7.de&noUDP&sock=startd_3176_0ce0>
+...
+007 (10303794.000.000) 2026-02-09 16:07:43 Shadow exception!
+	Error from slot1_1@cpu30.htc.inm7.de: Failed to execute '/home/sjoon/projects/brain_connectivity_classifier/cluster/hemisphere/03_train_hemisphere_xgboost.sh': (errno=13: 'Permission denied')
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+...
+012 (10303794.000.000) 2026-02-09 16:07:43 Job was held.
+	Error from slot1_1@cpu30.htc.inm7.de: Failed to execute '/home/sjoon/projects/brain_connectivity_classifier/cluster/hemisphere/03_train_hemisphere_xgboost.sh': (errno=13: 'Permission denied')
+	Code 6 Subcode 13
+...
+000 (10303795.000.000) 2026-02-09 16:08:56 Job submitted from host: <10.0.8.14:9618?addrs=10.0.8.14-9618&alias=head2.htc.inm7.de&noUDP&sock=schedd_317342_cb8b>
+...
+001 (10303795.000.000) 2026-02-09 16:09:04 Job executing on host: <10.0.9.30:9618?addrs=10.0.9.30-9618&alias=cpu30.htc.inm7.de&noUDP&sock=startd_3176_0ce0>
+...
+007 (10303795.000.000) 2026-02-09 16:09:04 Shadow exception!
+	Error from slot1_1@cpu30.htc.inm7.de: Failed to execute '/home/sjoon/projects/brain_connectivity_classifier/cluster/hemisphere/03_train_hemisphere_xgboost.sh': (errno=13: 'Permission denied')
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+...
+012 (10303795.000.000) 2026-02-09 16:09:04 Job was held.
+	Error from slot1_1@cpu30.htc.inm7.de: Failed to execute '/home/sjoon/projects/brain_connectivity_classifier/cluster/hemisphere/03_train_hemisphere_xgboost.sh': (errno=13: 'Permission denied')
+	Code 6 Subcode 13
+...
+000 (10303796.000.000) 2026-02-09 16:13:30 Job submitted from host: <10.0.8.14:9618?addrs=10.0.8.14-9618&alias=head2.htc.inm7.de&noUDP&sock=schedd_317342_cb8b>
+...
+001 (10303796.000.000) 2026-02-09 16:13:30 Job executing on host: <10.0.9.30:9618?addrs=10.0.9.30-9618&alias=cpu30.htc.inm7.de&noUDP&sock=startd_3176_0ce0>
+...
+006 (10303796.000.000) 2026-02-09 16:13:39 Image size of job updated: 2
+	6  -  MemoryUsage of job (MB)
+	5472  -  ResidentSetSize of job (KB)
+...
+006 (10303796.000.000) 2026-02-09 16:14:02 Image size of job updated: 1688352
+	421  -  MemoryUsage of job (MB)
+	430612  -  ResidentSetSize of job (KB)
+...
+005 (10303796.000.000) 2026-02-09 16:14:02 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:03:31, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:03:31, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :        2  2097152   7738299 
+	   Memory (MB)          :      421     3072      3072 
+
+	Job terminated of its own accord at 2026-02-09T15:14:02Z with exit-code 1.
+...
+000 (10303797.000.000) 2026-02-09 16:16:08 Job submitted from host: <10.0.8.14:9618?addrs=10.0.8.14-9618&alias=head2.htc.inm7.de&noUDP&sock=schedd_317342_cb8b>
+...
+001 (10303797.000.000) 2026-02-09 16:16:08 Job executing on host: <10.0.9.30:9618?addrs=10.0.9.30-9618&alias=cpu30.htc.inm7.de&noUDP&sock=startd_3176_0ce0>
+...
+006 (10303797.000.000) 2026-02-09 16:16:17 Image size of job updated: 1688212
+	421  -  MemoryUsage of job (MB)
+	430972  -  ResidentSetSize of job (KB)
+...
+005 (10303797.000.000) 2026-02-09 16:16:40 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:02:30, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:02:30, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :        2  2097152   7738299 
+	   Memory (MB)          :      421     3072      3072 
+
+	Job terminated of its own accord at 2026-02-09T15:16:40Z with exit-code 1.
+...
+000 (10303799.000.000) 2026-02-09 16:19:41 Job submitted from host: <10.0.8.14:9618?addrs=10.0.8.14-9618&alias=head2.htc.inm7.de&noUDP&sock=schedd_317342_cb8b>
+...
+001 (10303799.000.000) 2026-02-09 16:19:51 Job executing on host: <10.0.9.30:9618?addrs=10.0.9.30-9618&alias=cpu30.htc.inm7.de&noUDP&sock=startd_3176_0ce0>
+...
+006 (10303799.000.000) 2026-02-09 16:20:00 Image size of job updated: 2
+	6  -  MemoryUsage of job (MB)
+	5692  -  ResidentSetSize of job (KB)
+...
+006 (10303799.000.000) 2026-02-09 16:20:22 Image size of job updated: 1688236
+	420  -  MemoryUsage of job (MB)
+	429380  -  ResidentSetSize of job (KB)
+...
+005 (10303799.000.000) 2026-02-09 16:20:22 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:03:33, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:03:33, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :        2  2097152   7738299 
+	   Memory (MB)          :      420     3072      3072 
+
+	Job terminated of its own accord at 2026-02-09T15:20:22Z with exit-code 1.
+...
+009 (10303794.000.000) 2026-02-09 16:20:34 Job was aborted.
+	via condor_rm (by user sjoon)
+...
+009 (10303795.000.000) 2026-02-09 16:20:46 Job was aborted.
+	via condor_rm (by user sjoon)
+...
+000 (10303800.000.000) 2026-02-09 16:22:26 Job submitted from host: <10.0.8.14:9618?addrs=10.0.8.14-9618&alias=head2.htc.inm7.de&noUDP&sock=schedd_317342_cb8b>
+...
+001 (10303800.000.000) 2026-02-09 16:22:27 Job executing on host: <10.0.9.30:9618?addrs=10.0.9.30-9618&alias=cpu30.htc.inm7.de&noUDP&sock=startd_3176_0ce0>
+...
+006 (10303800.000.000) 2026-02-09 16:22:35 Image size of job updated: 2
+	6  -  MemoryUsage of job (MB)
+	5432  -  ResidentSetSize of job (KB)
+...
+006 (10303800.000.000) 2026-02-09 16:22:58 Image size of job updated: 1688240
+	422  -  MemoryUsage of job (MB)
+	431224  -  ResidentSetSize of job (KB)
+...
+005 (10303800.000.000) 2026-02-09 16:22:58 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:02:46, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:02:46, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :        2  2097152   7738299 
+	   Memory (MB)          :      422     3072      3072 
+
+	Job terminated of its own accord at 2026-02-09T15:22:58Z with exit-code 1.
+...
+000 (10303801.000.000) 2026-02-09 16:35:37 Job submitted from host: <10.0.8.14:9618?addrs=10.0.8.14-9618&alias=head2.htc.inm7.de&noUDP&sock=schedd_317342_cb8b>
+...
+001 (10303801.000.000) 2026-02-09 16:35:48 Job executing on host: <10.0.9.30:9618?addrs=10.0.9.30-9618&alias=cpu30.htc.inm7.de&noUDP&sock=startd_3176_0ce0>
+...
+006 (10303801.000.000) 2026-02-09 16:35:56 Image size of job updated: 2
+	6  -  MemoryUsage of job (MB)
+	5520  -  ResidentSetSize of job (KB)
+...
+006 (10303801.000.000) 2026-02-09 16:39:54 Image size of job updated: 1961396
+	733  -  MemoryUsage of job (MB)
+	749944  -  ResidentSetSize of job (KB)
+...
+005 (10303801.000.000) 2026-02-09 16:39:54 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:30:33, Sys 0 00:00:02  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:30:33, Sys 0 00:00:02  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :        2  2097152   7738299 
+	   Memory (MB)          :      733     3072      3072 
+
+	Job terminated of its own accord at 2026-02-09T15:39:54Z with exit-code 0.
+...

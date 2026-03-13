@@ -1,0 +1,27 @@
+{
+  "diagonal_strategy": "random",
+  "rest_train_accuracy": 1.0,
+  "task_test_accuracy": 0.9925862068965517,
+  "accuracy_drop": 0.007413793103448252,
+  "hyperparameters": {
+    "max_depth": 6,
+    "learning_rate": 0.1,
+    "n_estimators": 100,
+    "min_child_weight": 1,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "gamma": 0,
+    "reg_alpha": 0,
+    "reg_lambda": 1
+  },
+  "n_rest_subjects": 224,
+  "n_task_subjects": 200,
+  "n_regions": 116,
+  "training_time_seconds": 32.65131115913391,
+  "rest_top_3_accuracy": 1.0,
+  "task_top_3_accuracy": 0.9993103448275862,
+  "rest_top_5_accuracy": 1.0,
+  "task_top_5_accuracy": 0.9996982758620689,
+  "rest_top_10_accuracy": 1.0,
+  "task_top_10_accuracy": 0.9997844827586206
+}
