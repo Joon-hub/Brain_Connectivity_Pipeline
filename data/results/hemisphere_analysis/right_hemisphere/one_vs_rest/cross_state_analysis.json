@@ -1,0 +1,10 @@
+{
+  "pearson_r": 0.9020699499534717,
+  "pearson_p": 2.063300047356732e-43,
+  "pct_regions_task_ge75": 87.93103448275862,
+  "pct_regions_drop_gt10": 14.655172413793101,
+  "mean_rest_recall": 0.9247998768472906,
+  "mean_task_recall": 0.8797844827586208,
+  "mean_drop": 0.045015394088669954,
+  "n_regions_analysed": 116
+}

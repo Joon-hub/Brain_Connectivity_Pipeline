@@ -1,4 +1,5 @@
 {
+  "hemisphere": "right",
   "diagonal_strategy": "random",
   "best_fold_hyperparameters": {
     "C": 0.04914864940821378,
@@ -6,7 +7,7 @@
     "max_iter": 209,
     "tol": 0.02111009592741691,
     "_optuna_best_score": 0.9310344827586207,
-    "_optuna_time_seconds": 1750.2468736171722
+    "_optuna_time_seconds": 1743.9210793972015
   },
   "best_fold_idx": 1,
   "best_fold_val_accuracy": 0.9291187739463601,
@@ -23,75 +24,99 @@
       "fold": 1,
       "train_accuracy": 0.9552591022924292,
       "val_accuracy": 0.9291187739463601,
-      "train_time": 25.047476291656494,
+      "task_accuracy": 0.8778448275862069,
+      "train_time": 25.6122727394104,
       "hyperparameters": {
         "C": 0.04914864940821378,
         "solver": "saga",
         "max_iter": 209,
         "tol": 0.02111009592741691,
         "_optuna_best_score": 0.9310344827586207,
-        "_optuna_time_seconds": 1750.2468736171722
+        "_optuna_time_seconds": 1743.9210793972015
       }
     },
     {
       "fold": 2,
       "train_accuracy": 0.95497014062801,
       "val_accuracy": 0.9270114942528735,
-      "train_time": 23.013783931732178,
+      "task_accuracy": 0.8775,
+      "train_time": 23.062942266464233,
       "hyperparameters": {
         "C": 0.04808697788059684,
         "solver": "saga",
         "max_iter": 881,
         "tol": 0.02150018259818247,
         "_optuna_best_score": 0.9085249042145593,
-        "_optuna_time_seconds": 1133.7523381710052
+        "_optuna_time_seconds": 1120.12411236763
       }
     },
     {
       "fold": 3,
       "train_accuracy": 0.9488537853978039,
       "val_accuracy": 0.9245210727969349,
-      "train_time": 13.181106328964233,
+      "task_accuracy": 0.8778879310344827,
+      "train_time": 13.202441453933716,
       "hyperparameters": {
         "C": 0.02645902688915571,
         "solver": "saga",
         "max_iter": 1294,
         "tol": 0.07042265471677933,
         "_optuna_best_score": 0.9195402298850575,
-        "_optuna_time_seconds": 1068.3339943885803
+        "_optuna_time_seconds": 1058.2592504024506
       }
     },
     {
       "fold": 4,
       "train_accuracy": 0.9549219803506068,
       "val_accuracy": 0.9241379310344827,
-      "train_time": 29.189451694488525,
+      "task_accuracy": 0.8775431034482759,
+      "train_time": 29.35278630256653,
       "hyperparameters": {
         "C": 0.03519747009003401,
         "solver": "saga",
         "max_iter": 1205,
         "tol": 0.01226381645270908,
         "_optuna_best_score": 0.921455938697318,
-        "_optuna_time_seconds": 1953.2421383857727
+        "_optuna_time_seconds": 1945.1017680168152
       }
     },
     {
       "fold": 5,
       "train_accuracy": 0.9577586206896552,
       "val_accuracy": 0.9190830721003135,
-      "train_time": 148.35777068138123,
+      "task_accuracy": 0.8694827586206897,
+      "train_time": 149.16908144950867,
       "hyperparameters": {
         "C": 0.04937804529343305,
         "solver": "saga",
         "max_iter": 121,
         "tol": 0.00040157591081212493,
         "_optuna_best_score": 0.9276819923371648,
-        "_optuna_time_seconds": 3439.3248159885406
+        "_optuna_time_seconds": 3459.7790393829346
       }
     }
   ],
-  "cv_time_seconds": 9587.288174390793,
   "mean_train_accuracy": 0.954352725871701,
   "mean_val_accuracy": 0.924774468826193,
-  "generalization_gap": 0.029578257045507983
+  "generalization_gap": 0.029578257045507983,
+  "mean_task_accuracy": 0.876051724137931,
+  "mean_rest_task_drop": 0.04872274468826199,
+  "cv_time_seconds": 9572.74003815651,
+  "paired_ttest_note": "fold_metrics[i].val_accuracy and fold_metrics[i].task_accuracy are matched pairs (same fold scaler). Use scipy.stats.ttest_rel(val_accs, task_accs) for the paired t-test.",
+  "output_files": {
+    "rest_per_region_recall": "rest_per_region_recall.csv",
+    "task_per_region_recall": "task_per_region_recall.csv",
+    "cross_state_stability": "cross_state_region_stability.csv",
+    "cross_state_summary": "cross_state_analysis.json"
+  },
+  "cross_state_analysis": {
+    "pearson_r": 0.9020699499534717,
+    "pearson_p": 2.063300047356732e-43,
+    "pct_regions_task_ge75": 87.93103448275862,
+    "pct_regions_drop_gt10": 14.655172413793101,
+    "mean_rest_recall": 0.9247998768472906,
+    "mean_task_recall": 0.8797844827586208,
+    "mean_drop": 0.045015394088669954,
+    "n_regions_analysed": 116
+  }
 }

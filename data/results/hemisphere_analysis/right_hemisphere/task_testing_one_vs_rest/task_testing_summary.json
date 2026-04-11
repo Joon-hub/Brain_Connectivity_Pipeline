@@ -1,4 +1,6 @@
 {
+  "note": "Single final model trained on all rest data. Per-fold task accuracies for the paired t-test are in cv_summary.json -> fold_metrics[*].task_accuracy.",
+  "hemisphere": "right",
   "diagonal_strategy": "random",
   "rest_train_accuracy": 0.9534713669950738,
   "task_test_accuracy": 0.879698275862069,
@@ -9,12 +11,12 @@
     "max_iter": 209,
     "tol": 0.02111009592741691,
     "_optuna_best_score": 0.9310344827586207,
-    "_optuna_time_seconds": 1750.2468736171722
+    "_optuna_time_seconds": 1743.9210793972015
   },
   "n_rest_subjects": 224,
   "n_task_subjects": 200,
   "n_regions": 116,
-  "training_time_seconds": 29.46106791496277,
+  "training_time_seconds": 29.867663383483887,
   "rest_top_3_accuracy": 0.9826816502463054,
   "task_top_3_accuracy": 0.9473275862068965,
   "rest_top_5_accuracy": 0.9892241379310345,

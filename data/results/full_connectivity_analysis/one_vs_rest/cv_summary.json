@@ -6,7 +6,7 @@
     "max_iter": 1641,
     "tol": 0.010333828633562555,
     "_optuna_best_score": 0.7771791187739464,
-    "_optuna_time_seconds": 12075.091308832169
+    "_optuna_time_seconds": 11909.587579727173
   },
   "best_fold_idx": 4,
   "best_fold_val_accuracy": 0.7740421455938697,
@@ -23,75 +23,99 @@
       "fold": 1,
       "train_accuracy": 0.8209400886149104,
       "val_accuracy": 0.7622605363984675,
-      "train_time": 210.99482989311218,
+      "task_accuracy": 0.7312284482758621,
+      "train_time": 210.77264165878296,
       "hyperparameters": {
         "C": 0.02112998742701668,
         "solver": "saga",
         "max_iter": 532,
         "tol": 0.023357760386764348,
         "_optuna_best_score": 0.7686781609195402,
-        "_optuna_time_seconds": 19488.596613407135
+        "_optuna_time_seconds": 19381.329831123352
       }
     },
     {
       "fold": 2,
       "train_accuracy": 0.8190377576574841,
       "val_accuracy": 0.7619731800766284,
-      "train_time": 151.8568720817566,
+      "task_accuracy": 0.7297413793103448,
+      "train_time": 151.71734428405762,
       "hyperparameters": {
         "C": 0.0492958401361325,
         "solver": "saga",
         "max_iter": 832,
         "tol": 0.04758541135351074,
         "_optuna_best_score": 0.7685584291187739,
-        "_optuna_time_seconds": 14727.753669500351
+        "_optuna_time_seconds": 14733.928452014923
       }
     },
     {
       "fold": 3,
       "train_accuracy": 0.8222163359660951,
       "val_accuracy": 0.7516283524904215,
-      "train_time": 1137.0064578056335,
+      "task_accuracy": 0.7229310344827586,
+      "train_time": 1114.0816507339478,
       "hyperparameters": {
         "C": 0.012523510761351952,
         "solver": "saga",
         "max_iter": 1296,
         "tol": 0.0008615708780737956,
         "_optuna_best_score": 0.7658045977011494,
-        "_optuna_time_seconds": 46522.61714911461
+        "_optuna_time_seconds": 46455.910531044006
       }
     },
     {
       "fold": 4,
       "train_accuracy": 0.8346416875361202,
       "val_accuracy": 0.7740421455938697,
-      "train_time": 416.234423160553,
+      "task_accuracy": 0.728103448275862,
+      "train_time": 411.5433669090271,
       "hyperparameters": {
         "C": 0.04439364235161713,
         "solver": "saga",
         "max_iter": 1641,
         "tol": 0.010333828633562555,
         "_optuna_best_score": 0.7771791187739464,
-        "_optuna_time_seconds": 12075.091308832169
+        "_optuna_time_seconds": 11909.587579727173
       }
     },
     {
       "fold": 5,
       "train_accuracy": 0.8132423371647509,
       "val_accuracy": 0.7622452978056427,
-      "train_time": 150.38564229011536,
+      "task_accuracy": 0.7303232758620689,
+      "train_time": 150.54041457176208,
       "hyperparameters": {
         "C": 0.013473042977285897,
         "solver": "saga",
         "max_iter": 424,
         "tol": 0.03725226561755071,
         "_optuna_best_score": 0.7701149425287356,
-        "_optuna_time_seconds": 10856.534540891647
+        "_optuna_time_seconds": 10823.159224033356
       }
     }
   ],
-  "cv_time_seconds": 105752.6163213253,
   "mean_train_accuracy": 0.8220156413878721,
   "mean_val_accuracy": 0.7624299024730059,
-  "generalization_gap": 0.05958573891486618
+  "generalization_gap": 0.05958573891486618,
+  "mean_task_accuracy": 0.7284655172413793,
+  "mean_rest_task_drop": 0.03396438523162659,
+  "cv_time_seconds": 105370.44506788254,
+  "paired_ttest_note": "fold_metrics[i].val_accuracy and fold_metrics[i].task_accuracy are matched pairs (same fold scaler). Use scipy.stats.ttest_rel(val_accs, task_accs) for the paired t-test.",
+  "output_files": {
+    "rest_per_region_recall": "rest_per_region_recall.csv",
+    "task_per_region_recall": "task_per_region_recall.csv",
+    "cross_state_stability": "cross_state_region_stability.csv",
+    "cross_state_summary": "cross_state_analysis.json"
+  },
+  "cross_state_analysis": {
+    "pearson_r": 0.8704852822083453,
+    "pearson_p": 9.368916703329482e-73,
+    "pct_regions_task_ge75": 55.172413793103445,
+    "pct_regions_drop_gt10": 12.068965517241379,
+    "mean_rest_recall": 0.7624307266009851,
+    "mean_task_recall": 0.7356896551724138,
+    "mean_drop": 0.026741071428571433,
+    "n_regions_analysed": 232
+  }
 }
